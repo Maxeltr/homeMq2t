@@ -1,0 +1,1 @@
+Spring Boot application based on Netty that publishes message to a topic on mqtt broker and receives messages from specific topics. It allows to execute commands on the client side over MQTT.
