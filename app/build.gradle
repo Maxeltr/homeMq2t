@@ -9,11 +9,16 @@
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     id 'application'
+    id 'java-library'
+    id "org.springframework.boot" version "3.1.0"
+    id "io.spring.dependency-management" version "1.1.0"
+    id 'java'
 }
 
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -22,6 +27,8 @@ dependencies {
 
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:31.1-jre'
+    implementation group: 'io.netty', name: 'netty-all', version: '4.1.93.Final'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '3.1.0'
 }
 
 application {
