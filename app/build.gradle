@@ -8,9 +8,9 @@
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
-    id 'application'
     id 'java-library'
-    id "org.springframework.boot" version "3.1.0"
+    id 'application'
+    id 'org.springframework.boot' version '3.1.0'
     id "io.spring.dependency-management" version "1.1.0"
     id 'java'
 }
@@ -18,17 +18,20 @@ plugins {
 repositories {
     // Use Maven Central for resolving dependencies.
     mavenCentral()
-    jcenter()
 }
 
 dependencies {
     // Use JUnit Jupiter for testing.
     testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:31.1-jre'
     implementation group: 'io.netty', name: 'netty-all', version: '4.1.93.Final'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '3.1.0'
+    implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '3.1.0'
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+
 }
 
 application {
