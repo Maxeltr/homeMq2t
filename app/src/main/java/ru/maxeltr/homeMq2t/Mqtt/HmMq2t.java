@@ -1,4 +1,3 @@
-
 package ru.maxeltr.homeMq2t.Mqtt;
 
 import io.netty.util.concurrent.Promise;

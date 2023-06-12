@@ -29,17 +29,11 @@ import io.netty.handler.codec.mqtt.MqttMessage;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface RetransmitSheduler {
-
-    public void start();
-
-    public void stop();
-
-    public void put(String key, MqttMessage value);
+public interface MqttAckmediator {
 
     public MqttMessage get(String key);
 
-    public void remove(String key);
+    public void add(String key, MqttMessage value);
 
-    public void clear();
+    public void remove(String key);
 }

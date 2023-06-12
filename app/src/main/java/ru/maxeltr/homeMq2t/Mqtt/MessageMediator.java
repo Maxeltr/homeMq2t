@@ -23,23 +23,23 @@
  */
 package ru.maxeltr.homeMq2t.Mqtt;
 
-import io.netty.handler.codec.mqtt.MqttMessage;
-
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface RetransmitSheduler {
+public interface MessageMediator {
 
-    public void start();
+    public void publish(Command command);
 
-    public void stop();
+    public void publish(Reply reply);
 
-    public void put(String key, MqttMessage value);
+    public void publish(Data data);
 
-    public MqttMessage get(String key);
+    public void execute(Command command);
 
-    public void remove(String key);
+    public void execute(Reply reply);
 
-    public void clear();
+    public void display(Reply reply);
+
+    public void display(Data data);
 }

@@ -23,23 +23,19 @@
  */
 package ru.maxeltr.homeMq2t.Mqtt;
 
-import io.netty.handler.codec.mqtt.MqttMessage;
-
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface RetransmitSheduler {
+public interface Data {
 
-    public void start();
+    public String getName();
 
-    public void stop();
+    public String getType();
 
-    public void put(String key, MqttMessage value);
+    public String getPayload();
 
-    public MqttMessage get(String key);
+    public String getStatus();
 
-    public void remove(String key);
-
-    public void clear();
+    public String getTimestamp();
 }

@@ -23,23 +23,15 @@
  */
 package ru.maxeltr.homeMq2t.Mqtt;
 
-import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.channel.ChannelHandlerContext;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface RetransmitSheduler {
+public interface MqttPubishHandler {
 
-    public void start();
+    public void handlerAdded(ChannelHandlerContext ctx);
 
-    public void stop();
-
-    public void put(String key, MqttMessage value);
-
-    public MqttMessage get(String key);
-
-    public void remove(String key);
-
-    public void clear();
+    public void setMediator(MessageMediator mediator);
 }
