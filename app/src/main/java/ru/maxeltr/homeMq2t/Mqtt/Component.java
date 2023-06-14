@@ -29,4 +29,5 @@ package ru.maxeltr.homeMq2t.Mqtt;
  */
 public interface Component {
 
+    public String getName();
 }

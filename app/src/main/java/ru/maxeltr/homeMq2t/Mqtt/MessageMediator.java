@@ -42,4 +42,8 @@ public interface MessageMediator {
     public void display(Reply reply);
 
     public void display(Data data);
+
+    public void update();
+
+    public void update(Component component);
 }

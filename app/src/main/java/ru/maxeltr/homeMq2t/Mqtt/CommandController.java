@@ -27,29 +27,6 @@ package ru.maxeltr.homeMq2t.Mqtt;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface PollService {
+public interface CommandController {
 
-    public void setMediator(MessageMediator mediator);
-
-    /**
-     * This method is called by Mediator in order to PollService updates sensor
-     * readings and publishes them.
-     */
-    public void update();
-
-    /**
-     * This method is called by Observable component. PollService should publish
-     * new readings.
-     *
-     * @param component Component object
-     */
-    public void update(Component component);
-
-    /**
-     * This method is called by Mediator. PollService should update the
-     * component and publish its readings.
-     *
-     * @param component Name of component
-     */
-    public void update(String component);
 }
