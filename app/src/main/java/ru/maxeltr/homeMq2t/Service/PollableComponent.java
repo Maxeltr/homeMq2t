@@ -21,19 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Mqtt;
+package ru.maxeltr.homeMq2t.Service;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface Command {
+public interface PollableComponent extends Component {
 
-    public String getId();
-
-    public String getName();
-
-    public String getArguments();
-
-    public String getTimestamp();
+    public String getCurrentSensorRead();
 }

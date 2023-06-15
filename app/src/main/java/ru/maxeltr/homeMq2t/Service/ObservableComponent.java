@@ -21,17 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Mqtt;
-
-import io.netty.handler.codec.mqtt.MqttMessage;
+package ru.maxeltr.homeMq2t.Service;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface RetransmitSheduler {
+public interface ObservableComponent extends Component {
 
-    public void start();
+    public void addObserver();
 
-    public void stop();
+    public void removeObserver();
+
+    public void notifyObservers();
 }

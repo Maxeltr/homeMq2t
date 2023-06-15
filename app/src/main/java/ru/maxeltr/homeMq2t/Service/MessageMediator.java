@@ -21,17 +21,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Mqtt;
+package ru.maxeltr.homeMq2t.Service;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface DisplayController {
+public interface MessageMediator {
 
-    public void setMediator(MessageMediator mediator);
+    public void publish(Command command);
+
+    public void publish(Reply reply);
+
+    public void publish(Data data);
+
+    public void execute(Command command);
+
+    public void execute(Reply reply);
+
+    public void display(Reply reply);
 
     public void display(Data data);
 
-    public void display(Reply reply);
+    public void update();
+
+    public void update(Component component);
 }

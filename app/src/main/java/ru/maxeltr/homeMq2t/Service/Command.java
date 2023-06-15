@@ -21,17 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Mqtt;
+package ru.maxeltr.homeMq2t.Service;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface CommandService {
+public interface Command {
 
-    public void setMediator(MessageMediator mediator);
+    public String getId();
 
-    public void execute(Command command);
+    public String getName();
 
-    public void execute(Reply reply);
+    public String getArguments();
+
+    public String getTimestamp();
 }

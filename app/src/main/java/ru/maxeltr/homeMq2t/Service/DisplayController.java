@@ -21,35 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Mqtt;
+package ru.maxeltr.homeMq2t.Service;
+
+import ru.maxeltr.homeMq2t.Service.MessageMediator;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface PollService {
+public interface DisplayController {
 
     public void setMediator(MessageMediator mediator);
 
-    /**
-     * This method is called by Mediator in order to PollService updates sensor
-     * readings and publishes them.
-     */
-    public void update();
+    public void display(Data data);
 
-    /**
-     * This method is called by Observable component. PollService should publish
-     * new readings.
-     *
-     * @param component Component object
-     */
-    public void update(Component component);
-
-    /**
-     * This method is called by Mediator. PollService should update the
-     * component and publish its readings.
-     *
-     * @param component Name of component
-     */
-    public void update(String component);
+    public void display(Reply reply);
 }

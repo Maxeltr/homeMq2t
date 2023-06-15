@@ -21,17 +21,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Mqtt;
+package ru.maxeltr.homeMq2t.Service;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface ObservableComponent extends Component {
+public interface Data {
 
-    public void addObserver();
+    public String getName();
 
-    public void removeObserver();
+    public String getType();
 
-    public void notifyObservers();
+    public String getPayload();
+
+    public String getStatus();
+
+    public String getTimestamp();
 }
