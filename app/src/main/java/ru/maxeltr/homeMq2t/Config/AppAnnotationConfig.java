@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import java.io.IOException;
+import java.util.logging.LogManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -36,6 +38,15 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableAsync
 @EnableScheduling
 public class AppAnnotationConfig {
+
+    public AppAnnotationConfig() {
+        try {
+            LogManager.getLogManager().readConfiguration(AppAnnotationConfig.class.getResourceAsStream("/logging.properties")
+            );
+        } catch (IOException | SecurityException ex) {
+            System.err.println("Could not setup logger configuration: " + ex.toString());
+        }
+    }
 
     @Bean
     public Config config() {

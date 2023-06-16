@@ -1,0 +1,15 @@
+2023-06-16 22:12:33.970 org.apache.catalina.util.LifecycleBase setStateInternal
+FINE: Setting state for [Connector[org.apache.coyote.http11.Http11NioProtocol-8080]] to [STARTING_PREP]
+
+2023-06-16 22:12:33.985 org.apache.catalina.util.LifecycleBase setStateInternal
+FINE: Setting state for [Connector[org.apache.coyote.http11.Http11NioProtocol-8080]] to [STARTING]
+
+2023-06-16 22:12:33.986 org.apache.coyote.AbstractProtocol start
+INFO: Starting ProtocolHandler ["http-nio-8080"]
+
+2023-06-16 22:12:34.014 org.apache.catalina.util.LifecycleBase setStateInternal
+FINE: Setting state for [Connector[org.apache.coyote.http11.Http11NioProtocol-8080]] to [STARTED]
+
+2023-06-16 22:12:34.015 org.apache.tomcat.util.threads.LimitLatch countUpOrAwait
+FINE: Counting up[http-nio-8080-Acceptor] latch=0
+

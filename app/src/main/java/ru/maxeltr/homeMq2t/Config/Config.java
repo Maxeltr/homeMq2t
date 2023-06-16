@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -37,23 +38,18 @@ public class Config {
 
     private static final Logger logger = Logger.getLogger(Config.class.getName());
 
-    public static final String CONFIG_PATHNAME = "Configuration.xml";
-
     private final Properties properties = new Properties();
 
     public final void readConfigFromFile() {
         try {
-            ClassLoader loader = Thread.currentThread().getContextClassLoader();
-            InputStream stream = loader.getResourceAsStream("/logging.properties");
-            this.properties.load(stream);
-
-            //get the property value and print it out
-            System.out.println(this.properties.getProperty("java.util.logging.FileHandler.level"));
-            System.out.println(this.properties.getProperty("java.util.logging.SimpleFormatter.format"));
-            System.out.println(this.properties.getProperty("java.util.logging.FileHandler.encoding"));
-
+            this.properties.load(new FileInputStream("configuration.properties"));
         } catch (IOException ex) {
+            System.out.println(String.format("Cannot read configuration."));
             logger.log(Level.SEVERE, String.format("Cannot read configuration.%n"), ex);
         }
+    }
+
+    public String getProperty(String property, String defaultValue) {
+        return this.properties.getProperty(property, defaultValue);
     }
 }

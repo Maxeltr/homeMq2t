@@ -1,0 +1,27 @@
+2023-06-16 21:48:20.365 org.apache.catalina.util.LifecycleBase setStateInternal
+FINE: Setting state for [Connector[org.apache.coyote.http11.Http11NioProtocol-8080]] to [STARTING_PREP]
+
+2023-06-16 21:48:20.379 org.apache.catalina.util.LifecycleBase setStateInternal
+FINE: Setting state for [Connector[org.apache.coyote.http11.Http11NioProtocol-8080]] to [STARTING]
+
+2023-06-16 21:48:20.379 org.apache.coyote.AbstractProtocol start
+INFO: Starting ProtocolHandler ["http-nio-8080"]
+
+2023-06-16 21:48:20.404 org.apache.catalina.util.LifecycleBase setStateInternal
+FINE: Setting state for [Connector[org.apache.coyote.http11.Http11NioProtocol-8080]] to [STARTED]
+
+2023-06-16 21:48:20.406 org.apache.tomcat.util.threads.LimitLatch countUpOrAwait
+FINE: Counting up[http-nio-8080-Acceptor] latch=0
+
+2023-06-16 21:48:20.421 ru.maxeltr.homeMq2t.Config.Config readConfigFromFile
+SEVERE: Cannot read configuration.
+
+java.io.FileNotFoundException: configuration.properties (Не удается найти указанный файл)
+	at java.base/java.io.FileInputStream.open0(Native Method)
+	at java.base/java.io.FileInputStream.open(FileInputStream.java:216)
+	at java.base/java.io.FileInputStream.<init>(FileInputStream.java:157)
+	at java.base/java.io.FileInputStream.<init>(FileInputStream.java:111)
+	at ru.maxeltr.homeMq2t.Config.Config.readConfigFromFile(Config.java:45)
+	at ru.maxeltr.homeMq2t.App.main(App.java:21)
+
+
