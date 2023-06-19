@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import io.netty.handler.codec.mqtt.MqttMessage;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -46,4 +48,6 @@ public interface MessageMediator {
     public void update();
 
     public void update(Component component);
+
+    public void handleMessage(MqttMessage message);
 }
