@@ -15,6 +15,6 @@ public class App {
         ConfigurableApplicationContext applicationContext = SpringApplication.run(App.class, args);
         Config config = (Config) applicationContext.getBean("config");
         config.readConfigFromFile();
-        System.out.println(config.getProperty("host", "1"));
+        System.out.println(config.getEnv("protocolName") + "   [qwer]");
     }
 }

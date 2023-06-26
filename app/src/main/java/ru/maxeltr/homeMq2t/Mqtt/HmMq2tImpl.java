@@ -38,7 +38,7 @@ import ru.maxeltr.homeMq2t.Config.Config;
 public class HmMq2tImpl implements HmMq2t {
 
     private static final Logger logger = Logger.getLogger(HmMq2tImpl.class.getName());
-    
+
     @Autowired
     private Config config;
 

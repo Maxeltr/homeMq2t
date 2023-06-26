@@ -29,12 +29,19 @@ import java.io.InputStream;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 
 /**
  *
  * @author Maxim Eltratov <Maxim.Eltratov@yandex.ru>
  */
 public class Config {
+
+    @Autowired
+    Environment env;
 
     private static final Logger logger = Logger.getLogger(Config.class.getName());
 
@@ -51,5 +58,9 @@ public class Config {
 
     public String getProperty(String property, String defaultValue) {
         return this.properties.getProperty(property, defaultValue);
+    }
+
+    public String getEnv(String property) {
+        return env.getProperty(property);
     }
 }
