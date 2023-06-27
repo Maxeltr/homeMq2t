@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Maxim Eltratov <Maxim.Eltratov@yandex.ru>.
+ * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,44 +23,41 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.web.server.WebServerFactoryCustomizer;
+import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.Environment;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 /**
  *
- * @author Maxim Eltratov <Maxim.Eltratov@yandex.ru>
+ * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class Config {
+@Configuration
+@EnableWebSocketMessageBroker
+public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> {
 
     @Autowired
-    Environment env;
+    private Environment env;
 
-    private static final Logger logger = Logger.getLogger(Config.class.getName());
-
-    private final Properties properties = new Properties();
-
-    public final void readConfigFromFile() {
-        try {
-            this.properties.load(new FileInputStream("configuration.properties"));
-        } catch (IOException ex) {
-            System.out.println(String.format("Cannot read configuration."));
-            logger.log(Level.SEVERE, String.format("Cannot read configuration.%n"), ex);
-        }
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic");
+        config.setApplicationDestinationPrefixes("/app");
     }
 
-    public String getProperty(String property, String defaultValue) {
-        return this.properties.getProperty(property, defaultValue);
+    @Override
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/mq2tClientDashboard").withSockJS();
     }
 
-    public String getEnv(String property) {
-        return env.getProperty(property);
+    @Override
+    public void customize(ConfigurableServletWebServerFactory factory) {
+        int port = Integer.parseInt(env.getProperty("localServerPort", "8028"));
+        factory.setPort(port);
     }
 }

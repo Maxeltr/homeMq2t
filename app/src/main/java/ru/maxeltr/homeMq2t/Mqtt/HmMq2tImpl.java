@@ -28,8 +28,6 @@ import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 import io.netty.util.concurrent.Promise;
 import java.util.logging.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
-import ru.maxeltr.homeMq2t.Config.Config;
 
 /**
  *
@@ -38,9 +36,6 @@ import ru.maxeltr.homeMq2t.Config.Config;
 public class HmMq2tImpl implements HmMq2t {
 
     private static final Logger logger = Logger.getLogger(HmMq2tImpl.class.getName());
-
-    @Autowired
-    private Config config;
 
     @Override
     public Promise<MqttConnAckMessage> connect() {

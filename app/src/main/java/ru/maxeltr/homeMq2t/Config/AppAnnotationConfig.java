@@ -38,8 +38,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Configuration
 @EnableAsync
 @EnableScheduling
-@PropertySource("classpath:configuration.properties")
-@PropertySource("configuration-local.properties")
 public class AppAnnotationConfig {
 
     public AppAnnotationConfig() {
@@ -51,8 +49,5 @@ public class AppAnnotationConfig {
         }
     }
 
-    @Bean
-    public Config config() {
-        return new Config();
-    }
+    
 }

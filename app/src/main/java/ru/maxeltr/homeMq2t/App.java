@@ -6,15 +6,14 @@ package ru.maxeltr.homeMq2t;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import ru.maxeltr.homeMq2t.Config.Config;
 
 @SpringBootApplication
 public class App {
 
     public static void main(String[] args) {
         ConfigurableApplicationContext applicationContext = SpringApplication.run(App.class, args);
-        Config config = (Config) applicationContext.getBean("config");
-        config.readConfigFromFile();
-        System.out.println(config.getEnv("protocolName") + "   [qwer]");
+
+
+
     }
 }

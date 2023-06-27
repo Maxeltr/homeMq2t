@@ -4,4 +4,6 @@
 # Ignore Gradle build output directory
 build
 logs
-*.properties
+
+#properties
+application-dev.properties
