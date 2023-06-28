@@ -6,14 +6,14 @@ package ru.maxeltr.homeMq2t;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
+import ru.maxeltr.homeMq2t.Config.AppAnnotationConfig;
 
 @SpringBootApplication
 public class App {
 
     public static void main(String[] args) {
         ConfigurableApplicationContext applicationContext = SpringApplication.run(App.class, args);
-
-
-
+        
     }
 }
