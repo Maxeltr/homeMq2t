@@ -23,7 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
-import ru.maxeltr.homeMq2t.Service.MessageMediator;
+import ru.maxeltr.homeMq2t.Service.Mediator;
 
 /**
  *
@@ -31,7 +31,7 @@ import ru.maxeltr.homeMq2t.Service.MessageMediator;
  */
 public interface DisplayController {
 
-    public void setMediator(MessageMediator mediator);
+    public void setMediator(Mediator mediator);
 
     public void display(Data data);
 

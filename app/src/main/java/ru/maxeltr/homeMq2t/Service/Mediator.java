@@ -23,15 +23,31 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import io.netty.handler.codec.mqtt.MqttMessage;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface CommandService {
+public interface Mediator {
 
-    public void setMediator(Mediator mediator);
+    public void publish(Command command);
+
+    public void publish(Reply reply);
+
+    public void publish(Data data);
 
     public void execute(Command command);
 
     public void execute(Reply reply);
+
+    public void display(Reply reply);
+
+    public void display(Data data);
+
+    public void update();
+
+    public void update(Component component);
+
+    public void handleMessage(MqttMessage message);
 }

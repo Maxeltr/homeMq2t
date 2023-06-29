@@ -23,31 +23,32 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
-import io.netty.handler.codec.mqtt.MqttMessage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface MessageMediator {
+public class DisplayControllerImp implements DisplayController {
 
-    public void publish(Command command);
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
 
-    public void publish(Reply reply);
+    private Mediator mediator;
 
-    public void publish(Data data);
+    @Override
+    public void setMediator(Mediator mediator) {
+        this.mediator = mediator;
+    }
 
-    public void execute(Command command);
+    @Override
+    public void display(Data data) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 
-    public void execute(Reply reply);
-
-    public void display(Reply reply);
-
-    public void display(Data data);
-
-    public void update();
-
-    public void update(Component component);
-
-    public void handleMessage(MqttMessage message);
+    @Override
+    public void display(Reply reply) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }
