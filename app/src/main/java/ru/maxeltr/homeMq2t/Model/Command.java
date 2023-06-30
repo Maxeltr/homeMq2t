@@ -21,21 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service;
+package ru.maxeltr.homeMq2t.Model;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface Data {
+public interface Command {
+
+    public String getId();
 
     public String getName();
 
-    public String getType();
-
-    public String getPayload();
-
-    public String getStatus();
+    public String getArguments();
 
     public String getTimestamp();
 }

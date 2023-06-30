@@ -23,6 +23,9 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import ru.maxeltr.homeMq2t.Model.Command;
+import ru.maxeltr.homeMq2t.Model.Reply;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>

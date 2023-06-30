@@ -21,19 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service;
+package ru.maxeltr.homeMq2t.Controller;
 
+import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import ru.maxeltr.homeMq2t.Model.Data;
 import ru.maxeltr.homeMq2t.Service.Mediator;
+import ru.maxeltr.homeMq2t.Model.Reply;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface DisplayController {
+public class DisplayControllerImp implements DisplayController {
 
-    public void setMediator(Mediator mediator);
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
 
-    public void display(Data data);
+    private Mediator mediator;
 
-    public void display(Reply reply);
+    @Override
+    public void setMediator(Mediator mediator) {
+        this.mediator = mediator;
+    }
+
+    @Override
+    public void display(Data data) {
+
+        simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", 1));
+    }
+
+    @Override
+    public void display(Reply reply) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

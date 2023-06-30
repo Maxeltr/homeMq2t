@@ -45,14 +45,14 @@ public class AppAnnotationConfig {
     @Autowired
     private Environment env;
 
-    public AppAnnotationConfig() {
-        try {
-            LogManager.getLogManager().readConfiguration(AppAnnotationConfig.class.getResourceAsStream("/logging.properties")
-            );
-        } catch (IOException | SecurityException ex) {
-            System.err.println("Could not setup logger configuration: " + ex.toString());
-        }
-    }
+//    public AppAnnotationConfig() {
+//        try {
+//            LogManager.getLogManager().readConfiguration(AppAnnotationConfig.class.getResourceAsStream("/logging.properties")
+//            );
+//        } catch (IOException | SecurityException ex) {
+//            System.err.println("Could not setup logger configuration: " + ex.toString());
+//        }
+//    }
 
     @Bean
     public AppProperty appProperty() {

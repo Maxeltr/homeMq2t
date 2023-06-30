@@ -21,19 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service;
+package ru.maxeltr.homeMq2t.Controller;
+
+import ru.maxeltr.homeMq2t.Model.Data;
+import ru.maxeltr.homeMq2t.Service.Mediator;
+import ru.maxeltr.homeMq2t.Service.Mediator;
+import ru.maxeltr.homeMq2t.Model.Reply;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface Command {
+public interface DisplayController {
 
-    public String getId();
+    public void setMediator(Mediator mediator);
 
-    public String getName();
+    public void display(Data data);
 
-    public String getArguments();
-
-    public String getTimestamp();
+    public void display(Reply reply);
 }
