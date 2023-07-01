@@ -7,7 +7,7 @@ function setConnected(connected) {
 }
 
 function connect() {
-    var socket = new SockJS('/mqttClientDashboard');
+    var socket = new SockJS('/mq2tClientDashboard');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function (frame) {
         setConnected(true);

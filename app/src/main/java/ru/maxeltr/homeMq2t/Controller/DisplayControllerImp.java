@@ -24,6 +24,8 @@
 package ru.maxeltr.homeMq2t.Controller;
 
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import ru.maxeltr.homeMq2t.Model.Data;
@@ -39,6 +41,8 @@ public class DisplayControllerImp implements DisplayController {
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
+    Logger logger = LoggerFactory.getLogger(DisplayControllerImp.class);
+
     private Mediator mediator;
 
     @Override
@@ -50,6 +54,7 @@ public class DisplayControllerImp implements DisplayController {
     public void display(Data data) {
 
         simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", 1));
+        logger.trace(String.format("Data was sent to display %s." , data));
     }
 
     @Override
