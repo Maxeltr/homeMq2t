@@ -36,12 +36,12 @@ import ru.maxeltr.homeMq2t.Model.Reply;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class DisplayControllerImp implements DisplayController {
+public class DisplayControllerImpl implements DisplayController {
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
-    Logger logger = LoggerFactory.getLogger(DisplayControllerImp.class);
+    Logger logger = LoggerFactory.getLogger(DisplayControllerImpl.class);
 
     private Mediator mediator;
 
