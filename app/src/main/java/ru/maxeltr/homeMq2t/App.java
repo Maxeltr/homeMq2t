@@ -8,14 +8,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ConfigurableApplicationContext;
-import ru.maxeltr.homeMq2t.Config.AppProperty;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 
 @SpringBootApplication
 public class App {
 
     public static void main(String[] args) {
         ConfigurableApplicationContext applicationContext = SpringApplication.run(App.class, args);
-        AppProperty appProperty = (AppProperty) applicationContext.getBean("appProperty");
+        AppProperties appProperty = (AppProperties) applicationContext.getBean("appProperty");
         System.out.println(appProperty.toString());
         Logger logger = LoggerFactory.getLogger(App.class);
         logger.warn("log infooooo");

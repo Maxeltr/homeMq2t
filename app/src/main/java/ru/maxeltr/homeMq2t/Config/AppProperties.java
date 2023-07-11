@@ -33,7 +33,7 @@ import org.springframework.core.env.Environment;
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 @ConfigurationProperties
-public class AppProperty {
+public class AppProperties {
 
     @Autowired
     private Environment env;

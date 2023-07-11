@@ -18,7 +18,7 @@ function connect() {
         stompClient.subscribe('/topic/data', function (message) {
             showMessages(JSON.parse(message.body), message.headers.card);
         });
-        stompClient.send("/app/connected", {}, JSON.stringify({'text': "connect"}));
+        stompClient.send("/app/connected", {}, JSON.stringify({'id': "-1", 'name': "connect"}));
     });
 }
 
@@ -31,7 +31,8 @@ function disconnect() {
 }
 
 function createCommand(commandNumber) {
-    stompClient.send("/app/createCommand", {}, JSON.stringify({'commandNumber': commandNumber}));
+    //stompClient.send("/app/createCommand", {}, JSON.stringify({'commandNumber': commandNumber}));
+    //stompClient.send("/app/connected", {}, JSON.stringify({'id': "connectsfgdsfgsdfg"}));
 }
 
 function showReplies(message, card) {

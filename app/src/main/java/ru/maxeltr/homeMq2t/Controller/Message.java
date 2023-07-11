@@ -23,25 +23,19 @@
  */
 package ru.maxeltr.homeMq2t.Controller;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.stereotype.Controller;
-import ru.maxeltr.homeMq2t.Model.Command;
-import ru.maxeltr.homeMq2t.Model.CommandImpl;
-
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-@Controller
-public class CommandControllerImpl {
+public class Message {
 
-    private static final Logger logger = LoggerFactory.getLogger(CommandControllerImpl.class);
+    private String text;
 
-    @MessageMapping("/connected")
-    public void connected(CommandImpl command) {
-        logger.warn(String.format("Connected %s." , command.getName()));
-        System.out.println("message:  " + command.toString());
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
     }
 }

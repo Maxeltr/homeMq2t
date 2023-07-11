@@ -21,27 +21,66 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Controller;
+package ru.maxeltr.homeMq2t.Model;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.stereotype.Controller;
-import ru.maxeltr.homeMq2t.Model.Command;
-import ru.maxeltr.homeMq2t.Model.CommandImpl;
+import io.netty.util.internal.StringUtil;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-@Controller
-public class CommandControllerImpl {
+public class CommandImpl implements Command {
 
-    private static final Logger logger = LoggerFactory.getLogger(CommandControllerImpl.class);
+    private String id;
 
-    @MessageMapping("/connected")
-    public void connected(CommandImpl command) {
-        logger.warn(String.format("Connected %s." , command.getName()));
-        System.out.println("message:  " + command.toString());
+    private String name;
+
+    private String arguments;
+
+    private String timestamp;
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getArguments() {
+        return arguments;
+    }
+
+    @Override
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setArguments(String args) {
+        this.arguments = args;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder(StringUtil.simpleClassName(this))
+                .append('[')
+                .append(String.format("id=%s, name=%s, timestamp=%s, arguments=%s", this.id, this.name, this.timestamp, this.arguments))
+                .append(']')
+                .toString();
     }
 }

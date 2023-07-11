@@ -52,7 +52,7 @@ public class AppAnnotationConfig {
 //    }
 
     @Bean
-    public AppProperty appProperty() {
-        return new AppProperty();
+    public AppProperties appProperty() {
+        return new AppProperties();
     }
 }
