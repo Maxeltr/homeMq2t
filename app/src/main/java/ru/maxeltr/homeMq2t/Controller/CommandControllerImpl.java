@@ -25,8 +25,10 @@ package ru.maxeltr.homeMq2t.Controller;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Command;
 import ru.maxeltr.homeMq2t.Model.CommandImpl;
 
@@ -39,9 +41,12 @@ public class CommandControllerImpl {
 
     private static final Logger logger = LoggerFactory.getLogger(CommandControllerImpl.class);
 
+    @Autowired
+    private AppProperties appProperties;
+
     @MessageMapping("/connected")
     public void connected(CommandImpl command) {
         logger.warn(String.format("Connected %s." , command.getName()));
-        System.out.println("message:  " + command.toString());
+        System.out.println("message:  " + appProperties.getMeasurementPeriodicTrigger());
     }
 }

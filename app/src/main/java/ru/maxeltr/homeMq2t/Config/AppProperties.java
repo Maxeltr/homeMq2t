@@ -55,6 +55,14 @@ public class AppProperties {
     private int maxBytesInMessage = 8092000;
     private int measurementPeriodicTrigger = 10;
 
+    public String getProperty(String key, String defaultValue) {
+        return env.getProperty(key, defaultValue);
+    }
+
+    public Environment getEnv() {
+        return this.env;
+    }
+
     public String getHost() {
         return host;
     }

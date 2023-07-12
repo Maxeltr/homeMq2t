@@ -19,5 +19,6 @@ public class App {
         System.out.println(appProperty.toString());
         Logger logger = LoggerFactory.getLogger(App.class);
         logger.warn("log infooooo");
+        
     }
 }
