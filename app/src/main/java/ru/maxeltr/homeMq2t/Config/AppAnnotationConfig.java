@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import ru.maxeltr.homeMq2t.Service.CommandService;
+import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 
 /**
  *
@@ -54,5 +56,10 @@ public class AppAnnotationConfig {
     @Bean
     public AppProperties appProperty() {
         return new AppProperties();
+    }
+
+    @Bean
+    public CommandService commandService() {
+        return new CommandServiceImpl();
     }
 }

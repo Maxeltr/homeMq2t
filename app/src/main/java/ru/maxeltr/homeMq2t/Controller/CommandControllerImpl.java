@@ -31,6 +31,7 @@ import org.springframework.stereotype.Controller;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Command;
 import ru.maxeltr.homeMq2t.Model.CommandImpl;
+import ru.maxeltr.homeMq2t.Service.CommandService;
 
 /**
  *
@@ -44,9 +45,14 @@ public class CommandControllerImpl {
     @Autowired
     private AppProperties appProperties;
 
-    @MessageMapping("/connected")
+    @Autowired
+    private CommandService commandService;
+
+    @MessageMapping("/connect")
     public void connected(CommandImpl command) {
-        logger.warn(String.format("Connected %s." , command.getName()));
-        System.out.println("message:  " + appProperties.getMeasurementPeriodicTrigger());
+        logger.trace(String.format("%s command received." , command.getName()));
+        commandService.connect();
+
+
     }
 }

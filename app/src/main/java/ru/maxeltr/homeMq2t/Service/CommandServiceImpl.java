@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import ru.maxeltr.homeMq2t.Model.Command;
 import ru.maxeltr.homeMq2t.Model.Reply;
 
@@ -30,13 +32,26 @@ import ru.maxeltr.homeMq2t.Model.Reply;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface CommandService {
+public class CommandServiceImpl implements CommandService {
 
-    public void setMediator(Mediator mediator);
+    private static final Logger logger = LoggerFactory.getLogger(CommandServiceImpl.class);
 
-    public void execute(Command command);
+    @Override
+    public void setMediator(Mediator mediator) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 
-    public void execute(Reply reply);
+    @Override
+    public void execute(Command command) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 
-    public void connect();
+    @Override
+    public void execute(Reply reply) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    public void connect() {
+        logger.trace(String.format("Do connect."));
+    }
 }
