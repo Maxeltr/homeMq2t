@@ -49,7 +49,7 @@ public class CommandControllerImpl {
     private CommandService commandService;
 
     @MessageMapping("/connect")
-    public void connected(CommandImpl command) {
+    public void connect(CommandImpl command) {
         logger.trace(String.format("%s command received." , command.getName()));
         commandService.connect();
 

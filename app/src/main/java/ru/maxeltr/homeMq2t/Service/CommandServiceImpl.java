@@ -25,8 +25,10 @@ package ru.maxeltr.homeMq2t.Service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.maxeltr.homeMq2t.Model.Command;
 import ru.maxeltr.homeMq2t.Model.Reply;
+import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 
 /**
  *
@@ -35,6 +37,9 @@ import ru.maxeltr.homeMq2t.Model.Reply;
 public class CommandServiceImpl implements CommandService {
 
     private static final Logger logger = LoggerFactory.getLogger(CommandServiceImpl.class);
+
+    @Autowired
+    private HmMq2t hmMq2t;
 
     @Override
     public void setMediator(Mediator mediator) {
@@ -53,5 +58,6 @@ public class CommandServiceImpl implements CommandService {
 
     public void connect() {
         logger.trace(String.format("Do connect."));
+        hmMq2t.connect();
     }
 }
