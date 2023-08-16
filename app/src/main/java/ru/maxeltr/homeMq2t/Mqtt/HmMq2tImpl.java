@@ -23,11 +23,22 @@
  */
 package ru.maxeltr.homeMq2t.Mqtt;
 
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
+import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Promise;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 
 /**
  *
@@ -35,11 +46,36 @@ import java.util.logging.Logger;
  */
 public class HmMq2tImpl implements HmMq2t {
 
-    private static final Logger logger = Logger.getLogger(HmMq2tImpl.class.getName());
+    private static final Logger logger = LoggerFactory.getLogger(HmMq2tImpl.class);
+
+    private EventLoopGroup workerGroup;
+
+    private Channel channel;
+
+    private MqttAckMediator mqttAckMediator;
+
+    @Autowired
+    private AppProperties appProperties;
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        workerGroup = new NioEventLoopGroup();
+        Bootstrap bootstrap = new Bootstrap();
+        bootstrap.group(workerGroup);
+        bootstrap.channel(NioSocketChannel.class);
+        bootstrap.handler(mqttChannelInitializer);
+
+        Promise<MqttConnAckMessage> connectFuture = new DefaultPromise<>(workerGroup.next());
+        mqttAckMediator.setConnectFuture(connectFuture);
+        bootstrap.remoteAddress(appProperties.getHost(), Integer.parseInt(appProperties.getPort()));
+
+        ChannelFuture future = bootstrap.connect();
+        future.addListener((ChannelFutureListener) f -> HmMq2tImpl.this.channel = f.channel());
+
+        logger.trace(String.format("Connecting to %s via port %s.", appProperties.getHost(), appProperties.getPort()));
+
+        return connectFuture;
+
     }
 
     @Override
