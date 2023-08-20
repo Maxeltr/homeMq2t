@@ -31,6 +31,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
+import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 
@@ -68,5 +69,10 @@ public class AppAnnotationConfig {
     @Bean
     public HmMq2t hmMq2t() {
         return new HmMq2tImpl();
+    }
+
+    @Bean
+    public MqttChannelInitializer mqttChannelInitializer() {
+        return new MqttChannelInitializer();
     }
 }

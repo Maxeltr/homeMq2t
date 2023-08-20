@@ -37,6 +37,7 @@ public class AppProperties {
 
     @Autowired
     private Environment env;
+    
     private String host = "127.0.0.22";
     private String port = "1883";
     private String localServerPort = "8030";
@@ -48,7 +49,7 @@ public class AppProperties {
     private int willQos = 0;
     private Boolean willRetain = false;
     private Boolean willFlag = false;
-    private Boolean cleanSeesion = true;
+    private Boolean cleanSession = true;
     private int keepAliveTimer = 20;
     private int retransmitMqttMessageTimer = 60;
     private int reconnectDelay = 3;
@@ -107,8 +108,8 @@ public class AppProperties {
         return willFlag;
     }
 
-    public Boolean getCleanSeesion() {
-        return cleanSeesion;
+    public Boolean getCleanSession() {
+        return cleanSession;
     }
 
     public int getKeepAliveTimer() {
@@ -179,8 +180,8 @@ public class AppProperties {
         this.willFlag = willFlag;
     }
 
-    public void setCleanSeesion(Boolean cleanSeesion) {
-        this.cleanSeesion = cleanSeesion;
+    public void setCleanSession(Boolean cleanSession) {
+        this.cleanSession = cleanSession;
     }
 
     public void setKeepAliveTimer(int keepAliveTimer) {

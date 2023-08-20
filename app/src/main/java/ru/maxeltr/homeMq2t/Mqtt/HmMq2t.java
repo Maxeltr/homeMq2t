@@ -21,5 +21,5 @@ public interface HmMq2t {
 
     public Promise<?> publish();
 
-    public void setMediator();
+    public void setMediator(MqttAckMediator mqttAckMediator);
 }

@@ -23,17 +23,21 @@
  */
 package ru.maxeltr.homeMq2t.Mqtt;
 
+import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.util.concurrent.Promise;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface MqttAckmediator {
+public interface MqttAckMediator {
 
     public MqttMessage get(String key);
 
     public void add(String key, MqttMessage value);
 
     public void remove(String key);
+
+    public void setConnectFuture(Promise<MqttConnAckMessage> future);
 }

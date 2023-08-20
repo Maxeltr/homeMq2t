@@ -55,6 +55,9 @@ public class HmMq2tImpl implements HmMq2t {
     private MqttAckMediator mqttAckMediator;
 
     @Autowired
+    private MqttChannelInitializer mqttChannelInitializer;
+
+    @Autowired
     private AppProperties appProperties;
 
     @Override
@@ -99,7 +102,7 @@ public class HmMq2tImpl implements HmMq2t {
     }
 
     @Override
-    public void setMediator() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void setMediator(MqttAckMediator mqttAckMediator) {
+        this.mqttAckMediator = mqttAckMediator;
     }
 }
