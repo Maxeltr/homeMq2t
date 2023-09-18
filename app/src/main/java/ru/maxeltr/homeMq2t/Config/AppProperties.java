@@ -37,7 +37,7 @@ public class AppProperties {
 
     @Autowired
     private Environment env;
-    
+
     private String host = "127.0.0.22";
     private String port = "1883";
     private String localServerPort = "8030";
@@ -206,7 +206,7 @@ public class AppProperties {
 
     @Override
     public String toString() {
-        return "AppProperty{" + "env=" + env + ", host=" + host + ", port=" + port + ", localServerPort=" + localServerPort + ", password=" + password + ", userName=" + userName + ", clientId=" + clientId + ", hasUserName=" + hasUserName + ", hasPassword=" + hasPassword + ", willQos=" + willQos + ", willRetain=" + willRetain + ", willFlag=" + willFlag + ", cleanSeesion=" + cleanSeesion + ", keepAliveTimer=" + keepAliveTimer + ", retransmitMqttMessageTimer=" + retransmitMqttMessageTimer + ", reconnectDelay=" + reconnectDelay + ", maxBytesInMessage=" + maxBytesInMessage + ", measurementPeriodicTrigger=" + measurementPeriodicTrigger + '}';
+        return "AppProperty{" + "env=" + env + ", host=" + host + ", port=" + port + ", localServerPort=" + localServerPort + ", password=" + password + ", userName=" + userName + ", clientId=" + clientId + ", hasUserName=" + hasUserName + ", hasPassword=" + hasPassword + ", willQos=" + willQos + ", willRetain=" + willRetain + ", willFlag=" + willFlag + ", cleanSeesion=" + cleanSession + ", keepAliveTimer=" + keepAliveTimer + ", retransmitMqttMessageTimer=" + retransmitMqttMessageTimer + ", reconnectDelay=" + reconnectDelay + ", maxBytesInMessage=" + maxBytesInMessage + ", measurementPeriodicTrigger=" + measurementPeriodicTrigger + '}';
     }
 
 }
