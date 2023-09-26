@@ -26,18 +26,39 @@ package ru.maxeltr.homeMq2t.Mqtt;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface MqttAckMediator {
+public class MqttAckMediatorImpl implements MqttAckMediator {
 
-    public Promise<MqttMessage> get(String key);
+    private Promise<MqttConnAckMessage> connectFuture;
 
-    public void add(String key, Promise<MqttMessage> value);
+    private final ConcurrentHashMap<String, Promise<MqttMessage>> futures = new ConcurrentHashMap<>();
 
-    public void remove(String key);
+    @Override
+    public Promise<MqttMessage> get(String key) {
+        return this.futures.get(key);
+    }
 
-    public void setConnectFuture(Promise<MqttConnAckMessage> future);
+    @Override
+    public void add(String key, Promise<MqttMessage> value) {
+        this.futures.put(key, value);
+    }
+
+    @Override
+    public void remove(String key) {
+        this.futures.remove(key);
+    }
+
+    @Override
+    public void setConnectFuture(Promise<MqttConnAckMessage> future) {
+        this.connectFuture = future;
+    }
+
+    public Promise<MqttConnAckMessage> getConnectFuture() {
+        return this.connectFuture;
+    }
 }
