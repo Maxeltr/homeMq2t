@@ -23,15 +23,19 @@
  */
 package ru.maxeltr.homeMq2t.Mqtt;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttConnectMessage;
 import io.netty.handler.codec.mqtt.MqttConnectPayload;
 import io.netty.handler.codec.mqtt.MqttConnectVariableHeader;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
+import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttProperties;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.util.ReferenceCountUtil;
 import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,14 +61,28 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        if (!(msg instanceof MqttMessage)) {
+            ctx.fireChannelRead(msg);
+            return;
+        }
 
+        MqttMessage message = (MqttMessage) msg;
+        if (message.fixedHeader().messageType() == MqttMessageType.CONNACK) {
+            handleConnackMessage(ctx.channel(), (MqttConnAckMessage) message);
+            ReferenceCountUtil.release(msg);
+        } else if (message.fixedHeader().messageType() == MqttMessageType.DISCONNECT) {
+            logger.info(String.format("Received disconnect message %s. Close channel.", msg));
+            ctx.close();
+        } else {
+            ctx.fireChannelRead(msg);   //ctx.fireChannelRead(ReferenceCountUtil.retain(msg));
+        }
     }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         super.channelActive(ctx);
 
-         MqttFixedHeader connectFixedHeader = new MqttFixedHeader(MqttMessageType.CONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
+        MqttFixedHeader connectFixedHeader = new MqttFixedHeader(MqttMessageType.CONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
 
         MqttConnectVariableHeader connectVariableHeader = new MqttConnectVariableHeader(
                 "MQTT",
@@ -91,5 +109,12 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
         MqttConnectMessage connectMessage = new MqttConnectMessage(connectFixedHeader, connectVariableHeader, connectPayload);
         ctx.writeAndFlush(connectMessage);
 
+        logger.trace(String.format("Sent connect message %s.", connectMessage.variableHeader()));
+
+    }
+
+    private void handleConnackMessage(Channel channel, MqttConnAckMessage mqttConnAckMessage) {
+        logger.trace(String.format("Handle connect message %s.", mqttConnAckMessage.variableHeader()));
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

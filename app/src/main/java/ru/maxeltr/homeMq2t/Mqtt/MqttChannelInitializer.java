@@ -35,6 +35,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 
 /**
@@ -90,6 +91,11 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
     private MqttConnectHandler createMqttConnectHandler() {
         var mqttConnectHandler = new MqttConnectHandler();
         mqttConnectHandler.setMediator(mqttAckMediator);
+
+        AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
+        autowireCapableBeanFactory.autowireBean(mqttConnectHandler);
+        autowireCapableBeanFactory.initializeBean(mqttConnectHandler, "mqttConnectHandler");
+
         return mqttConnectHandler;
     }
 }

@@ -52,6 +52,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     private Channel channel;
 
+    @Autowired
     private MqttAckMediator mqttAckMediator;
 
     @Autowired
