@@ -109,12 +109,12 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
         MqttConnectMessage connectMessage = new MqttConnectMessage(connectFixedHeader, connectVariableHeader, connectPayload);
         ctx.writeAndFlush(connectMessage);
 
-        logger.trace(String.format("Sent connect message %s.", connectMessage.variableHeader()));
+        logger.debug("Sent connect message {}.", connectMessage.variableHeader());
 
     }
 
     private void handleConnackMessage(Channel channel, MqttConnAckMessage mqttConnAckMessage) {
-        logger.trace(String.format("Handle connect message %s.", mqttConnAckMessage.variableHeader()));
+        logger.debug("Handle connect message {}.", mqttConnAckMessage.variableHeader());
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

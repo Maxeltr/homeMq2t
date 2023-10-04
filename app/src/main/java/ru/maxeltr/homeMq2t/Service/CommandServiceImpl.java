@@ -57,7 +57,7 @@ public class CommandServiceImpl implements CommandService {
     }
 
     public void connect() {
-        logger.trace(String.format("Do connect."));
+        logger.debug("Do connect.");
         hmMq2t.connect();
     }
 }

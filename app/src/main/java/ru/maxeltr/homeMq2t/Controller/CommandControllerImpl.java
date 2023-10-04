@@ -50,7 +50,7 @@ public class CommandControllerImpl {
 
     @MessageMapping("/connect")
     public void connect(CommandImpl command) {
-        logger.trace(String.format("%s command received." , command.getName()));
+        logger.debug("{} command received." , command.getName());
         commandService.connect();
 
 

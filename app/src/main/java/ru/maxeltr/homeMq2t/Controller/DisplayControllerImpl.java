@@ -54,7 +54,7 @@ public class DisplayControllerImpl implements DisplayController {
     public void display(Data data) {
 
         simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", 1));
-        logger.trace(String.format("Data was sent to display %s." , data));
+        logger.debug("Data was sent to display {}." , data);
     }
 
     @Override

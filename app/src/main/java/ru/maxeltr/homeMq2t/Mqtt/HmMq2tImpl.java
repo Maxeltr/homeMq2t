@@ -76,7 +76,7 @@ public class HmMq2tImpl implements HmMq2t {
         ChannelFuture future = bootstrap.connect();
         future.addListener((ChannelFutureListener) f -> HmMq2tImpl.this.channel = f.channel());
 
-        logger.trace(String.format("Connecting to %s via port %s.", appProperties.getHost(), appProperties.getPort()));
+        logger.debug("Connecting to %s via port {}.", appProperties.getHost(), appProperties.getPort());
 
         return connectFuture;
 

@@ -15,10 +15,11 @@ public class App {
 
     public static void main(String[] args) {
         ConfigurableApplicationContext applicationContext = SpringApplication.run(App.class, args);
-        AppProperties appProperty = (AppProperties) applicationContext.getBean("appProperty");
-        System.out.println(appProperty.toString());
-        Logger logger = LoggerFactory.getLogger(App.class);
-        logger.warn("log infooooo");
-        
+//        AppProperties appProperty = (AppProperties) applicationContext.getBean("appProperty");
+//        System.out.println(appProperty.toString());
+//        Logger logger = LoggerFactory.getLogger(App.class);
+//        logger.trace("trace log infooooo");
+//        logger.warn("warn log infooooo");
+
     }
 }
