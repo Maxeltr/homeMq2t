@@ -40,4 +40,6 @@ public interface MqttAckMediator {
     public void remove(String key);
 
     public void setConnectFuture(Promise<MqttConnAckMessage> future);
+
+    public Promise<MqttConnAckMessage> getConnectFuture();
 }

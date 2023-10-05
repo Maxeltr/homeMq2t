@@ -27,7 +27,7 @@ dependencies {
 
     // This dependency is used by the application.
     implementation 'com.google.guava:guava:31.1-jre'
-    implementation group: 'io.netty', name: 'netty-all', version: '4.1.93.Final'
+    implementation group: 'io.netty', name: 'netty-all', version: '4.1.99.Final'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '3.1.0'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '3.1.0'
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'

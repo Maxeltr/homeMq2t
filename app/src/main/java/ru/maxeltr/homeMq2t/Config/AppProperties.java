@@ -25,7 +25,6 @@ package ru.maxeltr.homeMq2t.Config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 
 /**

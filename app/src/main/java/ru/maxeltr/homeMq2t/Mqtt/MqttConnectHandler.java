@@ -29,6 +29,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttConnectMessage;
 import io.netty.handler.codec.mqtt.MqttConnectPayload;
+import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttConnectVariableHeader;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
@@ -36,6 +37,7 @@ import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttProperties;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.ReferenceCountUtil;
+import io.netty.util.concurrent.Promise;
 import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +58,6 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
     private AppProperties appProperties;
 
     public void setMediator(MqttAckMediator mqttAckMediator) {
-        this.mqttAckMediator = mqttAckMediator;
     }
 
     @Override
@@ -113,8 +114,37 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     }
 
-    private void handleConnackMessage(Channel channel, MqttConnAckMessage mqttConnAckMessage) {
-        logger.debug("Handle connect message {}.", mqttConnAckMessage.variableHeader());
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    private void handleConnackMessage(Channel channel, MqttConnAckMessage message) {
+        logger.debug("Handle connect message {}.", message.variableHeader());
+        MqttConnectReturnCode returnCode = message.variableHeader().connectReturnCode();
+        Promise<MqttConnAckMessage> future = this.mqttAckMediator.getConnectFuture();
+        switch (returnCode) {
+            case CONNECTION_ACCEPTED:
+                if (!future.isDone()) {
+                    future.setSuccess(message);
+                }
+                logger.info("Received CONNACK message. Connection accepted {}.", message.variableHeader());
+
+                channel.flush();
+                break;
+
+            case CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD:
+            case CONNECTION_REFUSED_IDENTIFIER_REJECTED:
+            case CONNECTION_REFUSED_NOT_AUTHORIZED:
+            case CONNECTION_REFUSED_SERVER_UNAVAILABLE:
+            case CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION:
+                if (!future.isDone()) {
+                    //future.setSuccess(message);
+                    future.cancel(true);
+                }
+                logger.info("Received CONNACK message. Connection refused {}.", message.variableHeader());
+
+                channel.close();
+                // Don't start reconnect logic here
+                break;
+        }
+
+
+
     }
 }
