@@ -26,7 +26,9 @@ package ru.maxeltr.homeMq2t.Mqtt;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
+import jakarta.annotation.PostConstruct;
 import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
@@ -36,7 +38,20 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
 
     private Promise<MqttConnAckMessage> connectFuture;
 
+    @Autowired
+    private HmMq2t hmMq2t;
+
+    //@Autowired
+    //private MqttConnectHandler mqttConnectHandler;
+
     private final ConcurrentHashMap<String, Promise<MqttMessage>> futures = new ConcurrentHashMap<>();
+
+    @PostConstruct
+    public void setMediator() {
+        hmMq2t.setMediator(this);
+        //mqttConnectHandler.setMediator(this);
+        //mqttPublishHandler.setMediator(this);
+    }
 
     @Override
     public Promise<MqttMessage> get(String key) {

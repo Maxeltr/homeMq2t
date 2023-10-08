@@ -21,44 +21,71 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Controller;
-
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import ru.maxeltr.homeMq2t.Model.Data;
-import ru.maxeltr.homeMq2t.Model.Reply;
-import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+package ru.maxeltr.homeMq2t.Model;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class DisplayControllerImpl implements DisplayController {
+public class DataImpl implements Data {
 
-    @Autowired
-    private SimpMessagingTemplate simpMessagingTemplate;
+    private String name;
+    private String type;
+    private String payload;
+    private String status;
+    private String timestamp;
 
-    Logger logger = LoggerFactory.getLogger(DisplayControllerImpl.class);
+    public DataImpl(String name, String type, String payload, String status, String timestamp) {
+        this.name = name;
+        this.type = type;
+        this.payload = payload;
+        this.status = status;
+        this.timestamp = timestamp;
+    }
 
-    private ServiceMediator mediator;
+    public void setName(String name) {
+        this.name = name;
+    }
 
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setPayload(String payload) {
+        this.payload = payload;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+    
     @Override
-    public void setMediator(ServiceMediator mediator) {
-        this.mediator = mediator;
+    public String getName() {
+        return name;
     }
 
     @Override
-    public void display(Data data) {
-
-        simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", 1));
-        logger.debug("Data was sent to display {}." , data);
+    public String getType() {
+        return type;
     }
 
     @Override
-    public void display(Reply reply) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public String getPayload() {
+        return payload;
     }
+
+    @Override
+    public String getStatus() {
+        return status;
+    }
+
+    @Override
+    public String getTimestamp() {
+        return timestamp;
+    }
+
 }

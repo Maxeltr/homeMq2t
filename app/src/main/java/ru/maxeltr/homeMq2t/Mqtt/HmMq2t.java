@@ -4,6 +4,7 @@ import io.netty.util.concurrent.Promise;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
  *
@@ -22,4 +23,6 @@ public interface HmMq2t {
     public Promise<?> publish();
 
     public void setMediator(MqttAckMediator mqttAckMediator);
+
+    public void setMediator(ServiceMediator serviceMediator);
 }

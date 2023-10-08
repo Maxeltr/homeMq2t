@@ -23,16 +23,18 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import ru.maxeltr.homeMq2t.Model.Command;
 import ru.maxeltr.homeMq2t.Model.Reply;
 import ru.maxeltr.homeMq2t.Model.Data;
 import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.util.concurrent.Promise;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface Mediator {
+public interface ServiceMediator {
 
     public void publish(Command command);
 
@@ -53,4 +55,6 @@ public interface Mediator {
     public void update(Component component);
 
     public void handleMessage(MqttMessage message);
+
+    public Promise<MqttConnAckMessage> connect();
 }

@@ -16,7 +16,7 @@ function connect() {
             showReplies(JSON.parse(message.body), message.headers.card);
         });
         stompClient.subscribe('/topic/data', function (message) {
-            showMessages(JSON.parse(message.body), message.headers.card);
+            showData(JSON.parse(message.body), message.headers.card);
         });
         stompClient.send("/app/connect", {}, JSON.stringify({'id': "-1", 'name': "connect"}));
     });
@@ -82,8 +82,8 @@ function showReplies(message, card) {
 
 }
 
-function showMessages(message, card) {
-//    console.log('message: ' + message.name);
+function showData(message, card) {
+    console.log('message: ' + message.name);
 
 
 }

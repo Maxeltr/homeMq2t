@@ -29,6 +29,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import ru.maxeltr.homeMq2t.Controller.DisplayController;
+import ru.maxeltr.homeMq2t.Controller.DisplayControllerImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
@@ -36,6 +38,8 @@ import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
 
 /**
  *
@@ -64,11 +68,6 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public CommandService commandService() {
-        return new CommandServiceImpl();
-    }
-
-    @Bean
     public HmMq2t hmMq2t() {
         return new HmMq2tImpl();
     }
@@ -81,5 +80,20 @@ public class AppAnnotationConfig {
     @Bean
     public MqttAckMediator mqttAckMediator() {
         return new MqttAckMediatorImpl();
+    }
+
+    @Bean
+    public ServiceMediator serviceMediator() {
+        return new ServiceMediatorImpl();
+    }
+
+    @Bean
+    public DisplayController displayController() {
+        return new DisplayControllerImpl();
+    }
+
+    @Bean
+    public CommandService commandService() {
+        return new CommandServiceImpl();
     }
 }

@@ -52,12 +52,14 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttConnectHandler.class);
 
+    @Autowired
     private MqttAckMediator mqttAckMediator;
 
     @Autowired
     private AppProperties appProperties;
 
     public void setMediator(MqttAckMediator mqttAckMediator) {
+        this.mqttAckMediator = mqttAckMediator;
     }
 
     @Override

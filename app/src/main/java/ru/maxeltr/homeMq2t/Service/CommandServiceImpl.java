@@ -23,10 +23,15 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import io.netty.handler.codec.mqtt.MqttConnAckMessage;
+import io.netty.util.concurrent.Promise;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.maxeltr.homeMq2t.Model.Command;
+import ru.maxeltr.homeMq2t.Model.Data;
+import ru.maxeltr.homeMq2t.Model.DataImpl;
 import ru.maxeltr.homeMq2t.Model.Reply;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 
@@ -38,12 +43,11 @@ public class CommandServiceImpl implements CommandService {
 
     private static final Logger logger = LoggerFactory.getLogger(CommandServiceImpl.class);
 
-    @Autowired
-    private HmMq2t hmMq2t;
+    private ServiceMediator mediator;
 
     @Override
-    public void setMediator(Mediator mediator) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void setMediator(ServiceMediator mediator) {
+        this.mediator = mediator;
     }
 
     @Override
@@ -58,6 +62,19 @@ public class CommandServiceImpl implements CommandService {
 
     public void connect() {
         logger.debug("Do connect.");
-        hmMq2t.connect();
+        Promise<MqttConnAckMessage> connectFuture = mediator.connect();
+
+        connectFuture.awaitUninterruptibly();
+        if (connectFuture.isCancelled()) {
+            // Connection attempt cancelled by user
+            logger.debug("Connection attempt cancelled.");
+            Data data = new DataImpl("connect", "", "Connection attempt cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
+            mediator.display(data);
+        } else if (!connectFuture.isSuccess()) {
+            logger.debug("Connection established failed {}", connectFuture.cause());
+        } else {
+            // Connection established successfully
+            logger.debug("connectFuture. Connection established successfully.");
+        }
     }
 }

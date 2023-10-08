@@ -23,7 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
-import ru.maxeltr.homeMq2t.Service.Mediator;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
  *
@@ -31,7 +31,7 @@ import ru.maxeltr.homeMq2t.Service.Mediator;
  */
 public interface PollService {
 
-    public void setMediator(Mediator mediator);
+    public void setMediator(ServiceMediator mediator);
 
     /**
      * This method is called by Mediator in order to PollService updates sensor

@@ -23,8 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Mqtt;
 
-import ru.maxeltr.homeMq2t.Service.Mediator;
 import io.netty.channel.ChannelHandlerContext;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
  *
@@ -34,5 +34,5 @@ public interface MqttPubishHandler {
 
     public void handlerAdded(ChannelHandlerContext ctx);
 
-    public void setMediator(Mediator mediator);
+    public void setMediator(ServiceMediator mediator);
 }

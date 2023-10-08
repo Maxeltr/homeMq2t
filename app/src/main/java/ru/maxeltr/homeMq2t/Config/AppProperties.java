@@ -49,11 +49,12 @@ public class AppProperties {
     private Boolean willRetain = false;
     private Boolean willFlag = false;
     private Boolean cleanSession = true;
-    private int keepAliveTimer = 20;
-    private int retransmitMqttMessageTimer = 60;
-    private int reconnectDelay = 3;
-    private int maxBytesInMessage = 8092000;
-    private int measurementPeriodicTrigger = 10;
+    private int keepAliveTimer = 20;                //sec
+    private int retransmitMqttMessageTimer = 60;    //sec
+    private int reconnectDelay = 3;                 //sec
+    private int maxBytesInMessage = 8092000;        //bytes
+    private int measurementPeriodicTrigger = 10;    //sec
+    private int CONNECT_TIMEOUT = 2000;             //ms
 
     public String getProperty(String key, String defaultValue) {
         return env.getProperty(key, defaultValue);

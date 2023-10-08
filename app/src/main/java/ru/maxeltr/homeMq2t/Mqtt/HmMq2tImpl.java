@@ -27,6 +27,7 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -39,6 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
 
 /**
  *
@@ -52,8 +55,8 @@ public class HmMq2tImpl implements HmMq2t {
 
     private Channel channel;
 
-    @Autowired
     private MqttAckMediator mqttAckMediator;
+    private ServiceMediator serviceMediator;
 
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
@@ -73,9 +76,9 @@ public class HmMq2tImpl implements HmMq2t {
         mqttAckMediator.setConnectFuture(connectFuture);
         bootstrap.remoteAddress(appProperties.getHost(), Integer.parseInt(appProperties.getPort()));
 
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Integer.valueOf(appProperties.getProperty("CONNECT_TIMEOUT", "1000")));
         ChannelFuture future = bootstrap.connect();
         future.addListener((ChannelFutureListener) f -> HmMq2tImpl.this.channel = f.channel());
-
         logger.debug("Connecting to %s via port {}.", appProperties.getHost(), appProperties.getPort());
 
         return connectFuture;
@@ -105,5 +108,10 @@ public class HmMq2tImpl implements HmMq2t {
     @Override
     public void setMediator(MqttAckMediator mqttAckMediator) {
         this.mqttAckMediator = mqttAckMediator;
+    }
+
+    @Override
+    public void setMediator(ServiceMediator serviceMediator) {
+        this.serviceMediator = serviceMediator;
     }
 }

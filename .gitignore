@@ -7,3 +7,6 @@ logs
 
 #properties
 application-dev.properties
+
+# Ignore other files
+*.vsdx

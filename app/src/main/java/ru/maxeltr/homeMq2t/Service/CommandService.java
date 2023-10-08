@@ -32,7 +32,7 @@ import ru.maxeltr.homeMq2t.Model.Reply;
  */
 public interface CommandService {
 
-    public void setMediator(Mediator mediator);
+    public void setMediator(ServiceMediator mediator);
 
     public void execute(Command command);
 
