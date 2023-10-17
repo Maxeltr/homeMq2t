@@ -68,7 +68,7 @@ public class CommandServiceImpl implements CommandService {
         if (connectFuture.isCancelled()) {
             // Connection attempt cancelled by user
             logger.debug("Connection attempt cancelled.");
-            Data data = new DataImpl("connect", "", "Connection attempt cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
+            Data data = new DataImpl("connect", "TEXT/PLAIN", "Connection attempt cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
             mediator.display(data);
         } else if (!connectFuture.isSuccess()) {
             logger.debug("Connection established failed {}", connectFuture.cause());

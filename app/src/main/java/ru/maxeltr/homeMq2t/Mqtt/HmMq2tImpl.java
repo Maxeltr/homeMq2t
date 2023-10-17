@@ -72,8 +72,8 @@ public class HmMq2tImpl implements HmMq2t {
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.handler(mqttChannelInitializer);
 
-        Promise<MqttConnAckMessage> connectFuture = new DefaultPromise<>(workerGroup.next());
-        mqttAckMediator.setConnectFuture(connectFuture);
+        Promise<MqttConnAckMessage> authFuture = new DefaultPromise<>(workerGroup.next());
+        mqttAckMediator.setConnectFuture(authFuture);
         bootstrap.remoteAddress(appProperties.getHost(), Integer.parseInt(appProperties.getPort()));
 
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Integer.valueOf(appProperties.getProperty("CONNECT_TIMEOUT", "1000")));
@@ -81,7 +81,7 @@ public class HmMq2tImpl implements HmMq2t {
         future.addListener((ChannelFutureListener) f -> HmMq2tImpl.this.channel = f.channel());
         logger.debug("Connecting to %s via port {}.", appProperties.getHost(), appProperties.getPort());
 
-        return connectFuture;
+        return authFuture;
 
     }
 
