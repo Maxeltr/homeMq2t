@@ -62,16 +62,16 @@ public class CommandServiceImpl implements CommandService {
 
     public void connect() {
         logger.debug("Do connect.");
-        Promise<MqttConnAckMessage> connectFuture = mediator.connect();
+        Promise<MqttConnAckMessage> authFuture = mediator.connect();
 
-        connectFuture.awaitUninterruptibly();
-        if (connectFuture.isCancelled()) {
+        authFuture.awaitUninterruptibly();
+        if (authFuture.isCancelled()) {
             // Connection attempt cancelled by user
             logger.debug("Connection attempt cancelled.");
             Data data = new DataImpl("connect", "TEXT/PLAIN", "Connection attempt cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
             mediator.display(data);
-        } else if (!connectFuture.isSuccess()) {
-            logger.debug("Connection established failed {}", connectFuture.cause());
+        } else if (!authFuture.isSuccess()) {
+            logger.debug("Connection established failed {}", authFuture.cause());
         } else {
             // Connection established successfully
             logger.debug("connectFuture. Connection established successfully.");

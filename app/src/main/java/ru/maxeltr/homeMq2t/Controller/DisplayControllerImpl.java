@@ -53,7 +53,7 @@ public class DisplayControllerImpl implements DisplayController {
     @Override
     public void display(Data data) {
 
-        simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", 1));
+        simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", "card1"));
         logger.debug("Data was sent to display {}." , data);
     }
 
