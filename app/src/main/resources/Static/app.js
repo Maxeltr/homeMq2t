@@ -96,11 +96,8 @@ function showData(message, card) {
         document.getElementById(card + '-timestamp').innerHTML = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
-    if (message.name.toUpperCase() === 'connect') {
-        if (message.status.toUpperCase() === 'FAIL') {
-            setConnected(true);
-        }
-        return;
+    if (message.name.toUpperCase() === 'CONNECT') {
+        onConnect(message);
     }
 
     if (message.type !== 'undefined') {
@@ -122,6 +119,14 @@ function showData(message, card) {
         document.getElementById(card + '-payload').innerHTML = '<p>' + 'message.type is undefined' + '<br>' + message.payload + '</p>';
     }
 
+}
+
+function onConnect(message) {
+    if (message.status.toUpperCase() === 'FAIL') {
+            setConnected(true);
+        }
+        return;
+        
 }
 
 $(function () {
