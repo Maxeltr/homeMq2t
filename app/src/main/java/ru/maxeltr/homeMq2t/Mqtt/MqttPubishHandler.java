@@ -30,7 +30,7 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediator;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface MqttPubishHandler {
+interface MqttPubishHandler {
 
     public void handlerAdded(ChannelHandlerContext ctx);
 

@@ -48,7 +48,7 @@ import ru.maxeltr.homeMq2t.Config.AppProperties;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
+class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttConnectHandler.class);
 

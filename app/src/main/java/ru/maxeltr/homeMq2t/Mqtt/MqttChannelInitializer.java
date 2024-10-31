@@ -42,7 +42,7 @@ import ru.maxeltr.homeMq2t.Config.AppProperties;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> implements ApplicationContextAware {
+class MqttChannelInitializer extends ChannelInitializer<SocketChannel> implements ApplicationContextAware {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttChannelInitializer.class);
 

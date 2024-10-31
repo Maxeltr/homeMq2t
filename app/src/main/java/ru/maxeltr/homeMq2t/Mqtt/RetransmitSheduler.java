@@ -29,7 +29,7 @@ import io.netty.handler.codec.mqtt.MqttMessage;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface RetransmitSheduler {
+interface RetransmitSheduler {
 
     public void start();
 

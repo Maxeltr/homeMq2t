@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class MqttAckMediatorImpl implements MqttAckMediator {
+class MqttAckMediatorImpl implements MqttAckMediator {
 
     private Promise<MqttConnAckMessage> connectFuture;
 

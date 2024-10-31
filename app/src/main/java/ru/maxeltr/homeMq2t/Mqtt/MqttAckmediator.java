@@ -31,7 +31,7 @@ import io.netty.util.concurrent.Promise;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface MqttAckMediator {
+interface MqttAckMediator {
 
     public Promise<MqttMessage> get(String key);
 
