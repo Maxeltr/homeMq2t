@@ -26,15 +26,14 @@ package ru.maxeltr.homeMq2t.Service;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.util.concurrent.Promise;
 import java.time.Instant;
+import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.w3c.dom.Document;
+import org.jsoup.nodes.Document;
 import ru.maxeltr.homeMq2t.Model.Command;
 import ru.maxeltr.homeMq2t.Model.Data;
 import ru.maxeltr.homeMq2t.Model.DataImpl;
 import ru.maxeltr.homeMq2t.Model.Reply;
-import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 
 /**
  *
@@ -62,20 +61,20 @@ public class CommandServiceImpl implements CommandService {
     }
 
     public void connect() {
-        logger.debug("Do connect.");
+        logger.info("Do connect.");
         Promise<MqttConnAckMessage> authFuture = mediator.connect();
 
         authFuture.awaitUninterruptibly();
         if (authFuture.isCancelled()) {
-            // Connection attempt cancelled by user
-            logger.debug("Connection attempt cancelled.");
+            // Connection attempt was cancelled by user
+            logger.info("Connection attempt cancelled.");
             Data data = new DataImpl("CONNECT", "TEXT/PLAIN", "Connection attempt cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
             mediator.display(data);
         } else if (!authFuture.isSuccess()) {
-            logger.debug("Connection established failed {}", authFuture.cause());
+            logger.info("Connection established failed {}", authFuture.cause());
         } else {
             // Connection established successfully
-            logger.debug("connectFuture. Connection established successfully.");
+            logger.info("connectFuture. Connection established successfully.");
         }
     }
 
