@@ -21,66 +21,44 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Model;
+package ru.maxeltr.homeMq2t.Controller;
 
-import io.netty.util.internal.StringUtil;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import ru.maxeltr.homeMq2t.Model.Data;
+import ru.maxeltr.homeMq2t.Model.Reply;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class CommandImpl implements Command {
+public class UIControllerImpl implements UIController {
 
-    private String id;
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
 
-    private String name;
+    Logger logger = LoggerFactory.getLogger(UIControllerImpl.class);
 
-    private String arguments;
-
-    private String timestamp;
-
-    @Override
-    public String getId() {
-        return id;
-    }
+    private ServiceMediator mediator;
 
     @Override
-    public String getName() {
-        return name;
+    public void setMediator(ServiceMediator mediator) {
+        this.mediator = mediator;
     }
 
     @Override
-    public String getArguments() {
-        return arguments;
+    public void display(Data data) {
+
+        simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", "card1"));
+        logger.debug("Data was sent to display {}." , data);
     }
 
     @Override
-    public String getTimestamp() {
-        return timestamp;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setArguments(String args) {
-        this.arguments = args;
-    }
-
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    @Override
-    public String toString() {
-        return new StringBuilder(StringUtil.simpleClassName(this))
-                .append('[')
-                .append(String.format("id=%s, name=%s, timestamp=%s, arguments=%s", this.id, this.name, this.timestamp, this.arguments))
-                .append(']')
-                .toString();
+    public void display(Reply reply) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 }

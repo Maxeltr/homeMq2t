@@ -29,8 +29,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import ru.maxeltr.homeMq2t.Controller.DisplayController;
-import ru.maxeltr.homeMq2t.Controller.DisplayControllerImpl;
+import ru.maxeltr.homeMq2t.Controller.UIControllerImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
@@ -40,6 +39,7 @@ import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
+import ru.maxeltr.homeMq2t.Controller.UIController;
 
 /**
  *
@@ -88,8 +88,8 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public DisplayController displayController() {
-        return new DisplayControllerImpl();
+    public UIController displayController() {
+        return new UIControllerImpl();
     }
 
     @Bean

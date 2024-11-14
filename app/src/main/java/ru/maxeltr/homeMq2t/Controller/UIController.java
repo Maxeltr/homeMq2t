@@ -23,11 +23,6 @@
  */
 package ru.maxeltr.homeMq2t.Controller;
 
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import ru.maxeltr.homeMq2t.Model.Data;
 import ru.maxeltr.homeMq2t.Model.Reply;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -36,29 +31,11 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediator;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class DisplayControllerImpl implements DisplayController {
+public interface UIController {
 
-    @Autowired
-    private SimpMessagingTemplate simpMessagingTemplate;
+    public void setMediator(ServiceMediator mediator);
 
-    Logger logger = LoggerFactory.getLogger(DisplayControllerImpl.class);
+    public void display(Data data);
 
-    private ServiceMediator mediator;
-
-    @Override
-    public void setMediator(ServiceMediator mediator) {
-        this.mediator = mediator;
-    }
-
-    @Override
-    public void display(Data data) {
-
-        simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", "card1"));
-        logger.debug("Data was sent to display {}." , data);
-    }
-
-    @Override
-    public void display(Reply reply) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+    public void display(Reply reply);
 }
