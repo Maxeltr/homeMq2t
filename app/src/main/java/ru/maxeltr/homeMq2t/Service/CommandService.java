@@ -23,9 +23,6 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
-import ru.maxeltr.homeMq2t.Model.Command;
-import ru.maxeltr.homeMq2t.Model.Reply;
-
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -33,10 +30,6 @@ import ru.maxeltr.homeMq2t.Model.Reply;
 public interface CommandService {
 
     public void setMediator(ServiceMediator mediator);
-
-    public void execute(Command command);
-
-    public void execute(Reply reply);
 
     public void connect();
 }

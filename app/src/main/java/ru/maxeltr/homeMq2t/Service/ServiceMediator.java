@@ -24,8 +24,6 @@
 package ru.maxeltr.homeMq2t.Service;
 
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
-import ru.maxeltr.homeMq2t.Model.Command;
-import ru.maxeltr.homeMq2t.Model.Reply;
 import ru.maxeltr.homeMq2t.Model.Data;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
@@ -36,17 +34,7 @@ import io.netty.util.concurrent.Promise;
  */
 public interface ServiceMediator {
 
-    public void publish(Command command);
-
-    public void publish(Reply reply);
-
     public void publish(Data data);
-
-    public void execute(Command command);
-
-    public void execute(Reply reply);
-
-    public void display(Reply reply);
 
     public void display(Data data);
 

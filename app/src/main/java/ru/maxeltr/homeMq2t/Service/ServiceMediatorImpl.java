@@ -28,11 +28,9 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.maxeltr.homeMq2t.Controller.DisplayController;
-import ru.maxeltr.homeMq2t.Model.Command;
 import ru.maxeltr.homeMq2t.Model.Data;
-import ru.maxeltr.homeMq2t.Model.Reply;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
+import ru.maxeltr.homeMq2t.Controller.UIController;
 
 /**
  *
@@ -44,7 +42,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     private CommandService commandService;
 
     @Autowired
-    private DisplayController displayController;
+    private UIController displayController;
 
     @Autowired
     private HmMq2t hmMq2t;
@@ -57,34 +55,10 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void publish(Command command) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public void publish(Reply reply) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
     public void publish(Data data) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
-    @Override
-    public void execute(Command command) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public void execute(Reply reply) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public void display(Reply reply) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 
     @Override
     public void display(Data data) {

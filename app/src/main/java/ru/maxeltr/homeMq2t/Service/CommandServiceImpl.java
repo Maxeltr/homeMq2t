@@ -30,10 +30,8 @@ import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jsoup.nodes.Document;
-import ru.maxeltr.homeMq2t.Model.Command;
 import ru.maxeltr.homeMq2t.Model.Data;
 import ru.maxeltr.homeMq2t.Model.DataImpl;
-import ru.maxeltr.homeMq2t.Model.Reply;
 
 /**
  *
@@ -50,16 +48,6 @@ public class CommandServiceImpl implements CommandService {
         this.mediator = mediator;
     }
 
-    @Override
-    public void execute(Command command) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public void execute(Reply reply) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
     public void connect() {
         logger.info("Do connect.");
         Promise<MqttConnAckMessage> authFuture = mediator.connect();
@@ -68,7 +56,7 @@ public class CommandServiceImpl implements CommandService {
         if (authFuture.isCancelled()) {
             // Connection attempt was cancelled by user
             logger.info("Connection attempt cancelled.");
-            Data data = new DataImpl("CONNECT", "TEXT/PLAIN", "Connection attempt cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
+            Data data = new DataImpl("CONNECT", "TEXT/PLAIN", "Connection attempt was cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
             mediator.display(data);
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed {}", authFuture.cause());
