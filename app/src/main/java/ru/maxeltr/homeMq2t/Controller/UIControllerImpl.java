@@ -23,24 +23,12 @@
  */
 package ru.maxeltr.homeMq2t.Controller;
 
-
-import io.netty.handler.codec.mqtt.MqttConnAckMessage;
-import io.netty.util.concurrent.Promise;
-import java.time.Instant;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.stereotype.Controller;
-import ru.maxeltr.homeMq2t.Model.Data;
-import ru.maxeltr.homeMq2t.Model.DataImpl;
-
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import ru.maxeltr.homeMq2t.Model.Data;
-
 import ru.maxeltr.homeMq2t.Model.Reply;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
@@ -48,8 +36,6 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediator;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-
-@Controller
 public class UIControllerImpl implements UIController {
 
     @Autowired
@@ -58,30 +44,6 @@ public class UIControllerImpl implements UIController {
     Logger logger = LoggerFactory.getLogger(UIControllerImpl.class);
 
     private ServiceMediator mediator;
-
-    
-    @MessageMapping("/connect")
-    public void connect(Data msg) {
-        logger.info("{} command received." , msg.getName());
-        
-        /*Promise<MqttConnAckMessage> authFuture = mediator.connect();
-
-        authFuture.awaitUninterruptibly();
-        if (authFuture.isCancelled()) {
-            // Connection attempt cancelled by user
-            logger.info("Connection attempt was cancelled.");
-            Data data = new DataImpl("connect", "TEXT/PLAIN", "Connection attempt was cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
-            mediator.display(data);
-        } else if (!authFuture.isSuccess()) {
-            logger.info("Connection established failed {}", authFuture.cause());
-        } else {
-            // Connection established successfully
-            logger.info("connectFuture. Connection established successfully.");
-        }*/
-
-
-    }
-
 
     @Override
     public void setMediator(ServiceMediator mediator) {
