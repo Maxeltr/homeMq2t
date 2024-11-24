@@ -28,22 +28,49 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import ru.maxeltr.homeMq2t.Model.Data;
 import ru.maxeltr.homeMq2t.Model.Reply;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import org.springframework.stereotype.Controller;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import ru.maxeltr.homeMq2t.Model.Msg;
+import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
+@Controller
 public class UIControllerImpl implements UIController {
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
-    Logger logger = LoggerFactory.getLogger(UIControllerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(UIControllerImpl.class);
 
     private ServiceMediator mediator;
+
+    @MessageMapping("/connect")
+    public void connect(Msg msg) {
+        logger.info("{} command received." , msg.getName());
+
+        /*Promise<MqttConnAckMessage> authFuture = mediator.connect();
+
+        authFuture.awaitUninterruptibly();
+        if (authFuture.isCancelled()) {
+            // Connection attempt cancelled by user
+            logger.info("Connection attempt was cancelled.");
+            Data data = new DataImpl("connect", "TEXT/PLAIN", "Connection attempt was cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
+            mediator.display(data);
+        } else if (!authFuture.isSuccess()) {
+            logger.info("Connection established failed {}", authFuture.cause());
+        } else {
+            // Connection established successfully
+            logger.info("connectFuture. Connection established successfully.");
+        }*/
+
+
+    }
+
 
     @Override
     public void setMediator(ServiceMediator mediator) {
@@ -51,7 +78,7 @@ public class UIControllerImpl implements UIController {
     }
 
     @Override
-    public void display(Data data) {
+    public void display(Msg data) {
 
         simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", "card1"));
         logger.debug("Data was sent to display {}." , data);

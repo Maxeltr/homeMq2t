@@ -27,7 +27,7 @@ package ru.maxeltr.homeMq2t.Model;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class DataImpl implements Data {
+public class DataImpl {
 
     private String name;
     private String type;
@@ -62,28 +62,28 @@ public class DataImpl implements Data {
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
-    
-    @Override
+
+
     public String getName() {
         return name;
     }
 
-    @Override
+
     public String getType() {
         return type;
     }
 
-    @Override
+
     public String getPayload() {
         return payload;
     }
 
-    @Override
+
     public String getStatus() {
         return status;
     }
 
-    @Override
+    
     public String getTimestamp() {
         return timestamp;
     }

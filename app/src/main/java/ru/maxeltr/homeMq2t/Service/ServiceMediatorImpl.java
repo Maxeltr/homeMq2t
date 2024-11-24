@@ -28,9 +28,9 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.maxeltr.homeMq2t.Model.Data;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Controller.UIController;
+import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
  *
@@ -55,13 +55,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void publish(Data data) {
+    public void publish(Msg data) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
 
     @Override
-    public void display(Data data) {
+    public void display(Msg data) {
         displayController.display(data);
     }
 

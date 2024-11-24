@@ -30,8 +30,8 @@ import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jsoup.nodes.Document;
-import ru.maxeltr.homeMq2t.Model.Data;
 import ru.maxeltr.homeMq2t.Model.DataImpl;
+import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
  *
@@ -49,21 +49,21 @@ public class CommandServiceImpl implements CommandService {
     }
 
     public void connect() {
-        logger.info("Do connect.");
+        /*logger.info("Do connect.");
         Promise<MqttConnAckMessage> authFuture = mediator.connect();
 
         authFuture.awaitUninterruptibly();
         if (authFuture.isCancelled()) {
             // Connection attempt was cancelled by user
             logger.info("Connection attempt cancelled.");
-            Data data = new DataImpl("CONNECT", "TEXT/PLAIN", "Connection attempt was cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
+            Msg data = new DataImpl("CONNECT", "TEXT/PLAIN", "Connection attempt was cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
             mediator.display(data);
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed {}", authFuture.cause());
         } else {
             // Connection established successfully
             logger.info("connectFuture. Connection established successfully.");
-        }
+        }*/
     }
 
     private String buildHtml() {

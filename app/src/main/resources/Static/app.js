@@ -18,7 +18,7 @@ function connect() {
         stompClient.subscribe('/topic/data', function (message) {
             showData(JSON.parse(message.body), message.headers.card);
         });
-        stompClient.send("/app/connect", {}, JSON.stringify({'id': "-1", 'name': "connect"}));
+        stompClient.send("/app/connect", {}, JSON.stringify({'name': "connect"}));
     });
 }
 
@@ -126,7 +126,7 @@ function onConnect(message) {
             setConnected(true);
         }
         return;
-        
+
 }
 
 $(function () {

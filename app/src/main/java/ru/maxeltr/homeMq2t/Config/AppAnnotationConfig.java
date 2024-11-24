@@ -87,10 +87,10 @@ public class AppAnnotationConfig {
         return new ServiceMediatorImpl();
     }
 
-    @Bean
-    public UIController displayController() {
-        return new UIControllerImpl();
-    }
+//    @Bean
+//    public UIController displayController() {
+//        return new UIControllerImpl();
+//    }
 
     @Bean
     public CommandService commandService() {

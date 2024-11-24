@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2024 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,15 +27,17 @@ package ru.maxeltr.homeMq2t.Model;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface Data {
+public class MsgImpl implements Msg {
 
-    public String getName();
+    private String name;
 
-    public String getType();
+    @Override
+    public String getName() {
+        return this.name;
+    }
 
-    public String getPayload();
-
-    public String getStatus();
-
-    public String getTimestamp();
+    @Override
+    public void setName(String name) {
+        this.name = name;
+    }
 }
