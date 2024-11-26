@@ -27,65 +27,14 @@ package ru.maxeltr.homeMq2t.Model;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class DataImpl {
+ @JsonDeserialize(as = MsgImpl.Builder.class)
+public interface Msg {
 
-    private String name;
-    private String type;
-    private String payload;
-    private String status;
-    private String timestamp;
+    public String getType();
 
-    public DataImpl(String name, String type, String payload, String status, String timestamp) {
-        this.name = name;
-        this.type = type;
-        this.payload = payload;
-        this.status = status;
-        this.timestamp = timestamp;
-    }
+    public String getTopic();
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public String getPayload();
 
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setPayload(String payload) {
-        this.payload = payload;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-
-
-    public String getName() {
-        return name;
-    }
-
-
-    public String getType() {
-        return type;
-    }
-
-
-    public String getPayload() {
-        return payload;
-    }
-
-
-    public String getStatus() {
-        return status;
-    }
-
-    
-    public String getTimestamp() {
-        return timestamp;
-    }
-
+    public String getTimestamp();
 }

@@ -47,45 +47,25 @@ public class UIControllerImpl implements UIController {
 
     private static final Logger logger = LoggerFactory.getLogger(UIControllerImpl.class);
 
-    private ServiceMediator mediator;
+    @Autowired
+    private UIService uiService;
 
     @MessageMapping("/connect")
-    public void connect(Msg msg) {
-        logger.info("{} command received." , msg.getName());
-
-        /*Promise<MqttConnAckMessage> authFuture = mediator.connect();
-
-        authFuture.awaitUninterruptibly();
-        if (authFuture.isCancelled()) {
-            // Connection attempt cancelled by user
-            logger.info("Connection attempt was cancelled.");
-            Data data = new DataImpl("connect", "TEXT/PLAIN", "Connection attempt was cancelled.", "fail", String.valueOf(Instant.now().toEpochMilli()));
-            mediator.display(data);
-        } else if (!authFuture.isSuccess()) {
-            logger.info("Connection established failed {}", authFuture.cause());
-        } else {
-            // Connection established successfully
-            logger.info("connectFuture. Connection established successfully.");
-        }*/
-
-
+    public void connect(Msg.Builder msg) {
+        logger.info("Msg was received with id {}." , msg.build().getId());
+        uiService.connect();
     }
-
-
-    @Override
-    public void setMediator(ServiceMediator mediator) {
-        this.mediator = mediator;
+	
+	@MessageMapping("/disconnect")
+    public void disconnect(Msg.Builder msg) {
+        logger.info("Msg was received with id {}." , msg.build().getId());
+        uiService.disconnect();
     }
 
     @Override
-    public void display(Msg data) {
-
-        simpMessagingTemplate.convertAndSend("/topic/data", data, Map.of("card", "card1"));
-        logger.debug("Data was sent to display {}." , data);
+    public void display(Msg msg) {
+        simpMessagingTemplate.convertAndSend("/topic/data", msg, Map.of("card", "card1"));
+        logger.debug("Msg was sent to display {}." , msg);
     }
 
-    @Override
-    public void display(Reply reply) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
 }

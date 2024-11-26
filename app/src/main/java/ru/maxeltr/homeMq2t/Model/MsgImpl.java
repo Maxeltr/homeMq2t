@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2024 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,21 +23,96 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import io.netty.util.internal.StringUtil;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public class MsgImpl implements Msg {
 
-    private String name;
+    private final String topic;
 
+    private final String payload;
+
+    private final String type;
+
+    private final String timestamp;
+
+    public static clacc Builder {
+		
+		private final String id;
+		
+		private String topic = "";
+
+        private String payload = "";
+
+        private String type = "";
+
+        private String timestamp = "";
+		
+		public Builder (String id) {
+		    this.id = id;	
+		}
+		
+		public Builder (String id, String topic, String payload, String type, String timestamp) {
+		    this.id = id;
+			this.topic = topic;
+			this.payload = payload;
+			this.type = type;
+			this.timestamp = timestamp;
+		}
+		
+		public Builder topic(String topic) {
+			this.topic = topic;
+			return this;
+		}
+		
+		public Builder payload(String payload) {
+			this.payload = payload;
+			return this;
+		}
+		
+		public Builder type(String type) {
+			this.type = type;
+			return this;
+		}
+		
+		public Builder timestamp(String timestamp) {
+		    this.timestamp = timestamp;
+			return this;
+		}
+		
+		public MsgImpl build() {
+			return new MsgImpl(this);
+		}
+	}
+	
+	private MsgImpl (Builder builder) {
+		topic = builder.topic;
+		payload = builder.payload;
+		type = builder.type;
+		timestamp = builder.timestamp;
+	}
+	
     @Override
-    public String getName() {
-        return this.name;
+    public String getTopic() {
+        return id;
     }
 
     @Override
-    public void setName(String name) {
-        this.name = name;
+    public String getPayload() {
+        return name;
     }
+
+    @Override
+    public String getType() {
+        return arguments;
+    }
+
+    @Override
+    public String getTimestamp() {
+        return timestamp;
+    }
+
 }

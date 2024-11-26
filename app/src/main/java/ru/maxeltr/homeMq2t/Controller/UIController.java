@@ -23,7 +23,6 @@
  */
 package ru.maxeltr.homeMq2t.Controller;
 
-import ru.maxeltr.homeMq2t.Model.Reply;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
@@ -36,6 +35,4 @@ public interface UIController {
     public void setMediator(ServiceMediator mediator);
 
     public void display(Msg data);
-
-    public void display(Reply reply);
 }
