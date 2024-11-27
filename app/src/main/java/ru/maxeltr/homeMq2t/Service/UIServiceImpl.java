@@ -45,6 +45,12 @@ public class UIServiceImpl implements UIService {
     private static final Logger logger = LoggerFactory.getLogger(UIServiceImpl.class);
 
     private ServiceMediator mediator;
+	
+	@Autowired
+    private Environment env;
+	
+	@Autowired
+    private ArrayList<Screen> screens;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
@@ -60,7 +66,7 @@ public class UIServiceImpl implements UIService {
             logger.info("Connection attempt cancelled.");
             Msg msg = new MsgImpl.Builder("")
 			    .type("application/json")
-				.payload({{'name': "connect", 'status': "fail", 'data': "Connection attempt cancelled."}})
+				.payload({{'name': "connect", 'status': "fail", 'data': "<div>Connection attempt cancelled.</div>"}})
 				.timestamp(String.valueOf(Instant.now().toEpochMilli())
 				.build();
             mediator.display(msg);
@@ -68,7 +74,7 @@ public class UIServiceImpl implements UIService {
             logger.info("Connection established failed {}", authFuture.cause());
 			Msg msg = new MsgImpl.Builder("")
 			    .type("application/json")
-				.payload({{'name': "connect", 'status': "fail", 'data': "Connection established failed."}})
+				.payload({{'name': "connect", 'status': "fail", 'data': "<div>Connection established failed.</div>"}})
 				.timestamp(String.valueOf(Instant.now().toEpochMilli())
 				.build();
             mediator.display(msg);
@@ -76,7 +82,7 @@ public class UIServiceImpl implements UIService {
             logger.info("Connection established successfully.");
 			Msg msg = new MsgImpl.Builder("")
 			    .type("application/json")
-				.payload({{'name': "connect", 'status': "ok", 'data': "Connection established successfully."}})
+				.payload({{'name': "connect", 'status': "ok", 'data': this.buildHtmlPageOnProperties()}})
 				.timestamp(String.valueOf(Instant.now().toEpochMilli())
 				.build();
             mediator.display(msg);
@@ -88,13 +94,21 @@ public class UIServiceImpl implements UIService {
 		
 	}
 	
-    private String buildHtml() {
-        Document document = Jsoup.parse(getCardHtml());
-
-        return "";
+    private String buildHtmlPageOnProperties() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("<div class=\"row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3\" id=\"cards\">");
+		int i = 1;
+		while(env.containsProperty("sub." + i + ".card") {
+			builder.append(this.getCardHtml(i));
+			++i;
+		}
+		builder.append("</div>");
+		
+        return builder.toString();
     }
 
-    private String getCardHtml() {
+    private String getCardHtml(String id) {
+		
         return """
                <div class="card text-center text-white bg-secondary shadow-sm " id="card1">
                    <div class="align-items-center" id="card1-payload">

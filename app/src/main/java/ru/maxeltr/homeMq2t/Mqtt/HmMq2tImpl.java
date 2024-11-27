@@ -64,6 +64,15 @@ public class HmMq2tImpl implements HmMq2t {
     @Autowired
     private AppProperties appProperties;
 
+	@Value("${host:127.0.0.1}")
+    private String host;
+	
+	@Value("${port:1883}")
+    private Integer port;
+	
+	@Value("${connect-timeout:5000}")
+    private Integer connectTimeout;
+	
     @Override
     public Promise<MqttConnAckMessage> connect() {
         workerGroup = new NioEventLoopGroup();
@@ -74,12 +83,13 @@ public class HmMq2tImpl implements HmMq2t {
 
         Promise<MqttConnAckMessage> authFuture = new DefaultPromise<>(workerGroup.next());
         mqttAckMediator.setConnectFuture(authFuture);
-        bootstrap.remoteAddress(appProperties.getHost(), Integer.parseInt(appProperties.getPort()));
+		
+        bootstrap.remoteAddress(host, port));
 
-        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Integer.valueOf(appProperties.getProperty("CONNECT_TIMEOUT", "1000")));
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
         ChannelFuture future = bootstrap.connect();
         future.addListener((ChannelFutureListener) f -> HmMq2tImpl.this.channel = f.channel());
-        logger.debug("Connecting to %s via port {}.", appProperties.getHost(), appProperties.getPort());
+        logger.info("Connecting to %s via port {}.", host, port);
 
         return authFuture;
 
