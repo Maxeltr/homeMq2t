@@ -96,4 +96,29 @@ public class AppAnnotationConfig {
     public CommandService commandService() {
         return new CommandServiceImpl();
     }
+	
+	@Bean
+    public UIService getUIService() {
+        return new UIServiceImpl();
+    }
+	
+	@Bean
+    public List<Dashboard> dashboards() {
+		List<Dashboard> dashboards = new ArrayList<>();
+		List<Card> cards = new ArrayList<>();
+        List<String> listOfDashboardNames = (List<String>) env.getProperty("dashboards", List.class);
+		for (String dashboardName: listOfDashboardNames) {
+			List<String> listOfCardsNames = (List<String>) env.getProperty(dashboardName + ".cards", List.class);
+			for (String cardName: listOfDashboardNames) {
+				Card card = new Card(cardName);
+				cards.add(card);
+			}
+			Dashboard dashboard = new Dashboard(dashboardName, cards);
+			dashboards.add(dashboard);
+		}
+		
+		return dashboards;
+    }
+	
+	
 }

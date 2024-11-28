@@ -27,8 +27,10 @@ package ru.maxeltr.homeMq2t.Model;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface Screen {
+public interface Dashboard {
 
+	public String getName();
+	
     public String getHtml();
 	
 	public String getCards();

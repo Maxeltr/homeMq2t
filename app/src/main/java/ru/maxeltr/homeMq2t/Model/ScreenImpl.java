@@ -27,9 +27,38 @@ package ru.maxeltr.homeMq2t.Model;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface Card {
+public class DashboardImpl {
 
-	public String getName();
+	@Autowired
+    private Environment env;
 	
-    public String getHtml();
+    private List<Card> dashboardCards;
+	
+	private String name = "";
+	
+	DashboardImpl(String name, List<Card> dashboardCards) {
+		this.name = name;
+		this.dashboardCards = dashboardCards;
+	}
+	
+	public String getName() {
+		return this.name;
+	}
+	
+	public ArrayList<Card> getDashboardCards() {
+		return this.dashboardCards;
+	}
+	
+    public String getHtml() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("<div class=\"row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3\" id=\"cards\">");
+		int i = 1;
+		for(Card card: this.dashboardCards) {
+			builder.append(card.getHtml());
+			++i;
+		}
+		builder.append("</div>");
+		
+        return builder.toString();
+	}
 }
