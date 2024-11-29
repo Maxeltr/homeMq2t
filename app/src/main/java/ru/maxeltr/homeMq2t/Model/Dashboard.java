@@ -29,9 +29,9 @@ package ru.maxeltr.homeMq2t.Model;
  */
 public interface Dashboard {
 
-	public String getName();
-	
+    public String getName();
+
     public String getHtml();
-	
-	public String getCards();
+
+    public String getCards();
 }

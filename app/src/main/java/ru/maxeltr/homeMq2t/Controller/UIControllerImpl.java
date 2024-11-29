@@ -28,12 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import ru.maxeltr.homeMq2t.Model.Reply;
-import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import org.springframework.stereotype.Controller;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Model.MsgImpl;
+import ru.maxeltr.homeMq2t.Service.UIService;
 
 /**
  *
@@ -52,13 +50,13 @@ public class UIControllerImpl implements UIController {
 
     @MessageMapping("/connect")
     public void connect(Msg.Builder msg) {
-        logger.info("Msg was received with id {}." , msg.build().getId());
+        logger.info("Msg was received with id {}." , msg.getId());
         uiService.connect();
     }
-	
+
 	@MessageMapping("/disconnect")
     public void disconnect(Msg.Builder msg) {
-        logger.info("Msg was received with id {}." , msg.build().getId());
+        logger.info("Msg was received with id {}." , msg.getId());
         uiService.disconnect();
     }
 

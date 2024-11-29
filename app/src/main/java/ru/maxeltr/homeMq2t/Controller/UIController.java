@@ -32,7 +32,5 @@ import ru.maxeltr.homeMq2t.Model.Msg;
  */
 public interface UIController {
 
-    public void setMediator(ServiceMediator mediator);
-
     public void display(Msg data);
 }

@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -37,4 +39,57 @@ public interface Msg {
     public String getPayload();
 
     public String getTimestamp();
+
+    public static class Builder {
+
+        private final String id;
+
+        protected String topic = "";
+
+        protected String payload = "";
+
+        protected String type = "";
+
+        protected String timestamp = "";
+
+        public Builder(String id) {
+            this.id = id;
+        }
+
+        public Builder(String id, String topic, String payload, String type, String timestamp) {
+            this.id = id;
+            this.topic = topic;
+            this.payload = payload;
+            this.type = type;
+            this.timestamp = timestamp;
+        }
+
+        public Builder topic(String topic) {
+            this.topic = topic;
+            return this;
+        }
+
+        public Builder payload(String payload) {
+            this.payload = payload;
+            return this;
+        }
+
+        public Builder type(String type) {
+            this.type = type;
+            return this;
+        }
+
+        public Builder timestamp(String timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        public MsgImpl build() {
+            return new MsgImpl(this.topic, this.payload, this.type, this.timestamp);
+        }
+
+        public String getId() {
+            return this.id;
+        }
+    }
 }

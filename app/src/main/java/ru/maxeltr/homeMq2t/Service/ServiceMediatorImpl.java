@@ -28,10 +28,7 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.maxeltr.homeMq2t.Controller.DisplayController;
-import ru.maxeltr.homeMq2t.Model.Command;
-import ru.maxeltr.homeMq2t.Model.Data;
-import ru.maxeltr.homeMq2t.Model.Reply;
+import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 
 /**
@@ -44,7 +41,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     private CommandService commandService;
 
     @Autowired
-    private UIController UIController;
+    private UIService uiService;
 
     @Autowired
     private HmMq2t hmMq2t;
@@ -52,7 +49,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @PostConstruct
     public void setMediator() {
         commandService.setMediator(this);
-        uiController.setMediator(this);
+        uiService.setMediator(this);
         hmMq2t.setMediator(this);
     }
 
@@ -67,8 +64,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void display(Data data) {
-        displayController.display(data);
+    public void display(Msg data) {
+        uiService.display(data);
     }
 
     @Override

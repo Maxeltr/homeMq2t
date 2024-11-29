@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
-import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
@@ -64,15 +64,15 @@ public class HmMq2tImpl implements HmMq2t {
     @Autowired
     private AppProperties appProperties;
 
-	@Value("${host:127.0.0.1}")
+    @Value("${host:127.0.0.1}")
     private String host;
-	
-	@Value("${port:1883}")
+
+    @Value("${port:1883}")
     private Integer port;
-	
-	@Value("${connect-timeout:5000}")
+
+    @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
-	
+
     @Override
     public Promise<MqttConnAckMessage> connect() {
         workerGroup = new NioEventLoopGroup();
@@ -83,13 +83,13 @@ public class HmMq2tImpl implements HmMq2t {
 
         Promise<MqttConnAckMessage> authFuture = new DefaultPromise<>(workerGroup.next());
         mqttAckMediator.setConnectFuture(authFuture);
-		
-        bootstrap.remoteAddress(host, port));
+
+        bootstrap.remoteAddress(host, port);
 
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
         ChannelFuture future = bootstrap.connect();
         future.addListener((ChannelFutureListener) f -> HmMq2tImpl.this.channel = f.channel());
-        logger.info("Connecting to %s via port {}.", host, port);
+        logger.info("Connecting to {} via port {}.", host, port);
 
         return authFuture;
 

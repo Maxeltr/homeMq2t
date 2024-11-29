@@ -23,8 +23,6 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
-import io.netty.util.internal.StringUtil;
-
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -39,80 +37,38 @@ public class MsgImpl implements Msg {
 
     private final String timestamp;
 
-    public static clacc Builder {
-		
-		private final String id;
-		
-		private String topic = "";
+    MsgImpl(String topic, String payload, String type, String timestamp) {
+        this.topic = topic;
+        this.payload = payload;
+        this.type = type;
+        this.timestamp = timestamp;
+    }
 
-        private String payload = "";
+//    MsgImpl(Msg.Builder builder) {
+//        this.topic = builder.topic;
+//        this.payload = builder.payload;
+//        this.type = builder.type;
+//        this.timestamp = builder.timestamp;
+//    }
 
-        private String type = "";
-
-        private String timestamp = "";
-		
-		public Builder (String id) {
-		    this.id = id;	
-		}
-		
-		public Builder (String id, String topic, String payload, String type, String timestamp) {
-		    this.id = id;
-			this.topic = topic;
-			this.payload = payload;
-			this.type = type;
-			this.timestamp = timestamp;
-		}
-		
-		public Builder topic(String topic) {
-			this.topic = topic;
-			return this;
-		}
-		
-		public Builder payload(String payload) {
-			this.payload = payload;
-			return this;
-		}
-		
-		public Builder type(String type) {
-			this.type = type;
-			return this;
-		}
-		
-		public Builder timestamp(String timestamp) {
-		    this.timestamp = timestamp;
-			return this;
-		}
-		
-		public MsgImpl build() {
-			return new MsgImpl(this);
-		}
-	}
-	
-	private MsgImpl (Builder builder) {
-		topic = builder.topic;
-		payload = builder.payload;
-		type = builder.type;
-		timestamp = builder.timestamp;
-	}
-	
     @Override
     public String getTopic() {
-        return id;
+        return this.topic;
     }
 
     @Override
     public String getPayload() {
-        return name;
+        return this.payload;
     }
 
     @Override
     public String getType() {
-        return arguments;
+        return this.type;
     }
 
     @Override
     public String getTimestamp() {
-        return timestamp;
+        return this.timestamp;
     }
 
 }

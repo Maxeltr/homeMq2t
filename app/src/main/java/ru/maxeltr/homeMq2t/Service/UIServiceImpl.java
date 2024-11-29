@@ -26,15 +26,16 @@ package ru.maxeltr.homeMq2t.Service;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.util.concurrent.Promise;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.w3c.dom.Document;
-import ru.maxeltr.homeMq2t.Model.Command;
+import org.springframework.core.env.Environment;
+import ru.maxeltr.homeMq2t.Controller.UIController;
+import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Model.DataImpl;
-import ru.maxeltr.homeMq2t.Model.Reply;
-import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
+import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
  *
@@ -45,18 +46,22 @@ public class UIServiceImpl implements UIService {
     private static final Logger logger = LoggerFactory.getLogger(UIServiceImpl.class);
 
     private ServiceMediator mediator;
-	
-	@Autowired
+
+    @Autowired
     private Environment env;
-	
-	@Autowired
-    private ArrayList<Dashboard> dashboards;
+
+    @Autowired
+    private UIController uiController;
+
+    @Autowired
+    private List<Dashboard> dashboards;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
     }
 
+    @Override
     public void connect() {
         logger.info("Do connect.");
         Promise<MqttConnAckMessage> authFuture = mediator.connect();
@@ -64,42 +69,43 @@ public class UIServiceImpl implements UIService {
         authFuture.awaitUninterruptibly();
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt cancelled.");
-            Msg msg = new MsgImpl.Builder("")
-			    .type("application/json")
-				.payload({{'name': "connect", 'status': "fail", 'data': "<div>Connection attempt cancelled.</div>"}})
-				.timestamp(String.valueOf(Instant.now().toEpochMilli())
-				.build();
-            mediator.display(msg);
+            Msg msg = new Msg.Builder("")
+                    .type("application/json")
+                    .payload("{'name': \"connect\", 'status': \"fail\", 'data': \"<div>Connection attempt cancelled.</div>\"}")
+                    .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                    .build();
+            this.display(msg);
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed {}", authFuture.cause());
-			Msg msg = new MsgImpl.Builder("")
-			    .type("application/json")
-				.payload({{'name': "connect", 'status': "fail", 'data': "<div>Connection established failed.</div>"}})
-				.timestamp(String.valueOf(Instant.now().toEpochMilli())
-				.build();
-            mediator.display(msg);
+            Msg msg = new MsgImpl.Builder("")
+                    .type("application/json")
+                    .payload("{'name': \"connect\", 'status': \"fail\", 'data': \"<div>Connection established failed.</div>\"}")
+                    .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                    .build();
+            this.display(msg);
         } else {
             logger.info("Connection established successfully.");
-			Msg msg = new MsgImpl.Builder("")
-			    .type("application/json")
-				.payload({{'name': "connect", 'status': "ok", 'data': this.getStartDashboard()}})
-				.timestamp(String.valueOf(Instant.now().toEpochMilli())
-				.build();
-            mediator.display(msg);
+            Msg msg = new MsgImpl.Builder("")
+                    .type("application/json")
+                    .payload("{'name': \"connect\", 'status': \"ok\", 'data': this.getStartDashboard()}")
+                    .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                    .build();
+            this.display(msg);
         }
     }
 
+    @Override
     public void disconnect() {
-		logger.info("Do disconnect.");
-		
-	}
-	
+        logger.info("Do disconnect.");
+
+    }
+
     private String getStartDashboard() {
-		return this.dashboards.get(0).getHtml();
+        return this.dashboards.get(0).getHtml();
     }
 
     /* private String getCardHtml(String id) {
-		
+
         return """
                <div class="card text-center text-white bg-secondary shadow-sm " id="card1">
                    <div class="align-items-center" id="card1-payload">
@@ -121,4 +127,13 @@ public class UIServiceImpl implements UIService {
                    </div>
                </div>""";
     } */
+    @Override
+    public void publish(Msg msg) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void display(Msg msg) {
+      this.uiController.display(msg);
+    }
 }

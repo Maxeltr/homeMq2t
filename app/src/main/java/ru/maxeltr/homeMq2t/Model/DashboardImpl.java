@@ -23,42 +23,51 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import java.util.List;
+import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Autowired;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class DashboardImpl {
+public class DashboardImpl implements Dashboard {
 
-	@Autowired
+    @Autowired
     private Environment env;
-	
+
     private List<Card> dashboardCards;
-	
-	private String name = "";
-	
-	DashboardImpl(String name, List<Card> dashboardCards) {
-		this.name = name;
-		this.dashboardCards = dashboardCards;
-	}
-	
-	public String getName() {
-		return this.name;
-	}
-	
-	public ArrayList<Card> getDashboardCards() {
-		return this.dashboardCards;
-	}
-	
+
+    private String name = "";
+
+    public DashboardImpl(String name, List<Card> dashboardCards) {
+        this.name = name;
+        this.dashboardCards = dashboardCards;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public List<Card> getDashboardCards() {
+        return this.dashboardCards;
+    }
+
     public String getHtml() {
-		StringBuilder builder = new StringBuilder();
-		builder.append("<div class=\"row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3\" id=\"cards\">");
-		int i = 1;
-		for(Card card: this.dashboardCards) {
-			builder.append(card.getHtml());
-			++i;
-		}
-		builder.append("</div>");
-		
+        StringBuilder builder = new StringBuilder();
+        builder.append("<div class=\"row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3\" id=\"cards\">");
+        int i = 1;
+        for (Card card : this.dashboardCards) {
+            builder.append(card.getHtml());
+            ++i;
+        }
+        builder.append("</div>");
+
         return builder.toString();
-	}
+    }
+
+    @Override
+    public String getCards() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
 }

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2024 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,28 +23,21 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class CommandServiceImpl implements CommandService {
+public interface UIService {
 
-    private static final Logger logger = LoggerFactory.getLogger(CommandServiceImpl.class);
+    public void connect();
 
-    private ServiceMediator mediator;
+    public void disconnect();
 
-    @Override
-    public void setMediator(ServiceMediator mediator) {
-        this.mediator = mediator;
-    }
+    public void publish(Msg message);
 
-    @Override
-    public void execute(Msg command) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+    public void display(Msg message);
 
+    public void setMediator(ServiceMediator mediator);
 }

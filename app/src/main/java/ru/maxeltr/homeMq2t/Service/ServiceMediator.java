@@ -24,11 +24,9 @@
 package ru.maxeltr.homeMq2t.Service;
 
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
-import ru.maxeltr.homeMq2t.Model.Command;
-import ru.maxeltr.homeMq2t.Model.Reply;
-import ru.maxeltr.homeMq2t.Model.Data;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
+import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
  *

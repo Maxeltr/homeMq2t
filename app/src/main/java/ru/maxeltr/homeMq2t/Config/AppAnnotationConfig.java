@@ -23,14 +23,18 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import ru.maxeltr.homeMq2t.Controller.DisplayController;
-import ru.maxeltr.homeMq2t.Controller.DisplayControllerImpl;
+import ru.maxeltr.homeMq2t.Model.Card;
+import ru.maxeltr.homeMq2t.Model.CardImpl;
+import ru.maxeltr.homeMq2t.Model.Dashboard;
+import ru.maxeltr.homeMq2t.Model.DashboardImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
@@ -40,6 +44,8 @@ import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
+import ru.maxeltr.homeMq2t.Service.UIService;
+import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
 
 /**
  *
@@ -61,7 +67,7 @@ public class AppAnnotationConfig {
 //            System.err.println("Could not setup logger configuration: " + ex.toString());
 //        }
 //    }
-
+    
     @Bean
     public AppProperties appProperty() {
         return new AppProperties();
@@ -96,29 +102,28 @@ public class AppAnnotationConfig {
     public CommandService commandService() {
         return new CommandServiceImpl();
     }
-	
-	@Bean
+
+    @Bean
     public UIService getUIService() {
         return new UIServiceImpl();
     }
-	
-	@Bean
+
+    @Bean
     public List<Dashboard> dashboards() {
-		List<Dashboard> dashboards = new ArrayList<>();
-		List<Card> cards = new ArrayList<>();
+        List<Dashboard> dashboards = new ArrayList<>();
+        List<Card> cards = new ArrayList<>();
         List<String> listOfDashboardNames = (List<String>) env.getProperty("dashboards", List.class);
-		for (String dashboardName: listOfDashboardNames) {
-			List<String> listOfCardsNames = (List<String>) env.getProperty(dashboardName + ".cards", List.class);
-			for (String cardName: listOfDashboardNames) {
-				Card card = new Card(cardName);
-				cards.add(card);
-			}
-			Dashboard dashboard = new Dashboard(dashboardName, cards);
-			dashboards.add(dashboard);
-		}
-		
-		return dashboards;
+        for (String dashboardName : listOfDashboardNames) {
+            List<String> listOfCardsNames = (List<String>) env.getProperty(dashboardName + ".cards", List.class);
+            for (String cardName : listOfDashboardNames) {
+                Card card = new CardImpl(cardName);
+                cards.add(card);
+            }
+            Dashboard dashboard = new DashboardImpl(dashboardName, cards);
+            dashboards.add(dashboard);
+        }
+
+        return dashboards;
     }
-	
-	
+
 }
