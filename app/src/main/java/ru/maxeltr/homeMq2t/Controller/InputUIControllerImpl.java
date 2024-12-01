@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2024 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,14 +23,37 @@
  */
 package ru.maxeltr.homeMq2t.Controller;
 
-import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.stereotype.Controller;
 import ru.maxeltr.homeMq2t.Model.Msg;
+import ru.maxeltr.homeMq2t.Service.UIService;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface UIController {
+@Controller
+public class InputUIControllerImpl implements InputUIController {
 
-    public void display(Msg data);
+    private static final Logger logger = LoggerFactory.getLogger(InputUIControllerImpl.class);
+
+    @Autowired
+    private UIService uiService;
+
+    @Override
+    @MessageMapping("/connect")
+    public void connect(Msg.Builder msg) {
+        logger.info("Msg was received with id {}.", msg.getId());
+        uiService.connect();
+    }
+
+    @Override
+    @MessageMapping("/disconnect")
+    public void disconnect(Msg.Builder msg) {
+        logger.info("Msg was received with id {}.", msg.getId());
+        uiService.disconnect();
+    }
 }

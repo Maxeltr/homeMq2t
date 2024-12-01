@@ -26,13 +26,12 @@ package ru.maxeltr.homeMq2t.Service;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.util.concurrent.Promise;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import ru.maxeltr.homeMq2t.Controller.UIController;
+import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
@@ -51,7 +50,7 @@ public class UIServiceImpl implements UIService {
     private Environment env;
 
     @Autowired
-    private UIController uiController;
+    private OutputUIController uiController;
 
     @Autowired
     private List<Dashboard> dashboards;
@@ -69,6 +68,7 @@ public class UIServiceImpl implements UIService {
         authFuture.awaitUninterruptibly();
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt cancelled.");
+
             Msg msg = new Msg.Builder("")
                     .type("application/json")
                     .payload("{'name': \"connect\", 'status': \"fail\", 'data': \"<div>Connection attempt cancelled.</div>\"}")
@@ -87,7 +87,7 @@ public class UIServiceImpl implements UIService {
             logger.info("Connection established successfully.");
             Msg msg = new MsgImpl.Builder("")
                     .type("application/json")
-                    .payload("{'name': \"connect\", 'status': \"ok\", 'data': this.getStartDashboard()}")
+                    .payload("{'name': \"connect\", 'status': \"ok\", 'data':" + this.getStartDashboard() + "}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                     .build();
             this.display(msg);

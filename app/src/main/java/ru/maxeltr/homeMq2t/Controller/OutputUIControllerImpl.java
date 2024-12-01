@@ -29,41 +29,24 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.messaging.handler.annotation.MessageMapping;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Service.UIService;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 @Controller
-public class UIControllerImpl implements UIController {
+public class OutputUIControllerImpl implements OutputUIController {
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
-    private static final Logger logger = LoggerFactory.getLogger(UIControllerImpl.class);
-
-    @Autowired
-    private UIService uiService;
-
-    @MessageMapping("/connect")
-    public void connect(Msg.Builder msg) {
-        logger.info("Msg was received with id {}." , msg.getId());
-        uiService.connect();
-    }
-
-	@MessageMapping("/disconnect")
-    public void disconnect(Msg.Builder msg) {
-        logger.info("Msg was received with id {}." , msg.getId());
-        uiService.disconnect();
-    }
+    private static final Logger logger = LoggerFactory.getLogger(OutputUIControllerImpl.class);
 
     @Override
     public void display(Msg msg) {
         simpMessagingTemplate.convertAndSend("/topic/data", msg, Map.of("card", "card1"));
-        logger.debug("Msg was sent to display {}." , msg);
+        logger.debug("Msg was sent to display {}.", msg);
     }
 
 }

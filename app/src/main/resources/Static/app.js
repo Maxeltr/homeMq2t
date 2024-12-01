@@ -83,7 +83,7 @@ function showReplies(message, card) {
 }
 
 function showData(message, card) {
-    console.log('message : ' + message.name + ' ' + message.status + ' ' + card);
+    console.log('message : ' + message);
 
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
@@ -96,7 +96,8 @@ function showData(message, card) {
         document.getElementById(card + '-timestamp').innerHTML = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
-    if (message.name.toUpperCase() === 'CONNECT') {
+    var payload = message.payload;
+    if (payload.name.toUpperCase() === 'CONNECT') {
         onConnect(message);
     }
 
