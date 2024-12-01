@@ -23,8 +23,18 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.Resource;
 
 /**
  *
@@ -34,6 +44,9 @@ public class CardImpl implements Card {
 
     @Autowired
     private Environment env;
+
+    @Value("classpath:card.html")
+    private Resource res;
 
     private String name = "";
 
@@ -62,23 +75,42 @@ public class CardImpl implements Card {
     }
 
     public String getHtml() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("<div class=\"card text-center text-white bg-secondary shadow-sm \" id=\"");
-        builder.append(this.getName()).append("\">");
-        builder.append("<div class=\"align-items-center\" id=\"");
-        builder.append(this.getName()).append("-payload\">");
-        builder.append(this.svg);
-        builder.append("</div><div class=\"card-body\"><h5 class=\"card-title\">");
-        builder.append(this.getName());
-        builder.append("</h5><p class=\"card-text\">");
-        builder.append(this.getText());
-        builder.append("</p><div class=\"btn-group\">");
-        builder.append("<button type=\"button\" class=\"btn btn-sm btn-outline-light\" id=\"sendCommand\" value=\"1\">Get</button>");
-        builder.append("<a href=\"\" download=\"image.jpg\" role=\"button\" class=\"btn btn-sm btn-outline-light disabled\" id=\"");
-        builder.append(this.getName()).append("-save\">Save</a></div><small class=\"text-dark\"> </small></div>");
-        builder.append("<div class=\"card-footer text-dark\" id=\"");
-        builder.append(this.getName()).append("-timestamp\"> </div></div>");
+        return this.getHtmlFromFile();
+//        StringBuilder builder = new StringBuilder();
+//        builder.append("<div class=\"card text-center text-white bg-secondary shadow-sm \" id=\"");
+//        builder.append(this.getName()).append("\">");
+//        builder.append("<div class=\"align-items-center\" id=\"");
+//        builder.append(this.getName()).append("-payload\">");
+//        builder.append(this.svg);
+//        builder.append("</div><div class=\"card-body\"><h5 class=\"card-title\">");
+//        builder.append(this.getName());
+//        builder.append("</h5><p class=\"card-text\">");
+//        builder.append(this.getText());
+//        builder.append("</p><div class=\"btn-group\">");
+//        builder.append("<button type=\"button\" class=\"btn btn-sm btn-outline-light\" id=\"sendCommand\" value=\"1\">Get</button>");
+//        builder.append("<a href=\"\" download=\"image.jpg\" role=\"button\" class=\"btn btn-sm btn-outline-light disabled\" id=\"");
+//        builder.append(this.getName()).append("-save\">Save</a></div><small class=\"text-dark\"> </small></div>");
+//        builder.append("<div class=\"card-footer text-dark\" id=\"");
+//        builder.append(this.getName()).append("-timestamp\"> </div></div>");
+//
+//        return builder.toString();
+    }
 
-        return builder.toString();
+    public String getHtmlFromFile() {
+        List<String> lines = new ArrayList<>();;
+        try {
+            lines = Files.readAllLines(Paths.get(res.getURI()),
+                    StandardCharsets.UTF_8);
+        } catch (IOException ex) {
+            Logger.getLogger(CardImpl.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+        for (String line : lines) {
+
+            System.out.println(line);
+
+        }
+        
+        return "getHtmlFromFile";
     }
 }
