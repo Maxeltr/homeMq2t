@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -31,16 +32,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
+import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public class CardImpl implements Card {
+
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UIServiceImpl.class);
 
     @Autowired
     private Environment env;
@@ -97,12 +103,20 @@ public class CardImpl implements Card {
     }
 
     public String getHtmlFromFile() {
+
+
+
         List<String> lines = new ArrayList<>();;
         try {
+
+            File file = new ClassPathResource("card.html").getFile();
+        System.out.println(file);
+
+        
             lines = Files.readAllLines(Paths.get(res.getURI()),
                     StandardCharsets.UTF_8);
         } catch (IOException ex) {
-            Logger.getLogger(CardImpl.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error("Cannot read card.html", ex);
         }
 
         for (String line : lines) {
@@ -110,7 +124,7 @@ public class CardImpl implements Card {
             System.out.println(line);
 
         }
-        
+
         return "getHtmlFromFile";
     }
 }
