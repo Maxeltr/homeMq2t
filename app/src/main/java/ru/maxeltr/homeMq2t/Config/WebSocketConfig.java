@@ -41,8 +41,8 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> {
 
-    @Autowired
-    private Environment env;
+    @Value("${local-server-port:8028}")
+	private int port;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
@@ -57,7 +57,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSer
 
     @Override
     public void customize(ConfigurableServletWebServerFactory factory) {
-        int port = Integer.parseInt(env.getProperty("localServerPort", "8028"));
         factory.setPort(port);
     }
 }

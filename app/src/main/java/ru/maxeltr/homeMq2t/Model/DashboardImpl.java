@@ -36,6 +36,9 @@ public class DashboardImpl implements Dashboard {
     @Autowired
     private Environment env;
 
+	@Value("${dashboard-template-path:static/dashboard.html}")
+    private String dashboardPath;
+	
     private List<Card> dashboardCards;
 
     private String name = "";
@@ -53,21 +56,27 @@ public class DashboardImpl implements Dashboard {
         return this.dashboardCards;
     }
 
-    public String getHtml() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("<div class=\"row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3\" id=\"cards\">");
-        int i = 1;
-        for (Card card : this.dashboardCards) {
-            builder.append(card.getHtml());
-            ++i;
-        }
-        builder.append("</div>");
-
-        return builder.toString();
+    private String getHtml() {
+		Document document = this.getTemplateFromJar();
+		this.modifyTemplate(document);
+		
+        return document.html();
+	}
+	
+	private void modifyTemplate(Document document) {
+		Element el = document.getElementById("cards");
+		for (Card card: this.getDashboardCards()) {
+			el.append(card.getHtml());
+		}
+	}
+	
+	private Document getTemplateFromFileSystem() {
+		File file = new ClassPathResource(dashboardPath).getFile();
+		return Jsoup.parse(file, "utf-8");
     }
-
-    @Override
-    public String getCards() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+	
+	private Document getTemplateFromJar() {
+		InputStream stream = new ClassPathResource(dashboardPath).getInputStream();
+		return Jsoup.parse(stream, "utf-8");
+	}
 }

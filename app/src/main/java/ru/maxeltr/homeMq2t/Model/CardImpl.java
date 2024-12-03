@@ -51,8 +51,8 @@ public class CardImpl implements Card {
     @Autowired
     private Environment env;
 
-    @Value("classpath:card.html")
-    private Resource res;
+    @Value("${card-template-path:static/card.html}")
+    private String cardPath;
 
     private String name = "";
 
@@ -102,29 +102,38 @@ public class CardImpl implements Card {
 //        return builder.toString();
     }
 
-    public String getHtmlFromFile() {
+	private String getHtml() {
+		Document document = this.getTemplateFromJar();
+		this.modifyTemplate(document);
+		
+        return document.html();
+	}
+	
+	private void modifyTemplate(Document document) {
+		Element el = document.getElementById("card1");
+		//el.removeAttr("id");
+		el.attr("id", this.getName());
+		
+		Element el = document.getElementById("card1-payload");
+		el.attr("id", this.getName() + "-payload");
 
-
-
-        List<String> lines = new ArrayList<>();;
-        try {
-
-            File file = new ClassPathResource("card.html").getFile();
-        System.out.println(file);
-
-        
-            lines = Files.readAllLines(Paths.get(res.getURI()),
-                    StandardCharsets.UTF_8);
-        } catch (IOException ex) {
-            logger.error("Cannot read card.html", ex);
-        }
-
-        for (String line : lines) {
-
-            System.out.println(line);
-
-        }
-
-        return "getHtmlFromFile";
+		Element el = document.getElementById("card1-save");
+		el.attr("id", this.getName() + "-save");
+		
+		Element el = document.getElementById("card1-timestamp");
+		el.attr("id", this.getName() + "-timestamp");
+		
+		Element el = document.select(".card-title");
+		el.text(this.getName());
+	}
+	
+	private Document getTemplateFromFileSystem() {
+		File file = new ClassPathResource(cardPath).getFile();
+		return Jsoup.parse(file, "utf-8");
     }
+	
+	private Document getTemplateFromJar() {
+		InputStream stream = new ClassPathResource(cardPath).getInputStream();
+		return Jsoup.parse(stream, "utf-8");
+	}
 }

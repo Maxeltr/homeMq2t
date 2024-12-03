@@ -42,7 +42,6 @@ import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.maxeltr.homeMq2t.Config.AppProperties;
 
 /**
  *
@@ -54,9 +53,48 @@ class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     @Autowired
     private MqttAckMediator mqttAckMediator;
-
-    @Autowired
-    private AppProperties appProperties;
+	
+	@Value("${protocol-name:MQTT}")
+	private String protocolName = "MQTT";
+	
+	@Value("${protocol-version:4}")
+	private int version;
+	
+	@Value("${has-user-name:true}")
+	private Boolean hasUserName;
+	
+	@Value("${has-password:true}")
+	private Boolean hasPassword;
+	
+	@Value("${will-retain:false}")
+	private Boolean willRetain;
+	
+	@Value("${will-qos:0}")
+	private int willQos;
+	
+	@Value("${will-flag:false}")
+	private Boolean willFlag;
+	
+	@Value("${clean-session:true}")
+	private Boolean cleanSession;
+	
+	@Value("${keep-alive-timer:20}")
+	private int keepAliveTimer;
+	
+	@Value("${client-id:defaultClientId}")
+	private String clientId;
+	
+	@Value("${will-topic:defaultWillTopic}")
+	private String willTopic;
+	
+	@Value("${will-message:defaultWillMessage}")
+	private String willMessage;
+	
+	@Value("${username:defaultUserName}")
+	private String userName;
+	
+	@Value("${password:defaultPassword}")
+	private String password;
 
     public void setMediator(MqttAckMediator mqttAckMediator) {
         this.mqttAckMediator = mqttAckMediator;
@@ -88,25 +126,25 @@ class MqttConnectHandler extends ChannelInboundHandlerAdapter {
         MqttFixedHeader connectFixedHeader = new MqttFixedHeader(MqttMessageType.CONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
 
         MqttConnectVariableHeader connectVariableHeader = new MqttConnectVariableHeader(
-                "MQTT",
-                Integer.parseInt("4"),
-                appProperties.getHasUserName(),
-                appProperties.getHasPassword(),
-                appProperties.getWillRetain(),
-                appProperties.getWillQos(),
-                appProperties.getWillFlag(),
-                appProperties.getCleanSession(),
-                appProperties.getKeepAliveTimer(),
+                protocolName,
+                version,
+                hasUserName,
+                hasPassword,
+                willRetain,
+                willQos,
+                willFlag,
+                cleanSession,
+                keepAliveTimer,
                 MqttProperties.NO_PROPERTIES
         );
 
         MqttConnectPayload connectPayload = new MqttConnectPayload(
-                appProperties.getClientId(),
+                clientId,
                 MqttProperties.NO_PROPERTIES,
-                appProperties.getProperty("willTopic", null),
-                appProperties.getProperty("willMessage", "").getBytes(Charset.forName("UTF-8")),
-                appProperties.getUserName(),
-                appProperties.getPassword().getBytes(Charset.forName("UTF-8"))
+                willTopic,
+                willMessage.getBytes(Charset.forName("UTF-8")),
+                userName,
+                password.getBytes(Charset.forName("UTF-8"))
         );
 
         MqttConnectMessage connectMessage = new MqttConnectMessage(connectFixedHeader, connectVariableHeader, connectPayload);

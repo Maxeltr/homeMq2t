@@ -56,7 +56,11 @@ public class HmMq2tImpl implements HmMq2t {
     private Channel channel;
 
     private MqttAckMediator mqttAckMediator;
+	
     private ServiceMediator serviceMediator;
+	
+	@Autowired
+    private Environment env;
 
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
@@ -73,6 +77,9 @@ public class HmMq2tImpl implements HmMq2t {
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
 
+	@Value("${subscription-topics:defaultSubTopic}")
+    private List<String> subTopics;
+	
     @Override
     public Promise<MqttConnAckMessage> connect() {
         workerGroup = new NioEventLoopGroup();
@@ -82,6 +89,10 @@ public class HmMq2tImpl implements HmMq2t {
         bootstrap.handler(mqttChannelInitializer);
 
         Promise<MqttConnAckMessage> authFuture = new DefaultPromise<>(workerGroup.next());
+		authFuture.addListener(f -> {
+				if (f.isSuccess()) {
+					this.subscribe();
+				}});
         mqttAckMediator.setConnectFuture(authFuture);
 
         bootstrap.remoteAddress(host, port);
@@ -94,6 +105,21 @@ public class HmMq2tImpl implements HmMq2t {
         return authFuture;
 
     }
+	
+	private Promise<MqttSubAckMessage> subscribe() {
+		Promise<MqttSubAckMessage> subscribeFuture = new DefaultPromise<>(this.workerGroup.next());
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
+		
+		List<MqttTopicSubscription> subscriptions = new ArrayList<>();
+		String topicName, topicQos;
+		for (String topic: subTopics) {
+			topicName = env.getProperty("sub" + topic + "name", "");
+			topicQos = MqttQoS.valueOf(env.getProperty("sub" + topic + "qos", ""));
+			MqttTopicSubscription subscription = new MqttTopicSubscription(topic, );
+            subscriptions.add(subscription);
+            logger.log(Level.INFO, String.format("Subscribe on topic: %s", subscription.topicName()));
+		}
+	}
 
     @Override
     public void disconnect() {
