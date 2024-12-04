@@ -36,12 +36,16 @@ import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Promise;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import org.springframework.beans.factory.annotation.Value;
+
 
 /**
  *
@@ -80,6 +84,12 @@ public class HmMq2tImpl implements HmMq2t {
 	@Value("${subscription-topics:defaultSubTopic}")
     private List<String> subTopics;
 	
+	private final AtomicInteger nextMessageId = new AtomicInteger(1);
+	
+	private final Map<Integer, MqttSubscribeMessage> waitAckMessQueue = Collections.synchronizedMap(new LinkedHashMap());
+	
+	private final Map<String, MqttTopicSubscription> activeTopics = Collections.synchronizedMap(new LinkedHashMap());
+	
     @Override
     public Promise<MqttConnAckMessage> connect() {
         workerGroup = new NioEventLoopGroup();
@@ -91,35 +101,103 @@ public class HmMq2tImpl implements HmMq2t {
         Promise<MqttConnAckMessage> authFuture = new DefaultPromise<>(workerGroup.next());
 		authFuture.addListener(f -> {
 				if (f.isSuccess()) {
-					this.subscribe();
+					HmMq2tImpl.this.subscribe(HmMq2tImpl.this.getSubscriptionsFromConfig());
 				}});
         mqttAckMediator.setConnectFuture(authFuture);
 
-        bootstrap.remoteAddress(host, port);
+        bootstrap.remoteAddress(this.host, this.port);
 
-        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout);
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.connectTimeout);
         ChannelFuture future = bootstrap.connect();
         future.addListener((ChannelFutureListener) f -> HmMq2tImpl.this.channel = f.channel());
-        logger.info("Connecting to {} via port {}.", host, port);
+        logger.info("Connecting to {} via port {}.", this.host, this.port);
 
         return authFuture;
 
     }
 	
-	private Promise<MqttSubAckMessage> subscribe() {
-		Promise<MqttSubAckMessage> subscribeFuture = new DefaultPromise<>(this.workerGroup.next());
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
-		
+	private List<MqttTopicSubscription> getSubscriptionsFromConfig() {
 		List<MqttTopicSubscription> subscriptions = new ArrayList<>();
 		String topicName, topicQos;
-		for (String topic: subTopics) {
+		for (String topic: this.subTopics) {
 			topicName = env.getProperty("sub" + topic + "name", "");
 			topicQos = MqttQoS.valueOf(env.getProperty("sub" + topic + "qos", ""));
-			MqttTopicSubscription subscription = new MqttTopicSubscription(topic, );
+			MqttTopicSubscription subscription = new MqttTopicSubscription(topicName, topicQos);
             subscriptions.add(subscription);
-            logger.log(Level.INFO, String.format("Subscribe on topic: %s", subscription.topicName()));
+			logger.info("Subscribing to the topic: {} with QoS {}.", topicName, topicQos);
 		}
+		
+		return subscriptions;
 	}
+	
+	public Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions) {
+		int id = getNewMessageId();
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
+		MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
+        MqttSubscribePayload payload = new MqttSubscribePayload(subscriptions);
+        MqttSubscribeMessage message = new MqttSubscribeMessage(fixedHeader, variableHeader, payload);
+		
+		Promise<MqttSubAckMessage> subscribeFuture = new DefaultPromise<>(this.workerGroup.next());
+        this.mqttAckMediator.add(id, subscribeFuture);
+		subscribeFuture.addListener((FutureListener) (Future f) -> {
+			HmMq2tImpl.this.handleSubAckMessage((MqttSubAckMessage) f.get());
+		});
+		
+		this.waitAckMessQueue.put(id, message);
+		logger.info("Put subscription message {} to waiting acknowledge message queue. Message: {}", id, message);
+		
+		this.writeAndFlush(message);
+		logger.info("Sent subscribe message id: {}, d: {}, q: {}, r: {}. Message: {}", message.variableHeader().messageId(), message.fixedHeader().isDup(), message.fixedHeader().qosLevel(), message.fixedHeader().isRetain(), message);
+		
+		return subscribeFuture;
+	}
+	
+	private void handleSubAckMessage(MqttSubAckMessage subAckMessage) {
+		MqttSubscribeMessage subscribeMessage = this.waitAckMessQueue.get(subAckMessage.variableHeader().messageId());
+		if (subscribeMessage == null) {
+			logger.warn("Queue of waiting acknowledge messages returned null instead subscribeMessage");
+			//TODO resub?
+			return;
+		}
+		
+		List<MqttTopicSubscription> topics = subscribeMessage.payload().topicSubscriptions();
+		List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
+		if (subAckQos.size() != topics.size()) {
+			logger.warn("Number of topics to subscribe is not match number of returned granted QOS. QoS {}. Topics {}", subAckQos.size(), topics.size()));
+			//TODO resub?
+		} else {
+			for (int i = 0; i < subAckQos.size(); i++) {
+				if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
+					this.activeTopics.put(topics.get(i).topicName(), topics.get(i));
+					logger.info("Subscribed on topic: {} with Qos: {}.", topics.get(i).topicName(), topics.get(i).qualityOfService());
+					
+				} else {
+					logger.warn("Subscription on topic: {} with Qos: {} failed. Returned Qos: {}, topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i)));
+					//TODO resub with lower QoS?
+				}
+			}
+		}
+		
+		this.waitAckMessQueue.remove(subAckMessage.variableHeader().messageId());
+        logger.info("Remove subscription message {} from waiting acknowledge message queue.", subAckMessage.variableHeader().messageId()));
+	}
+	
+	private ChannelFuture writeAndFlush(Object message) {
+        if (this.channel == null) {
+            logger.error("Cannot write and flush message. Channel is null");
+            return null;
+        }
+        if (this.channel.isActive()) {
+            return this.channel.writeAndFlush(message);
+        }
+        logger.error("Cannot write and flush message. Channel is closed.");
+        return this.channel.newFailedFuture(new RuntimeException("Cannot write and flush message. Channel is closed."));
+    }
+	
+	 private int getNewMessageId() {
+        this.nextMessageId.compareAndSet(0xffff, 1);
+        return this.nextMessageId.getAndIncrement();
+    }
 
     @Override
     public void disconnect() {
