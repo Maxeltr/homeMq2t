@@ -83,14 +83,14 @@ ResourceLoader resourceLoader;
     public String getHtml() {
         Document document;
         try {
-            document = this.getTemplateFromJar();
+            document = this.getTemplate();
         } catch (IOException ex) {
             logger.error("Cannot get dashboard template.", ex);
-            return "<div><h3 style=\"color:red\">Error</h3> </div>";
+            return "<div><h3>Error</h3></div>";
         }
         this.modifyTemplate(document);
 
-        return document.html();
+        return document.body().html();
     }
 
     private void modifyTemplate(Document document) {
@@ -102,18 +102,9 @@ ResourceLoader resourceLoader;
         }
     }
 
-    private Document getTemplateFromFileSystem() throws IOException {
-        File file = new ClassPathResource("/src/main/resources/Static/dashboard.html").getFile();
-        return Jsoup.parse(file, "utf-8");
-    }
-
-    private Document getTemplateFromJar() throws IOException {
-        System.out.println(env);
-        //InputStream stream = new ClassPathResource(this.dashboardPath).getInputStream();
-        //Resource resource = resourceLoader.getResource("classpath:dashboard.html");
-        File file = ResourceUtils.getFile("classpath:Static/dashboard.html");
-        System.out.println(file.toPath());
-        //InputStream stream = resource.getInputStream();
-        return Jsoup.parse(file, "utf-8", null);
+    private Document getTemplate() throws IOException {
+        String pathname = File.separator + "Static" + File.separator + "dashboard.html";
+        InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
+        return Jsoup.parse(is, "utf-8", "");
     }
 }

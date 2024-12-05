@@ -84,39 +84,18 @@ public class CardImpl implements Card {
         return this.text;
     }
 
-//    public String getHtml() {
-//        return this.getHtmlFromFile();
-//        StringBuilder builder = new StringBuilder();
-//        builder.append("<div class=\"card text-center text-white bg-secondary shadow-sm \" id=\"");
-//        builder.append(this.getName()).append("\">");
-//        builder.append("<div class=\"align-items-center\" id=\"");
-//        builder.append(this.getName()).append("-payload\">");
-//        builder.append(this.svg);
-//        builder.append("</div><div class=\"card-body\"><h5 class=\"card-title\">");
-//        builder.append(this.getName());
-//        builder.append("</h5><p class=\"card-text\">");
-//        builder.append(this.getText());
-//        builder.append("</p><div class=\"btn-group\">");
-//        builder.append("<button type=\"button\" class=\"btn btn-sm btn-outline-light\" id=\"sendCommand\" value=\"1\">Get</button>");
-//        builder.append("<a href=\"\" download=\"image.jpg\" role=\"button\" class=\"btn btn-sm btn-outline-light disabled\" id=\"");
-//        builder.append(this.getName()).append("-save\">Save</a></div><small class=\"text-dark\"> </small></div>");
-//        builder.append("<div class=\"card-footer text-dark\" id=\"");
-//        builder.append(this.getName()).append("-timestamp\"> </div></div>");
-//
-//        return builder.toString();
-//    }
     @Override
     public String getHtml() {
         Document document;
         try {
-            document = this.getTemplateFromJar();
+            document = this.getTemplate();
         } catch (IOException ex) {
             logger.error("Cannot get card template.", ex);
-            return "<div><h3 style=\"color:red\">Error</h3> </div>";
+            return "<div><h3>Error</h3></div>";
         }
         this.modifyTemplate(document);
 
-        return document.html();
+        return document.body().html();
     }
 
     private void modifyTemplate(Document document) {
@@ -142,8 +121,9 @@ public class CardImpl implements Card {
         return Jsoup.parse(file, "utf-8");
     }
 
-    private Document getTemplateFromJar() throws IOException {
-        InputStream stream = new ClassPathResource(cardPath).getInputStream();
-        return Jsoup.parse(stream, "utf-8", null);
+    private Document getTemplate() throws IOException {
+        String pathname = File.separator + "Static" + File.separator + "card.html";
+        InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
+        return Jsoup.parse(is, "utf-8", "");
     }
 }
