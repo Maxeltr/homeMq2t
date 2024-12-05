@@ -93,11 +93,6 @@ public class AppAnnotationConfig {
         return new ServiceMediatorImpl();
     }
 
-    /* @Bean
-    public UIController uiController() {
-        return new UIControllerImpl();
-    } */
-
     @Bean
     public CommandService commandService() {
         return new CommandServiceImpl();
@@ -125,6 +120,6 @@ public class AppAnnotationConfig {
 
         return dashboards;
     }
-    
+
 
 }

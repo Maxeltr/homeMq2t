@@ -86,7 +86,7 @@ ResourceLoader resourceLoader;
             document = this.getTemplate();
         } catch (IOException ex) {
             logger.error("Cannot get dashboard template.", ex);
-            return "<div><h3>Error</h3></div>";
+            return "<div><h3>Error</h3><h5>Cannot get dashboard template.</h5></div>";
         }
         this.modifyTemplate(document);
 

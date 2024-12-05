@@ -12,9 +12,9 @@ function connect() {
     stompClient.connect({}, function (frame) {
         //setConnected(true);
         console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/replies', function (message) {
-            showReplies(JSON.parse(message.body), message.headers.card);
-        });
+//        stompClient.subscribe('/topic/replies', function (message) {
+//            showReplies(JSON.parse(message.body), message.headers.card);
+//        });
         stompClient.subscribe('/topic/data', function (message) {
             showData(JSON.parse(message.body), message.headers.card);
         });
@@ -36,7 +36,7 @@ function createCommand(commandNumber) {
 }
 
 function showReplies(message, card) {
-    console.log(card);
+    console.log("card: " + card);
 
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
@@ -83,7 +83,17 @@ function showReplies(message, card) {
 }
 
 function showData(message, card) {
-    console.log('message : ' + message);
+    console.log(message.payload)
+    console.log(message.payload.name)
+    var payload = message.payload;
+    if (payload.name.toUpperCase() === 'CONNECT') {
+        onConnect(message);
+        return;
+    }
+
+var dashboard = document.getElementById('dashboard');
+
+//dashboard.innerHTML = message.payload;
 
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
@@ -96,10 +106,7 @@ function showData(message, card) {
         document.getElementById(card + '-timestamp').innerHTML = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
-    var payload = message.payload;
-    if (payload.name.toUpperCase() === 'CONNECT') {
-        onConnect(message);
-    }
+
 
     if (message.type !== 'undefined') {
         if (message.type.toUpperCase() === 'IMAGE/JPEG') {
