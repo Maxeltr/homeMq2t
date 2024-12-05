@@ -23,22 +23,46 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
+import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.util.ResourceUtils;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
+//@Configurable
 public class DashboardImpl implements Dashboard {
+
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DashboardImpl.class);
 
     @Autowired
     private Environment env;
 
-	@Value("${dashboard-template-path:static/dashboard.html}")
+    @Autowired
+ResourceLoader resourceLoader;
+
+    //@Value("${dashboard-template-path:dashboard.html}")
+    //@Value("classpath:Static/dashboard.html")
+    @Value("classpath:dashboard.html")
     private String dashboardPath;
-	
+
     private List<Card> dashboardCards;
 
     private String name = "";
@@ -52,31 +76,44 @@ public class DashboardImpl implements Dashboard {
         return this.name;
     }
 
-    public List<Card> getDashboardCards() {
+    public List<Card> getCards() {
         return this.dashboardCards;
     }
 
-    private String getHtml() {
-		Document document = this.getTemplateFromJar();
-		this.modifyTemplate(document);
-		
+    public String getHtml() {
+        Document document;
+        try {
+            document = this.getTemplateFromJar();
+        } catch (IOException ex) {
+            logger.error("Cannot get dashboard template.", ex);
+            return "<div><h3 style=\"color:red\">Error</h3> </div>";
+        }
+        this.modifyTemplate(document);
+
         return document.html();
-	}
-	
-	private void modifyTemplate(Document document) {
-		Element el = document.getElementById("cards");
-		for (Card card: this.getDashboardCards()) {
-			el.append(card.getHtml());
-		}
-	}
-	
-	private Document getTemplateFromFileSystem() {
-		File file = new ClassPathResource(dashboardPath).getFile();
-		return Jsoup.parse(file, "utf-8");
     }
-	
-	private Document getTemplateFromJar() {
-		InputStream stream = new ClassPathResource(dashboardPath).getInputStream();
-		return Jsoup.parse(stream, "utf-8");
-	}
+
+    private void modifyTemplate(Document document) {
+        Element el = document.getElementById("cards");
+        if (el != null) {
+            for (Card card : this.getCards()) {
+                el.append(card.getHtml());
+            }
+        }
+    }
+
+    private Document getTemplateFromFileSystem() throws IOException {
+        File file = new ClassPathResource("/src/main/resources/Static/dashboard.html").getFile();
+        return Jsoup.parse(file, "utf-8");
+    }
+
+    private Document getTemplateFromJar() throws IOException {
+        System.out.println(env);
+        //InputStream stream = new ClassPathResource(this.dashboardPath).getInputStream();
+        //Resource resource = resourceLoader.getResource("classpath:dashboard.html");
+        File file = ResourceUtils.getFile("classpath:Static/dashboard.html");
+        System.out.println(file.toPath());
+        //InputStream stream = resource.getInputStream();
+        return Jsoup.parse(file, "utf-8", null);
+    }
 }

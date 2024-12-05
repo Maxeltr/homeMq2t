@@ -44,7 +44,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     //@Autowired
     //private MqttConnectHandler mqttConnectHandler;
 
-    private final ConcurrentHashMap<String, Promise<MqttMessage>> futures = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Promise<? extends MqttMessage>> futures = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void setMediator() {
@@ -54,17 +54,17 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     }
 
     @Override
-    public Promise<MqttMessage> get(String key) {
+    public Promise<? extends MqttMessage> get(String key) {
         return this.futures.get(key);
     }
 
     @Override
-    public void add(String key, Promise<MqttMessage> value) {
+    public void add(int key, Promise<? extends MqttMessage> value) {
         this.futures.put(key, value);
     }
 
     @Override
-    public void remove(String key) {
+    public void remove(int key) {
         this.futures.remove(key);
     }
 

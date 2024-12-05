@@ -67,7 +67,7 @@ public class AppAnnotationConfig {
 //            System.err.println("Could not setup logger configuration: " + ex.toString());
 //        }
 //    }
-    
+
     @Bean
     public AppProperties appProperty() {
         return new AppProperties();
@@ -125,5 +125,6 @@ public class AppAnnotationConfig {
 
         return dashboards;
     }
+    
 
 }

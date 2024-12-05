@@ -25,6 +25,7 @@ package ru.maxeltr.homeMq2t.Model;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -32,6 +33,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,7 +50,7 @@ import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
  */
 public class CardImpl implements Card {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(UIServiceImpl.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CardImpl.class);
 
     @Autowired
     private Environment env;
@@ -80,8 +84,8 @@ public class CardImpl implements Card {
         return this.text;
     }
 
-    public String getHtml() {
-        return this.getHtmlFromFile();
+//    public String getHtml() {
+//        return this.getHtmlFromFile();
 //        StringBuilder builder = new StringBuilder();
 //        builder.append("<div class=\"card text-center text-white bg-secondary shadow-sm \" id=\"");
 //        builder.append(this.getName()).append("\">");
@@ -100,40 +104,46 @@ public class CardImpl implements Card {
 //        builder.append(this.getName()).append("-timestamp\"> </div></div>");
 //
 //        return builder.toString();
-    }
+//    }
+    @Override
+    public String getHtml() {
+        Document document;
+        try {
+            document = this.getTemplateFromJar();
+        } catch (IOException ex) {
+            logger.error("Cannot get card template.", ex);
+            return "<div><h3 style=\"color:red\">Error</h3> </div>";
+        }
+        this.modifyTemplate(document);
 
-	private String getHtml() {
-		Document document = this.getTemplateFromJar();
-		this.modifyTemplate(document);
-		
         return document.html();
-	}
-	
-	private void modifyTemplate(Document document) {
-		Element el = document.getElementById("card1");
-		//el.removeAttr("id");
-		el.attr("id", this.getName());
-		
-		Element el = document.getElementById("card1-payload");
-		el.attr("id", this.getName() + "-payload");
-
-		Element el = document.getElementById("card1-save");
-		el.attr("id", this.getName() + "-save");
-		
-		Element el = document.getElementById("card1-timestamp");
-		el.attr("id", this.getName() + "-timestamp");
-		
-		Element el = document.select(".card-title");
-		el.text(this.getName());
-	}
-	
-	private Document getTemplateFromFileSystem() {
-		File file = new ClassPathResource(cardPath).getFile();
-		return Jsoup.parse(file, "utf-8");
     }
-	
-	private Document getTemplateFromJar() {
-		InputStream stream = new ClassPathResource(cardPath).getInputStream();
-		return Jsoup.parse(stream, "utf-8");
-	}
+
+    private void modifyTemplate(Document document) {
+        Element el = document.getElementById("card1");
+        //el.removeAttr("id");
+        if (el != null) el.attr("id", this.getName());
+
+        el = document.getElementById("card1-payload");
+        if (el != null) el.attr("id", this.getName() + "-payload");
+
+        el = document.getElementById("card1-save");
+        if (el != null) el.attr("id", this.getName() + "-save");
+
+        el = document.getElementById("card1-timestamp");
+        if (el != null) el.attr("id", this.getName() + "-timestamp");
+
+        el = document.select(".card-title").first();
+        if (el != null) el.text(this.getName());
+    }
+
+    private Document getTemplateFromFileSystem() throws IOException {
+        File file = new ClassPathResource(cardPath).getFile();
+        return Jsoup.parse(file, "utf-8");
+    }
+
+    private Document getTemplateFromJar() throws IOException {
+        InputStream stream = new ClassPathResource(cardPath).getInputStream();
+        return Jsoup.parse(stream, "utf-8", null);
+    }
 }

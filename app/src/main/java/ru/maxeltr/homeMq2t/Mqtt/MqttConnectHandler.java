@@ -42,6 +42,7 @@ import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
@@ -53,46 +54,46 @@ class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     @Autowired
     private MqttAckMediator mqttAckMediator;
-	
+
 	@Value("${protocol-name:MQTT}")
 	private String protocolName = "MQTT";
-	
+
 	@Value("${protocol-version:4}")
 	private int version;
-	
+
 	@Value("${has-user-name:true}")
 	private Boolean hasUserName;
-	
+
 	@Value("${has-password:true}")
 	private Boolean hasPassword;
-	
+
 	@Value("${will-retain:false}")
 	private Boolean willRetain;
-	
+
 	@Value("${will-qos:0}")
 	private int willQos;
-	
+
 	@Value("${will-flag:false}")
 	private Boolean willFlag;
-	
+
 	@Value("${clean-session:true}")
 	private Boolean cleanSession;
-	
+
 	@Value("${keep-alive-timer:20}")
 	private int keepAliveTimer;
-	
+
 	@Value("${client-id:defaultClientId}")
 	private String clientId;
-	
+
 	@Value("${will-topic:defaultWillTopic}")
 	private String willTopic;
-	
+
 	@Value("${will-message:defaultWillMessage}")
 	private String willMessage;
-	
+
 	@Value("${username:defaultUserName}")
 	private String userName;
-	
+
 	@Value("${password:defaultPassword}")
 	private String password;
 

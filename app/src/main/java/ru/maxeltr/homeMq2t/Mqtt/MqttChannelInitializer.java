@@ -36,6 +36,7 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
@@ -48,13 +49,13 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
     private ApplicationContext appContext;
 
     private MqttAckMediator mqttAckMediator;
-	
+
 	@Value("${max-bytes-in-message:8092000}")
 	private int maxBytesInMessage;
 
 	@Value("${keep-alive-timer:20}")
 	private int keepAliveTimer;
-	
+
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
         ch.pipeline().addLast("mqttDecoder", this.createMqttDecoder());

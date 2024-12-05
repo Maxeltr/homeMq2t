@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import java.util.List;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -33,5 +35,5 @@ public interface Dashboard {
 
     public String getHtml();
 
-    public String getCards();
+    public List<Card> getCards();
 }
