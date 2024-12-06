@@ -37,6 +37,8 @@ public class MsgImpl implements Msg {
 
     private final String timestamp;
 
+    private static final int MAX_CHAR_TO_PRINT = 256;
+
     MsgImpl(String topic, String payload, String type, String timestamp) {
         this.topic = topic;
         this.payload = payload;
@@ -50,7 +52,6 @@ public class MsgImpl implements Msg {
 //        this.type = builder.type;
 //        this.timestamp = builder.timestamp;
 //    }
-
     @Override
     public String getTopic() {
         return this.topic;
@@ -71,4 +72,17 @@ public class MsgImpl implements Msg {
         return this.timestamp;
     }
 
+    @Override
+    public String toString() {
+        String subString;
+        if (this.payload.length() > MAX_CHAR_TO_PRINT) {
+            subString = this.payload.substring(0, MAX_CHAR_TO_PRINT) + "...";
+        } else {
+            subString = this.payload;
+        }
+        return "Topic: '" + this.topic +
+                "', Type: '" + this.type +
+                "', Timestamp: '" + this.timestamp +
+                "', Payload: '" + subString;
+    }
 }

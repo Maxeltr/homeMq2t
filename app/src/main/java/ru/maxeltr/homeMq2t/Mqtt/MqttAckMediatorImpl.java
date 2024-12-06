@@ -28,6 +28,8 @@ import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import java.util.concurrent.ConcurrentHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**
@@ -35,6 +37,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public class MqttAckMediatorImpl implements MqttAckMediator {
+
+	private static final Logger logger = LoggerFactory.getLogger(MqttAckMediatorImpl.class);
 
     private Promise<MqttConnAckMessage> connectFuture;
 
@@ -49,6 +53,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     @PostConstruct
     public void setMediator() {
         hmMq2t.setMediator(this);
+		logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, hmMq2t);
         //mqttConnectHandler.setMediator(this);
         //mqttPublishHandler.setMediator(this);
     }
@@ -61,16 +66,19 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     @Override
     public void add(int key, Promise<? extends MqttMessage> value) {
         this.futures.put(key, value);
+		logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, value, futures.size());
     }
 
     @Override
     public void remove(int key) {
         this.futures.remove(key);
+		logger.debug("Future was removed key: {}. Amount futures: {}", key, futures.size());
     }
 
     @Override
     public void setConnectFuture(Promise<MqttConnAckMessage> future) {
         this.connectFuture = future;
+		logger.debug("Connect future was set: {}.", future);
     }
 
     public Promise<MqttConnAckMessage> getConnectFuture() {

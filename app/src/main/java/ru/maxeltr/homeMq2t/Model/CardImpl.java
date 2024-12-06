@@ -51,29 +51,24 @@ import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
 public class CardImpl implements Card {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CardImpl.class);
-
-    @Autowired
-    private Environment env;
-
-    @Value("${card-template-path:static/card.html}")
-    private String cardPath;
+    
+	private String pathname = File.separator + "Static" + File.separator + "card.html";
 
     private String name = "";
 
     private String text = "";
-
-    private final String svg = """
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-display" viewBox="0 0 16 16">
-            <path d="M0 4s0-2 2-2h12s2 0 2 2v6s0 2-2 2h-4c0 .667.083 1.167.25 1.5H11a.5.5 0 0 1 0 1H5a.5.5 0 0 1 0-1h.75c.167-.333.25-.833.25-1.5H2s-2 0-2-2V4zm1.398-.855a.758.758 0 0 0-.254.302A1.46 1.46 0 0 0 1 4.01V10c0 .325.078.502.145.602.07.105.17.188.302.254a1.464 1.464 0 0 0 .538.143L2.01 11H14c.325 0 .502-.078.602-.145a.758.758 0 0 0 .254-.302 1.464 1.464 0 0 0 .143-.538L15 9.99V4c0-.325-.078-.502-.145-.602a.757.757 0 0 0-.302-.254A1.46 1.46 0 0 0 13.99 3H2c-.325 0-.502.078-.602.145z"/>
-        </svg>""";
+	
+	private Document view;
 
     public CardImpl(String name) {
         this.name = name;
+		this.view = this.getViewTemplate();
     }
 
     public CardImpl(String name, String text) {
         this.name = name;
         this.text = text;
+		this.view = this.getViewTemplate();
     }
 
     public String getName() {
@@ -86,19 +81,23 @@ public class CardImpl implements Card {
 
     @Override
     public String getHtml() {
-        Document document;
-        try {
-            document = this.getTemplate();
-        } catch (IOException ex) {
-            logger.error("Cannot get card template.", ex);
-            return "<div><h3>Error</h3><h5>Cannot get card template.</h5></div>";
-        }
-        this.modifyTemplate(document);
-
-        return document.body().html();
+		return this.view.body().html();
     }
 
-    private void modifyTemplate(Document document) {
+	private Document getViewTemplate() {
+		Document document;
+        try {
+            document = this.getTemplateFromResource();
+        } catch (IOException ex) {
+            logger.error("Cannot get card template.", ex);
+            return Jsoup.parse("<div><h3>Error</h3><h5>Cannot get card view template.</h5></div>");
+        }
+        this.configureTemplate(document);
+		
+		return document;
+	}
+	
+    private void configureTemplate(Document document) {
         Element el = document.getElementById("card1");
         //el.removeAttr("id");
         if (el != null) el.attr("id", this.getName());
@@ -112,17 +111,14 @@ public class CardImpl implements Card {
         el = document.getElementById("card1-timestamp");
         if (el != null) el.attr("id", this.getName() + "-timestamp");
 
+		el = document.getElementById("sendCommand");
+		if (el != null) el.attr("value", this.getName());
+		
         el = document.select(".card-title").first();
         if (el != null) el.text(this.getName());
     }
 
-    private Document getTemplateFromFileSystem() throws IOException {
-        File file = new ClassPathResource(cardPath).getFile();
-        return Jsoup.parse(file, "utf-8");
-    }
-
-    private Document getTemplate() throws IOException {
-        String pathname = File.separator + "Static" + File.separator + "card.html";
+    private Document getTemplateFromResource() throws IOException {
         InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
         return Jsoup.parse(is, "utf-8", "");
     }

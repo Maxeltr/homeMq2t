@@ -177,7 +177,8 @@ public class HmMq2tImpl implements HmMq2t {
     }
 
     private void handleSubAckMessage(MqttSubAckMessage subAckMessage) {
-        MqttSubscribeMessage subscribeMessage = this.waitAckMessQueue.get(subAckMessage.variableHeader().messageId());
+		int id = subAckMessage.variableHeader().messageId();
+        MqttSubscribeMessage subscribeMessage = this.waitAckMessQueue.get(id);
         if (subscribeMessage == null) {
             logger.warn("Queue of waiting acknowledge messages returned null instead subscribeMessage");
             //TODO resub?
@@ -201,9 +202,9 @@ public class HmMq2tImpl implements HmMq2t {
                 }
             }
         }
-
-        this.waitAckMessQueue.remove(subAckMessage.variableHeader().messageId());
-        logger.info("Remove subscription message {} from waiting acknowledge message queue.", subAckMessage.variableHeader().messageId());
+		this.mqttAckMediator.remove(id);
+        this.waitAckMessQueue.remove(id);
+        logger.info("Remove subscription message {} from waiting acknowledge message queue.", id);
     }
 
     private ChannelFuture writeAndFlush(Object message) {

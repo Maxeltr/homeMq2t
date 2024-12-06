@@ -47,29 +47,22 @@ import org.springframework.util.ResourceUtils;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-//@Configurable
 public class DashboardImpl implements Dashboard {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DashboardImpl.class);
 
-    @Autowired
-    private Environment env;
-
-    @Autowired
-ResourceLoader resourceLoader;
-
-    //@Value("${dashboard-template-path:dashboard.html}")
-    //@Value("classpath:Static/dashboard.html")
-    @Value("classpath:dashboard.html")
-    private String dashboardPath;
+	private String pathname = File.separator + "Static" + File.separator + "dashboard.html";
 
     private List<Card> dashboardCards;
 
     private String name = "";
+	
+	private Document view;
 
     public DashboardImpl(String name, List<Card> dashboardCards) {
         this.name = name;
         this.dashboardCards = dashboardCards;
+		this.view = this.getViewTemplate();
     }
 
     public String getName() {
@@ -80,20 +73,25 @@ ResourceLoader resourceLoader;
         return this.dashboardCards;
     }
 
+	@Override
     public String getHtml() {
+		return this.view.body().html();
+    }
+	
+    private Document getViewTemplate() {
         Document document;
         try {
-            document = this.getTemplate();
+            document = this.getTemplateFromResource();
         } catch (IOException ex) {
-            logger.error("Cannot get dashboard template.", ex);
-            return "<div><h3>Error</h3><h5>Cannot get dashboard template.</h5></div>";
+            logger.error("Cannot get dashboard template from resource.", ex);
+            return Jsoup.parse("<div><h3>Error</h3><h5>Cannot get dashboard view template.</h5></div>");
         }
-        this.modifyTemplate(document);
+        this.configureTemplate(document);
 
-        return document.body().html();
+        return document;
     }
 
-    private void modifyTemplate(Document document) {
+    private void configureTemplate(Document document) {
         Element el = document.getElementById("cards");
         if (el != null) {
             for (Card card : this.getCards()) {
@@ -102,8 +100,7 @@ ResourceLoader resourceLoader;
         }
     }
 
-    private Document getTemplate() throws IOException {
-        String pathname = File.separator + "Static" + File.separator + "dashboard.html";
+    private Document getTemplateFromResource() throws IOException {
         InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
         return Jsoup.parse(is, "utf-8", "");
     }

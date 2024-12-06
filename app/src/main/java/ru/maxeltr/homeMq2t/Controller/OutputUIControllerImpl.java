@@ -45,7 +45,7 @@ public class OutputUIControllerImpl implements OutputUIController {
 
     @Override
     public void display(Msg msg) {
-        simpMessagingTemplate.convertAndSend("/topic/data", msg, Map.of("card", "card1"));
+        simpMessagingTemplate.convertAndSend("/topic/data", msg);
         logger.debug("Msg was sent to display {}.", msg);
     }
 

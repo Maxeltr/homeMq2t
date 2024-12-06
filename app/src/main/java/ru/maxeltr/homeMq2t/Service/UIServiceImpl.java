@@ -87,7 +87,7 @@ public class UIServiceImpl implements UIService {
             logger.info("Connection established successfully.");
             Msg msg = new MsgImpl.Builder("")
                     .type("application/json")
-                    .payload("{\"name\": \"connect\", \"status\": \"ok\", \"data\":" + this.getStartDashboard() + "}")
+                    .payload("{\"name\": \"connect\", \"status\": \"ok\", \"data\":\"" + this.getStartDashboard() + "\"}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                     .build();
             this.display(msg);
@@ -97,7 +97,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void disconnect() {
         logger.info("Do disconnect.");
-
+		throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private String getStartDashboard() {
