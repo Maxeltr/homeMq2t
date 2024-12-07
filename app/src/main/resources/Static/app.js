@@ -18,15 +18,16 @@ function connect() {
         stompClient.subscribe('/topic/data', function (message) {
             showData(JSON.parse(message.body));
         });
-        stompClient.send("/app/connect", {}, JSON.stringify({'name': "connect"}));
+        stompClient.send("/app/connect", {}, JSON.stringify({'id': "connect"}));
     });
 }
 
 function disconnect() {
+    stompClient.send("/app/disconnect", {}, JSON.stringify({'id': "disconnect"}));
     if (stompClient !== null) {
         stompClient.disconnect();
     }
-    //setConnected(false);
+    setConnected(false);
     console.log("Disconnected");
 }
 
@@ -44,15 +45,10 @@ function showData(message) {
     if (payload.name.toUpperCase() === 'CONNECT') {
         if (payload.status.toUpperCase() === 'OK') {
             setConnected(true);
-            dashboard.innerHTML = atob(payload.data);
-            console.log(atob(payload.data))
         }
+        dashboard.innerHTML = atob(payload.data);
         return;
     }
-
-
-
-    //
 
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
@@ -86,12 +82,6 @@ function showData(message) {
         console.log('message.type is undefined');
         document.getElementById(card + '-payload').innerHTML = '<p>' + 'message.type is undefined' + '<br>' + atob(payload.data) + '</p>';
     }
-
-}
-
-function onConnect(message) {
-
-    return;
 
 }
 

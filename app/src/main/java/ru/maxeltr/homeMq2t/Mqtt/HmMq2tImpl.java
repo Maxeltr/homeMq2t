@@ -94,8 +94,8 @@ public class HmMq2tImpl implements HmMq2t {
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
 
-    @Value("${subscription-topics:}")
-    private List<String> subTopics;
+    @Value("${subscriptions:}")
+    private List<String> subNames;
 
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
@@ -115,7 +115,7 @@ public class HmMq2tImpl implements HmMq2t {
         authFuture.addListener(f -> {
             if (f.isSuccess()) {
                 List<MqttTopicSubscription> subs = HmMq2tImpl.this.getSubscriptionsFromConfig();
-                if (subs.size() == 0) {
+                if (subs.isEmpty()) {
                     logger.info("There are no topics to subscribe in the config.");
                     return;
                 }
@@ -139,13 +139,13 @@ public class HmMq2tImpl implements HmMq2t {
         List<MqttTopicSubscription> subscriptions = new ArrayList<>();
         String topicName;
         MqttQoS topicQos;
-        for (String topic : this.subTopics) {
-            topicName = env.getProperty("sub" + topic + "name", "");
+        for (String sub : this.subNames) {
+            topicName = env.getProperty(sub + ".topicname", "");
             if (topicName.length() == 0) {
-                logger.info("There is empty topic name in the config.");
+                logger.info("There is empty sub name in the config.");
                 continue;
             }
-            topicQos = MqttQoS.valueOf(env.getProperty("sub" + topic + "qos", MqttQoS.AT_LEAST_ONCE.toString()));
+            topicQos = MqttQoS.valueOf(env.getProperty(sub + ".qos", MqttQoS.AT_MOST_ONCE.toString()));
             MqttTopicSubscription subscription = new MqttTopicSubscription(topicName, topicQos);
             subscriptions.add(subscription);
             logger.info("Subscribing to the topic: {} with QoS {}.", topicName, topicQos);

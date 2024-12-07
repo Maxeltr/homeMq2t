@@ -46,14 +46,14 @@ public class InputUIControllerImpl implements InputUIController {
     @Override
     @MessageMapping("/connect")
     public void connect(Msg.Builder msg) {
-        logger.info("Msg was received with id {}.", msg.getId());
+        logger.info("Msg.Builder was received - {}.", msg);
         uiService.connect();
     }
 
     @Override
     @MessageMapping("/disconnect")
     public void disconnect(Msg.Builder msg) {
-        logger.info("Msg was received with id {}.", msg.getId());
+        logger.info("Msg.Builder was received - {}.", msg);
         uiService.disconnect();
     }
 }

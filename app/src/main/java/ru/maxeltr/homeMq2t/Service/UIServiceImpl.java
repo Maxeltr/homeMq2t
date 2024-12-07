@@ -73,7 +73,7 @@ public class UIServiceImpl implements UIService {
             Msg msg = new Msg.Builder("")
                     .type("application/json")
                     .payload("{\"name\": \"connect\", \"status\": \"fail\", \"data\": \""
-                            + Base64.getEncoder().encodeToString("<div>Connection attempt cancelled.</div>".getBytes())
+                            + Base64.getEncoder().encodeToString("<div style=\"color:red;\">Connection attempt cancelled.</div>".getBytes())
                             + "\"}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                     .build();
@@ -83,7 +83,7 @@ public class UIServiceImpl implements UIService {
             Msg msg = new MsgImpl.Builder("")
                     .type("application/json")
                     .payload("{\"name\": \"connect\", \"status\": \"fail\", \"data\": \""
-                            + Base64.getEncoder().encodeToString("<div>Connection established failed.</div>".getBytes())
+                            + Base64.getEncoder().encodeToString("<div style=\"color:red;\">Connection established failed.</div>".getBytes())
                             + "\"}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                     .build();

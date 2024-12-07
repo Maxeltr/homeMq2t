@@ -29,8 +29,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
- @JsonDeserialize(as = MsgImpl.Builder.class)
+@JsonDeserialize(as = MsgImpl.Builder.class)
 public interface Msg {
+
+    static final int MAX_CHAR_TO_PRINT = 256;
 
     public String getType();
 
@@ -90,6 +92,21 @@ public interface Msg {
 
         public String getId() {
             return this.id;
+        }
+
+        @Override
+        public String toString() {
+            String subString;
+            if (this.payload instanceof String && this.payload.length() > MAX_CHAR_TO_PRINT) {
+                subString = this.payload.substring(0, MAX_CHAR_TO_PRINT) + "...";
+            } else {
+                subString = this.payload;
+            }
+            return "Id: " + this.id
+                    + ", Topic: " + this.topic
+                    + ", Type: " + this.type
+                    + ", Timestamp: " + this.timestamp
+                    + ", Payload: " + subString;
         }
     }
 }
