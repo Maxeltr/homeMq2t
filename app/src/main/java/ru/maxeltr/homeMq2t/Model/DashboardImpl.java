@@ -51,18 +51,18 @@ public class DashboardImpl implements Dashboard {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DashboardImpl.class);
 
-	private String pathname = File.separator + "Static" + File.separator + "dashboard.html";
+    private String pathname = File.separator + "Static" + File.separator + "dashboard.html";
 
     private List<Card> dashboardCards;
 
     private String name = "";
-	
-	private Document view;
+
+    private Document view;
 
     public DashboardImpl(String name, List<Card> dashboardCards) {
         this.name = name;
         this.dashboardCards = dashboardCards;
-		this.view = this.getViewTemplate();
+        this.view = this.getViewTemplate();
     }
 
     public String getName() {
@@ -73,11 +73,11 @@ public class DashboardImpl implements Dashboard {
         return this.dashboardCards;
     }
 
-	@Override
+    @Override
     public String getHtml() {
-		return this.view.body().html();
+        return this.view.body().html();
     }
-	
+
     private Document getViewTemplate() {
         Document document;
         try {

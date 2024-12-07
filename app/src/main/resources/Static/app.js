@@ -16,7 +16,7 @@ function connect() {
 //            showReplies(JSON.parse(message.body), message.headers.card);
 //        });
         stompClient.subscribe('/topic/data', function (message) {
-            showData(JSON.parse(message.body), message.headers.card);
+            showData(JSON.parse(message.body));
         });
         stompClient.send("/app/connect", {}, JSON.stringify({'name': "connect"}));
     });
@@ -38,18 +38,21 @@ function createCommand(id) {
 
 
 function showData(message) {
-    console.log(message.payload)
-    console.log(JSON.parse(message.payload))
-    var payload = message.payload;
-	var card = payload.name;
+    var dashboard = document.getElementById('dashboard');
+    var payload = JSON.parse(message.payload);
+    var card = payload.name;
     if (payload.name.toUpperCase() === 'CONNECT') {
-        onConnect(message);
+        if (payload.status.toUpperCase() === 'OK') {
+            setConnected(true);
+            dashboard.innerHTML = atob(payload.data);
+            console.log(atob(payload.data))
+        }
         return;
     }
 
-	var dashboard = document.getElementById('dashboard');
 
-	//dashboard.innerHTML = message.payload;
+
+    //
 
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
@@ -67,30 +70,28 @@ function showData(message) {
     if (message.type !== 'undefined') {
         if (message.type.toUpperCase() === 'IMAGE/JPEG') {
             var image = new Image();
-            image.src = 'data:image/jpeg;base64,' + message.payload;
+            image.src = 'data:image/jpeg;base64,' + payload.data;
             document.getElementById(card + '-payload').innerHTML = '<img src="' + image.src + '" class="img-fluid" alt="...">';
             var saveButton = document.getElementById(card + '-save');
             saveButton.setAttribute('href', image.src);
             saveButton.classList.remove("disabled");
         } else if (message.type.toUpperCase() === 'TEXT/PLAIN') {
-            document.getElementById(card + '-payload').innerHTML = '<p>' + message.payload + '</p>';
-		} else if (message.type.toUpperCase() === 'APPLICATION/JSON') {
-			console.log('message.type is APPLICATION/JSON ' + message);
+            document.getElementById(card + '-payload').innerHTML = '<p>' + atob(payload.data) + '</p>';
+        } else if (message.type.toUpperCase() === 'APPLICATION/JSON') {
+            console.log('message.type is APPLICATION/JSON ' + atob(payload.data));
         } else {
-            document.getElementById(card + '-payload').innerHTML = '<p>' + "Type is " + message.type + '<br>' + message.payload + '</p>';
+            document.getElementById(card + '-payload').innerHTML = '<p>' + "Type is " + message.type + '<br>' + atob(payload.data) + '</p>';
         }
     } else {
         console.log('message.type is undefined');
-        document.getElementById(card + '-payload').innerHTML = '<p>' + 'message.type is undefined' + '<br>' + message.payload + '</p>';
+        document.getElementById(card + '-payload').innerHTML = '<p>' + 'message.type is undefined' + '<br>' + atob(payload.data) + '</p>';
     }
 
 }
 
 function onConnect(message) {
-    if (message.status.toUpperCase() === 'FAIL') {
-            setConnected(true);
-        }
-        return;
+
+    return;
 
 }
 

@@ -26,6 +26,7 @@ package ru.maxeltr.homeMq2t.Service;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.util.concurrent.Promise;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,9 @@ public class UIServiceImpl implements UIService {
 
             Msg msg = new Msg.Builder("")
                     .type("application/json")
-                    .payload("{'name': \"connect\", 'status': \"fail\", 'data': \"<div>Connection attempt cancelled.</div>\"}")
+                    .payload("{\"name\": \"connect\", \"status\": \"fail\", \"data\": \""
+                            + Base64.getEncoder().encodeToString("<div>Connection attempt cancelled.</div>".getBytes())
+                            + "\"}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                     .build();
             this.display(msg);
@@ -79,7 +82,9 @@ public class UIServiceImpl implements UIService {
             logger.info("Connection established failed {}", authFuture.cause());
             Msg msg = new MsgImpl.Builder("")
                     .type("application/json")
-                    .payload("{'name': \"connect\", 'status': \"fail\", 'data': \"<div>Connection established failed.</div>\"}")
+                    .payload("{\"name\": \"connect\", \"status\": \"fail\", \"data\": \""
+                            + Base64.getEncoder().encodeToString("<div>Connection established failed.</div>".getBytes())
+                            + "\"}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                     .build();
             this.display(msg);
@@ -87,7 +92,9 @@ public class UIServiceImpl implements UIService {
             logger.info("Connection established successfully.");
             Msg msg = new MsgImpl.Builder("")
                     .type("application/json")
-                    .payload("{\"name\": \"connect\", \"status\": \"ok\", \"data\":\"" + this.getStartDashboard() + "\"}")
+                    .payload("{\"name\": \"connect\", \"status\": \"ok\", \"data\":\""
+                            + Base64.getEncoder().encodeToString(this.getStartDashboard().getBytes())
+                            + "\"}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                     .build();
             this.display(msg);
@@ -97,7 +104,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void disconnect() {
         logger.info("Do disconnect.");
-		throw new UnsupportedOperationException("Not supported yet.");
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     private String getStartDashboard() {
@@ -111,6 +118,6 @@ public class UIServiceImpl implements UIService {
 
     @Override
     public void display(Msg msg) {
-      this.uiController.display(msg);
+        this.uiController.display(msg);
     }
 }

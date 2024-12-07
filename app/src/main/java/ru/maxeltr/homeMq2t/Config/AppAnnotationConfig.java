@@ -110,7 +110,7 @@ public class AppAnnotationConfig {
         List<String> listOfDashboardNames = (List<String>) env.getProperty("dashboards", List.class);
         for (String dashboardName : listOfDashboardNames) {
             List<String> listOfCardsNames = (List<String>) env.getProperty(dashboardName + ".cards", List.class);
-            for (String cardName : listOfDashboardNames) {
+            for (String cardName : listOfCardsNames) {
                 Card card = new CardImpl(cardName);
                 cards.add(card);
             }
