@@ -91,10 +91,10 @@ class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 	@Value("${will-message:defaultWillMessage}")
 	private String willMessage;
 
-	@Value("${username:defaultUserName}")
-	private String userName;
+	@Value("${mq2t-username:defaultUserName}")
+	private String username;
 
-	@Value("${password:defaultPassword}")
+	@Value("${mq2t-password:defaultPassword}")
 	private String password;
 
     public void setMediator(MqttAckMediator mqttAckMediator) {
@@ -144,7 +144,7 @@ class MqttConnectHandler extends ChannelInboundHandlerAdapter {
                 MqttProperties.NO_PROPERTIES,
                 willTopic,
                 willMessage.getBytes(Charset.forName("UTF-8")),
-                userName,
+                username,
                 password.getBytes(Charset.forName("UTF-8"))
         );
 

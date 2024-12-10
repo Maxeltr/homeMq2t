@@ -46,7 +46,11 @@ public class OutputUIControllerImpl implements OutputUIController {
     @Override
     public void display(Msg msg) {
         simpMessagingTemplate.convertAndSend("/topic/data", msg);
-        logger.debug("Msg was sent to display {}.", msg);
+        logger.debug("Msg was sent to /topic/data. {}", msg);
     }
 
+    public void onConnect(Msg msg) {
+        simpMessagingTemplate.convertAndSend("/topic/onConnect", msg);
+        logger.debug("Msg was sent to /topic/onConnect. {}", msg);
+    }
 }

@@ -12,13 +12,14 @@ function connect() {
     stompClient.connect({}, function (frame) {
         //setConnected(true);
         console.log('Connected: ' + frame);
-//        stompClient.subscribe('/topic/replies', function (message) {
-//            showReplies(JSON.parse(message.body), message.headers.card);
-//        });
+        stompClient.subscribe('/topic/onConnect', function (message) {
+            onConnect(JSON.parse(message.body));
+        });
         stompClient.subscribe('/topic/data', function (message) {
             showData(JSON.parse(message.body));
         });
-        stompClient.send("/app/connect", {}, JSON.stringify({'id': "connect"}));
+        //stompClient.send("/app/connect", {}, JSON.stringify({'topic': "", 'type': "application/json", 'timestamp': Date.now(), 'payload': {'name': "connect"}}));
+        stompClient.send("/app/connect", {}, JSON.stringify({'topic': "onconnecte", 'payload': "-", 'type': "application/json", 'timestamp': "--"}));
     });
 }
 
@@ -36,19 +37,18 @@ function createCommand(id) {
     //stompClient.send("/app/connected", {}, JSON.stringify({'id': "connectsfgdsfgsdfg"}));
 }
 
-
-
-function showData(message) {
+function onConnect(message) {
     var dashboard = document.getElementById('dashboard');
     var payload = JSON.parse(message.payload);
-    var card = payload.name;
-    if (payload.name.toUpperCase() === 'CONNECT') {
-        if (payload.status.toUpperCase() === 'OK') {
-            setConnected(true);
-        }
-        dashboard.innerHTML = atob(payload.data);
-        return;
+    if (payload.name.toUpperCase() === 'ONCONNECT' && payload.status.toUpperCase() === 'OK') {
+        setConnected(true);
     }
+    dashboard.innerHTML = atob(payload.data);
+}
+
+function showData(message) {
+    payload = message.payload;
+    var card = payload.name;
 
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');

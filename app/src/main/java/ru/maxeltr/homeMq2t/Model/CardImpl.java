@@ -26,23 +26,11 @@ package ru.maxeltr.homeMq2t.Model;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Objects;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
 
 /**
  *
@@ -51,26 +39,29 @@ import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
 public class CardImpl implements Card {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CardImpl.class);
-    
-	private String pathname = File.separator + "Static" + File.separator + "card.html";
+
+    static final int MAX_CHAR_TO_PRINT = 256;
+
+    private final String pathname = File.separator + "Static" + File.separator + "card.html";
 
     private String name = "";
 
     private String text = "";
-	
-	private Document view;
+
+    private final Document view;
 
     public CardImpl(String name) {
-        this.name = name;
-		this.view = this.getViewTemplate();
+        this.name = Objects.requireNonNullElse(name, "");
+        this.view = this.getViewTemplate();
     }
 
     public CardImpl(String name, String text) {
-        this.name = name;
-        this.text = text;
-		this.view = this.getViewTemplate();
+        this.name = Objects.requireNonNullElse(name, "");
+        this.text = Objects.requireNonNullElse(text, "");
+        this.view = this.getViewTemplate();
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
@@ -81,45 +72,76 @@ public class CardImpl implements Card {
 
     @Override
     public String getHtml() {
-		return this.view.body().html();
+        return this.view.body().html();
     }
 
-	private Document getViewTemplate() {
-		Document document;
+    private Document getViewTemplate() {
+        Document document;
         try {
             document = this.getTemplateFromResource();
         } catch (IOException ex) {
-            logger.error("Cannot get card template.", ex);
-            return Jsoup.parse("<div><h3>Error</h3><h5>Cannot get card view template.</h5></div>");
+            logger.error("Cannot get card template from resource.", ex);
+            return Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>");
         }
         this.configureTemplate(document);
-		
-		return document;
-	}
-	
+
+        return document;
+    }
+
     private void configureTemplate(Document document) {
         Element el = document.getElementById("card1");
         //el.removeAttr("id");
-        if (el != null) el.attr("id", this.getName());
+        if (el != null) {
+            el.attr("id", this.getName());
+        }
 
         el = document.getElementById("card1-payload");
-        if (el != null) el.attr("id", this.getName() + "-payload");
+        if (el != null) {
+            el.attr("id", this.getName() + "-payload");
+        }
 
         el = document.getElementById("card1-save");
-        if (el != null) el.attr("id", this.getName() + "-save");
+        if (el != null) {
+            el.attr("id", this.getName() + "-save");
+        }
 
         el = document.getElementById("card1-timestamp");
-        if (el != null) el.attr("id", this.getName() + "-timestamp");
+        if (el != null) {
+            el.attr("id", this.getName() + "-timestamp");
+        }
 
-		el = document.getElementById("sendCommand");
-		if (el != null) el.attr("value", this.getName());
-		
+        el = document.getElementById("sendCommand");
+        if (el != null) {
+            el.attr("value", this.getName());
+        }
+
         el = document.select(".card-title").first();
-        if (el != null) el.text(this.getName());
+        if (el != null) {
+            el.text(this.getName());
+        }
     }
 
     private Document getTemplateFromResource() throws IOException {
         InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
         return Jsoup.parse(is, "utf-8", "");
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("CardImpl{")
+                .append("name=").append(this.name)
+                .append(", text=").append(this.text)
+                .append(", view=");
+        String strView = this.view.toString();
+        if (strView.length() > MAX_CHAR_TO_PRINT) {
+            sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));
+            sb.append("...");
+        } else {
+            sb.append(strView);
+        }
+        sb.append("}");
+
+        return sb.toString();
     }
 }

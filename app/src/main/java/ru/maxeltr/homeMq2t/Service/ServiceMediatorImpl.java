@@ -64,7 +64,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void display(Msg data) {
+    public void display(Msg.Builder data) {
         uiService.display(data);
     }
 

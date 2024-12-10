@@ -27,21 +27,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Objects;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.env.Environment;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
-import org.springframework.beans.factory.annotation.Configurable;
-import org.springframework.util.ResourceUtils;
 
 /**
  *
@@ -51,24 +41,30 @@ public class DashboardImpl implements Dashboard {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DashboardImpl.class);
 
-    private String pathname = File.separator + "Static" + File.separator + "dashboard.html";
+    static final int MAX_CHAR_TO_PRINT = 256;
 
-    private List<Card> dashboardCards;
+    private final String pathname = File.separator + "Static" + File.separator + "dashboard.html";
+
+    static final String CARD_ELEMENT_ID = "cards";
+
+    private final List<Card> dashboardCards;
 
     private String name = "";
 
-    private Document view;
+    private final Document view;
 
     public DashboardImpl(String name, List<Card> dashboardCards) {
-        this.name = name;
+        this.name = Objects.requireNonNullElse(name, "");
         this.dashboardCards = dashboardCards;
         this.view = this.getViewTemplate();
     }
 
+    @Override
     public String getName() {
         return this.name;
     }
 
+    @Override
     public List<Card> getCards() {
         return this.dashboardCards;
     }
@@ -84,7 +80,7 @@ public class DashboardImpl implements Dashboard {
             document = this.getTemplateFromResource();
         } catch (IOException ex) {
             logger.error("Cannot get dashboard template from resource.", ex);
-            return Jsoup.parse("<div><h3>Error</h3><h5>Cannot get dashboard view template.</h5></div>");
+            return Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get dashboard view template.</h5></div>");
         }
         this.configureTemplate(document);
 
@@ -92,7 +88,7 @@ public class DashboardImpl implements Dashboard {
     }
 
     private void configureTemplate(Document document) {
-        Element el = document.getElementById("cards");
+        Element el = document.getElementById(CARD_ELEMENT_ID);
         if (el != null) {
             for (Card card : this.getCards()) {
                 el.append(card.getHtml());
@@ -103,5 +99,28 @@ public class DashboardImpl implements Dashboard {
     private Document getTemplateFromResource() throws IOException {
         InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
         return Jsoup.parse(is, "utf-8", "");
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("DashboardImpl{")
+                .append("name=").append(this.name)
+                .append(", dashboardCards=");
+        for (Card card : this.getCards()) {
+            sb.append(card.toString());
+            sb.append(", ");
+        }
+        sb.append("view=");
+        String strView = this.view.toString();
+        if (strView.length() > MAX_CHAR_TO_PRINT) {
+            sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));
+            sb.append("...");
+        } else {
+            sb.append(strView);
+        }
+        sb.append("}");
+
+        return sb.toString();
     }
 }

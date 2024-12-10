@@ -24,12 +24,13 @@
 package ru.maxeltr.homeMq2t.Model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.util.Objects;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-@JsonDeserialize(as = MsgImpl.Builder.class)
+@JsonDeserialize(as = Msg.Builder.class)
 public interface Msg {
 
     static final int MAX_CHAR_TO_PRINT = 256;
@@ -44,8 +45,6 @@ public interface Msg {
 
     public static class Builder {
 
-        private final String id;
-
         protected String topic = "";
 
         protected String payload = "";
@@ -54,35 +53,34 @@ public interface Msg {
 
         protected String timestamp = "";
 
-        public Builder(String id) {
-            this.id = id;
+        public Builder() {
+
         }
 
-        public Builder(String id, String topic, String payload, String type, String timestamp) {
-            this.id = id;
-            this.topic = topic;
-            this.payload = payload;
-            this.type = type;
-            this.timestamp = timestamp;
+        public Builder(String topic, String payload, String type, String timestamp) {
+            this.topic = Objects.requireNonNullElse(topic, "");
+            this.payload = Objects.requireNonNullElse(payload, "");
+            this.type = Objects.requireNonNullElse(type, "");
+            this.timestamp = Objects.requireNonNullElse(timestamp, "");
         }
 
         public Builder topic(String topic) {
-            this.topic = topic;
+            this.topic = Objects.requireNonNullElse(topic, "");
             return this;
         }
 
         public Builder payload(String payload) {
-            this.payload = payload;
+            this.payload = Objects.requireNonNullElse(payload, "");
             return this;
         }
 
         public Builder type(String type) {
-            this.type = type;
+            this.type = Objects.requireNonNullElse(type, "");
             return this;
         }
 
         public Builder timestamp(String timestamp) {
-            this.timestamp = timestamp;
+            this.timestamp = Objects.requireNonNullElse(timestamp, "");
             return this;
         }
 
@@ -90,23 +88,23 @@ public interface Msg {
             return new MsgImpl(this.topic, this.payload, this.type, this.timestamp);
         }
 
-        public String getId() {
-            return this.id;
-        }
-
         @Override
         public String toString() {
-            String subString;
-            if (this.payload instanceof String && this.payload.length() > MAX_CHAR_TO_PRINT) {
-                subString = this.payload.substring(0, MAX_CHAR_TO_PRINT) + "...";
+            StringBuilder sb = new StringBuilder();
+            sb.append("Msg.Builder{")
+                    .append("topic=").append(this.topic)
+                    .append(", type=").append(this.type)
+                    .append(", timestamp=").append(this.timestamp)
+                    .append(", payload=");
+            if (this.payload.length() > MAX_CHAR_TO_PRINT) {
+                sb.append(this.payload.substring(0, MAX_CHAR_TO_PRINT));
+                sb.append("...");
             } else {
-                subString = this.payload;
+                sb.append(this.payload);
             }
-            return "Id: " + this.id
-                    + ", Topic: " + this.topic
-                    + ", Type: " + this.type
-                    + ", Timestamp: " + this.timestamp
-                    + ", Payload: " + subString;
+            sb.append("}");
+
+            return sb.toString();
         }
     }
 }

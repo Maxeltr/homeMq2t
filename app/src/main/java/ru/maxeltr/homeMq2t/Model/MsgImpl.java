@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import java.util.Objects;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -38,18 +40,12 @@ public class MsgImpl implements Msg {
     private final String timestamp;
 
     MsgImpl(String topic, String payload, String type, String timestamp) {
-        this.topic = topic;
-        this.payload = payload;
-        this.type = type;
-        this.timestamp = timestamp;
+        this.topic = Objects.requireNonNullElse(topic, "");
+        this.payload = Objects.requireNonNullElse(payload, "");
+        this.type = Objects.requireNonNullElse(type, "");
+        this.timestamp = Objects.requireNonNullElse(timestamp, "");
     }
 
-//    MsgImpl(Msg.Builder builder) {
-//        this.topic = builder.topic;
-//        this.payload = builder.payload;
-//        this.type = builder.type;
-//        this.timestamp = builder.timestamp;
-//    }
     @Override
     public String getTopic() {
         return this.topic;
@@ -72,15 +68,48 @@ public class MsgImpl implements Msg {
 
     @Override
     public String toString() {
-        String subString;
-        if (this.payload instanceof String && this.payload.length() > MAX_CHAR_TO_PRINT) {
-            subString = this.payload.substring(0, MAX_CHAR_TO_PRINT) + "...";
+        StringBuilder sb = new StringBuilder();
+        sb.append("MsgImpl{")
+                .append(", topic=").append(this.topic)
+                .append(", type=").append(this.type)
+                .append(", timestamp=").append(this.timestamp)
+                .append(", payload=");
+        if (this.payload.length() > MAX_CHAR_TO_PRINT) {
+            sb.append(this.payload.substring(0, MAX_CHAR_TO_PRINT));
+            sb.append("...");
         } else {
-            subString = this.payload;
+            sb.append(this.payload);
         }
-        return "Topic: " + this.topic +
-                ", Type: " + this.type +
-                ", Timestamp: " + this.timestamp +
-                ", Payload: " + subString;
+        sb.append("}");
+
+        return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
+
+        if (!(o instanceof MsgImpl)) {
+            return false;
+        }
+
+        MsgImpl that = (MsgImpl) o;
+
+        return this.topic.equals(that.topic)
+                && this.type.equals(that.type)
+                && this.timestamp.equals(that.timestamp)
+                && this.payload.equals(that.payload);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = this.topic.hashCode();
+        result = 31 * result + this.type.hashCode();
+        result = 31 * result + this.timestamp.hashCode();
+        result = 31 * result + this.payload.hashCode();
+
+        return result;
     }
 }

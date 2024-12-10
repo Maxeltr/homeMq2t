@@ -50,6 +50,9 @@ public class UIServiceImpl implements UIService {
     @Autowired
     private Environment env;
 
+//    @Autowired
+//    Objectmapper objectmapper;
+
     @Autowired
     private OutputUIController uiController;
 
@@ -68,36 +71,34 @@ public class UIServiceImpl implements UIService {
 
         authFuture.awaitUninterruptibly();
         if (authFuture.isCancelled()) {
-            logger.info("Connection attempt cancelled.");
-
-            Msg msg = new Msg.Builder("")
+            logger.info("Connection attempt to remote server was failed.");
+            String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
+            Msg.Builder msg = new Msg.Builder()
                     .type("application/json")
-                    .payload("{\"name\": \"connect\", \"status\": \"fail\", \"data\": \""
-                            + Base64.getEncoder().encodeToString("<div style=\"color:red;\">Connection attempt cancelled.</div>".getBytes())
+                    .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"data\": \""
+                            + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
                             + "\"}")
-                    .timestamp(String.valueOf(Instant.now().toEpochMilli()))
-                    .build();
-            this.display(msg);
+                    .timestamp(String.valueOf(Instant.now().toEpochMilli()));
+            this.uiController.onConnect(msg.build());
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed {}", authFuture.cause());
-            Msg msg = new MsgImpl.Builder("")
+            String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
+            Msg.Builder msg = new MsgImpl.Builder()
                     .type("application/json")
-                    .payload("{\"name\": \"connect\", \"status\": \"fail\", \"data\": \""
-                            + Base64.getEncoder().encodeToString("<div style=\"color:red;\">Connection established failed.</div>".getBytes())
+                    .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"data\": \""
+                            + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
                             + "\"}")
-                    .timestamp(String.valueOf(Instant.now().toEpochMilli()))
-                    .build();
-            this.display(msg);
+                    .timestamp(String.valueOf(Instant.now().toEpochMilli()));
+            this.uiController.onConnect(msg.build());
         } else {
             logger.info("Connection established successfully.");
-            Msg msg = new MsgImpl.Builder("")
+            Msg.Builder msg = new MsgImpl.Builder()
                     .type("application/json")
-                    .payload("{\"name\": \"connect\", \"status\": \"ok\", \"data\":\""
+                    .payload("{\"name\": \"onConnect\", \"status\": \"ok\", \"data\":\""
                             + Base64.getEncoder().encodeToString(this.getStartDashboard().getBytes())
                             + "\"}")
-                    .timestamp(String.valueOf(Instant.now().toEpochMilli()))
-                    .build();
-            this.display(msg);
+                    .timestamp(String.valueOf(Instant.now().toEpochMilli()));
+            this.uiController.onConnect(msg.build());
         }
     }
 
@@ -117,7 +118,9 @@ public class UIServiceImpl implements UIService {
     }
 
     @Override
-    public void display(Msg msg) {
-        this.uiController.display(msg);
+    public void display(Msg.Builder msg) {
+
+        //TODO sanitize name, payload, timestamp...
+        this.uiController.display(msg.build());
     }
 }

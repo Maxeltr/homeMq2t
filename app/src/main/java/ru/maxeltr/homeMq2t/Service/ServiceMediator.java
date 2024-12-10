@@ -38,7 +38,7 @@ public interface ServiceMediator {
 
     public void execute(Msg command);
 
-    public void display(Msg data);
+    public void display(Msg.Builder data);
 
     public void update();
 

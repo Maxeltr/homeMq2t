@@ -37,7 +37,7 @@ public interface UIService {
 
     public void publish(Msg message);
 
-    public void display(Msg message);
+    public void display(Msg.Builder message);
 
     public void setMediator(ServiceMediator mediator);
 }
