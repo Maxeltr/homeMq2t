@@ -99,8 +99,6 @@ public class HmMq2tImpl implements HmMq2t {
 
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
-    private final Map<Integer, MqttSubscribeMessage> waitAckMessQueue = Collections.synchronizedMap(new LinkedHashMap());
-
     private final Map<String, MqttTopicSubscription> activeTopics = Collections.synchronizedMap(new LinkedHashMap());
 
     @Override
@@ -134,6 +132,31 @@ public class HmMq2tImpl implements HmMq2t {
         return authFuture;
 
     }
+	
+	public void disconnect(byte reasonCode) {
+        MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
+        MqttReasonCodeAndPropertiesVariableHeader mqttDisconnectVariableHeader = new MqttReasonCodeAndPropertiesVariableHeader(reasonCode, MqttProperties.NO_PROPERTIES);
+        MqttMessage message = new MqttMessage(mqttFixedHeader, mqttDisconnectVariableHeader);
+
+        this.writeAndFlush(message);
+
+        logger.info("Sent disconnection message reason: {}, d: {}, q: {}, r: {}.",
+                mqttDisconnectVariableHeader.reasonCode(),
+                message.fixedHeader().isDup(),
+                message.fixedHeader().qosLevel(),
+                message.fixedHeader().isRetain()
+        ));
+		
+		TimeUnit.MILLISECONDS.sleep(300));
+		
+		if (this.channel != null) {
+            this.channel.close();
+			logger.info("Close channel");
+        }
+		
+		this.workerGroup.shutdownGracefully();
+        logger.info("Shutdown gracefully");
+    }
 
     private List<MqttTopicSubscription> getSubscriptionsFromConfig() {
         List<MqttTopicSubscription> subscriptions = new ArrayList<>();
@@ -162,13 +185,10 @@ public class HmMq2tImpl implements HmMq2t {
         MqttSubscribeMessage message = new MqttSubscribeMessage(fixedHeader, variableHeader, payload);
 
         Promise<MqttSubAckMessage> subscribeFuture = new DefaultPromise<>(this.workerGroup.next());
-        this.mqttAckMediator.add(id, subscribeFuture);
+        this.mqttAckMediator.add(id, subscribeFuture, message);
         subscribeFuture.addListener((FutureListener) (Future f) -> {
             HmMq2tImpl.this.handleSubAckMessage((MqttSubAckMessage) f.get());
         });
-
-        this.waitAckMessQueue.put(id, message);
-        logger.info("Put subscription message {} to waiting acknowledge message queue. Message: {}", id, message);
 
         this.writeAndFlush(message);
         logger.info("Sent subscribe message id: {}, d: {}, q: {}, r: {}. Message: {}", message.variableHeader().messageId(), message.fixedHeader().isDup(), message.fixedHeader().qosLevel(), message.fixedHeader().isRetain(), message);
@@ -178,9 +198,11 @@ public class HmMq2tImpl implements HmMq2t {
 
     private void handleSubAckMessage(MqttSubAckMessage subAckMessage) {
 		int id = subAckMessage.variableHeader().messageId();
-        MqttSubscribeMessage subscribeMessage = this.waitAckMessQueue.get(id);
+        MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(id);
+		this.mqttAckMediator.remove(id);
+
         if (subscribeMessage == null) {
-            logger.warn("Queue of waiting acknowledge messages returned null instead subscribeMessage");
+            logger.error("Queue of waiting acknowledge messages returned null instead subscribeMessage");
             //TODO resub?
             return;
         }
@@ -197,14 +219,13 @@ public class HmMq2tImpl implements HmMq2t {
                     logger.info("Subscribed on topic: {} with Qos: {}.", topics.get(i).topicName(), topics.get(i).qualityOfService());
 
                 } else {
-                    logger.warn("Subscription on topic: {} with Qos: {} failed. Returned Qos: {}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
+                    logger.warn("Subscription on topic: {} with Qos: {} failed. Granted Qos: {}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
                     //TODO resub with lower QoS?
                 }
             }
         }
-		this.mqttAckMediator.remove(id);
-        this.waitAckMessQueue.remove(id);
-        logger.info("Remove subscription message {} from waiting acknowledge message queue.", id);
+		
+        logger.info("Remove subscription message {} from waiting acknowledge message queue. {}", id, subscribeMessage);
     }
 
     private ChannelFuture writeAndFlush(Object message) {

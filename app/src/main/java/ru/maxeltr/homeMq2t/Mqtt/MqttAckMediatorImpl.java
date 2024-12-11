@@ -49,6 +49,8 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     //private MqttConnectHandler mqttConnectHandler;
 
     private final ConcurrentHashMap<Integer, Promise<? extends MqttMessage>> futures = new ConcurrentHashMap<>();
+	
+	private final ConcurrentHashMap<Integer, <? extends MqttMessage> futures = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void setMediator() {
@@ -59,20 +61,34 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     }
 
     @Override
-    public Promise<? extends MqttMessage> get(String key) {
+    public Promise<? extends MqttMessage> getFuture(String key) {
         return this.futures.get(key);
     }
 
+	@Override
+    public <? extends MqttMessage> getMessage(String key) {
+        return this.messages.get(key);
+    }
+	
+	@Override
+    public boolean isContainId(String key) {
+        return this.messages.contains(key) || this.futures.contains(key);
+    }
+	
     @Override
-    public void add(int key, Promise<? extends MqttMessage> value) {
-        this.futures.put(key, value);
-		logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, value, futures.size());
+    public void add(int key, Promise<? extends MqttMessage> future, <? extends MqttMessage> message) {
+        this.futures.put(key, future);
+		logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, future, futures.size());
+		this.messages.put(key, message);
+		logger.debug("Message was added key: {} message: {}. Amount messages: {}", key, future, messages.size());
     }
 
     @Override
     public void remove(int key) {
         this.futures.remove(key);
 		logger.debug("Future was removed key: {}. Amount futures: {}", key, futures.size());
+		this.messages.remove(key);
+		logger.debug("Message was removed key: {}. Amount messages: {}", key, messages.size());
     }
 
     @Override

@@ -81,7 +81,7 @@ public class UIServiceImpl implements UIService {
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()));
             this.uiController.onConnect(msg.build());
         } else if (!authFuture.isSuccess()) {
-            logger.info("Connection established failed {}", authFuture.cause());
+            logger.info("Connection established failed {}", authFuture.cause().printStackTrace());
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
             Msg.Builder msg = new MsgImpl.Builder()
                     .type("application/json")
