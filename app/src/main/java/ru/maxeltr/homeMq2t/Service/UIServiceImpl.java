@@ -67,7 +67,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void connect() {
         logger.info("Do connect.");
-        Promise<MqttConnAckMessage> authFuture = mediator.connect();
+        Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
 
         authFuture.awaitUninterruptibly();
         if (authFuture.isCancelled()) {
@@ -75,37 +75,37 @@ public class UIServiceImpl implements UIService {
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
             Msg.Builder msg = new Msg.Builder()
                     .type("application/json")
-                    .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"data\": \""
+                    .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                             + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
                             + "\"}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()));
-            this.uiController.onConnect(msg.build());
+            this.display(msg);
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed {}", authFuture.cause().printStackTrace());
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
             Msg.Builder msg = new MsgImpl.Builder()
                     .type("application/json")
-                    .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"data\": \""
+                    .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                             + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
                             + "\"}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()));
-            this.uiController.onConnect(msg.build());
+            this.display(msg);
         } else {
             logger.info("Connection established successfully.");
             Msg.Builder msg = new MsgImpl.Builder()
                     .type("application/json")
-                    .payload("{\"name\": \"onConnect\", \"status\": \"ok\", \"data\":\""
+                    .payload("{\"name\": \"onConnect\", \"status\": \"ok\", \"type\": \"text/html;base64\", \"data\": \""
                             + Base64.getEncoder().encodeToString(this.getStartDashboard().getBytes())
                             + "\"}")
                     .timestamp(String.valueOf(Instant.now().toEpochMilli()));
-            this.uiController.onConnect(msg.build());
+            this.display(msg);
         }
     }
 
     @Override
     public void disconnect() {
         logger.info("Do disconnect.");
-        throw new UnsupportedOperationException("Not supported yet.");
+        this.mediator.connect();
     }
 
     private String getStartDashboard() {

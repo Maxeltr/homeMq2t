@@ -34,5 +34,4 @@ public interface OutputUIController {
 
     public void display(Msg data);
 
-    public void onConnect(Msg data);
 }

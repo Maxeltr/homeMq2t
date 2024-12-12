@@ -177,7 +177,7 @@ public class HmMq2tImpl implements HmMq2t {
         return subscriptions;
     }
 
-    public Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions) {
+    public void subscribe(List<MqttTopicSubscription> subscriptions) {
         int id = getNewMessageId();
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
@@ -192,8 +192,6 @@ public class HmMq2tImpl implements HmMq2t {
 
         this.writeAndFlush(message);
         logger.info("Sent subscribe message id: {}, d: {}, q: {}, r: {}. Message: {}", message.variableHeader().messageId(), message.fixedHeader().isDup(), message.fixedHeader().qosLevel(), message.fixedHeader().isRetain(), message);
-
-        return subscribeFuture;
     }
 
     private void handleSubAckMessage(MqttSubAckMessage subAckMessage) {
@@ -201,11 +199,11 @@ public class HmMq2tImpl implements HmMq2t {
         MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(id);
 		this.mqttAckMediator.remove(id);
 
-        if (subscribeMessage == null) {
+        /* if (subscribeMessage == null) {
             logger.error("Queue of waiting acknowledge messages returned null instead subscribeMessage");
             //TODO resub?
             return;
-        }
+        } */
 
         List<MqttTopicSubscription> topics = subscribeMessage.payload().topicSubscriptions();
         List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
@@ -224,9 +222,123 @@ public class HmMq2tImpl implements HmMq2t {
                 }
             }
         }
-		
-        logger.info("Remove subscription message {} from waiting acknowledge message queue. {}", id, subscribeMessage);
     }
+	
+	public void publishAtMostOnce(String topic, ByteBuf payload, boolean retain) {
+		MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_MOST_ONCE, retain, 0);
+        MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, -1);
+        MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
+		
+		this.writeAndFlush(message);
+		logger.info("Sent publish message id: {}, t: {}, d: {}, q: {}, r: {}.",
+                message.variableHeader().packetId(),
+                message.variableHeader().topicName(),
+                message.fixedHeader().isDup(),
+                message.fixedHeader().qosLevel(),
+                message.fixedHeader().isRetain()
+        );
+
+        return publishFuture;
+	}
+	
+	public void publishAtLeastOnce(String topic, ByteBuf payload, boolean retain) {
+		int id = this.getNewMessageId();
+		MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, retain, 0);
+        MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
+        MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
+		
+		Promise<? extends MqttMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
+		this.mqttAckMediator.add(id, publishFuture, message);
+		publishFuture.addListener((FutureListener) (Future f) -> {
+			HmMq2tImpl.this.handlePubAckMessage((MqttPubAckMessage) f.get());
+		}
+		ReferenceCountUtil.retain(message); //TODO is it nessesary?
+		
+		this.writeAndFlush(message);
+		logger.info("Sent publish message id: {}, t: {}, d: {}, q: {}, r: {}.",
+                message.variableHeader().packetId(),
+                message.variableHeader().topicName(),
+                message.fixedHeader().isDup(),
+                message.fixedHeader().qosLevel(),
+                message.fixedHeader().isRetain()
+        );
+
+        return publishFuture;
+	}
+	
+	private void handlePubAckMessage(MqttPubAckMessage pubAckMessage) {
+		int id = pubAckMessage.variableHeader().messageId();
+		MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
+		this.mqttAckMediator.remove(id);
+		
+		/* if (publishMessage == null) {
+			logger.error("Collection of waiting confirmation publish QoS1 messages returned null instead publishMessage");
+			return;
+		} */
+
+		ReferenceCountUtil.release(publishMessage);
+	}
+	
+	public void publishExactlyOnce(String topic, ByteBuf payload, boolean retain) {
+		int id = this.getNewMessageId();
+		MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.EXACTLY_ONCE, retain, 0);
+        MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
+        MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
+		
+		Promise<? extends MqttMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
+		this.mqttAckMediator.add(id, publishFuture, message);
+		publishFuture.addListener((FutureListener) (Future f) -> {
+			HmMq2tImpl.this.handlePubRecMessage((MqttPubRecMessage) f.get());
+		}
+		ReferenceCountUtil.retain(message); //TODO is it nessesary?
+		
+		this.writeAndFlush(message);
+		logger.info("Sent publish message id: {}, t: {}, d: {}, q: {}, r: {}.",
+                message.variableHeader().packetId(),
+                message.variableHeader().topicName(),
+                message.fixedHeader().isDup(),
+                message.fixedHeader().qosLevel(),
+                message.fixedHeader().isRetain()
+        );
+
+        return publishFuture;
+	}
+	
+	private void handlePubRecMessage(MqttPubRecMessage pubRecMessage) {
+		int id = pubRecMessage.variableHeader().messageId();
+		MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
+		this.mqttAckMediator.remove(id);
+		
+		/* if (publishMessage == null) {
+			logger.error("Collection of waiting confirmation publish QoS2 messages returned null instead publishMessage");
+			return;
+		} */
+
+		ReferenceCountUtil.release(publishMessage);
+		this.sendPubRelMessage(id);
+	}
+	
+	private void sendPubRelMessage(int id) {
+		MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBREL, false, MqttQoS.AT_LEAST_ONCE, false, 0);
+		MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
+        MqttMessage pubrelMessage = new MqttMessage(fixedHeader, variableHeader);
+		
+		Promise<? extends MqttMessage> pubRelFuture = new DefaultPromise<>(this.workerGroup.next());
+		this.mqttAckMediator.add(id, pubRelFuture, pubrelMessage);
+		pubRelFuture.addListener((FutureListener) (Future f) -> {
+			HmMq2tImpl.this.handlePubCompMessage((MqttMessage) f.get());
+		}
+		ReferenceCountUtil.retain(pubrelMessage); //TODO is it nessesary?
+		
+	}
+	
+	private void handlePubCompMessage(MqttMessage pubCompMessage) {
+		int id = pubCompMessage.variableHeader().messageId();
+		MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
+		this.mqttAckMediator.remove(id);
+		ReferenceCountUtil.release(pubrelMessage);
+		
+	}
 
     private ChannelFuture writeAndFlush(Object message) {
         if (this.channel == null) {
@@ -243,11 +355,6 @@ public class HmMq2tImpl implements HmMq2t {
     private int getNewMessageId() {
         this.nextMessageId.compareAndSet(0xffff, 1);
         return this.nextMessageId.getAndIncrement();
-    }
-
-    @Override
-    public void disconnect() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
