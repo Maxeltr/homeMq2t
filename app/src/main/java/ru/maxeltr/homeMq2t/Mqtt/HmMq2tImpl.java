@@ -191,20 +191,20 @@ public class HmMq2tImpl implements HmMq2t {
         });
 
         this.writeAndFlush(message);
-        logger.info("Sent subscribe message id: {}, d: {}, q: {}, r: {}. Message: {}", message.variableHeader().messageId(), message.fixedHeader().isDup(), message.fixedHeader().qosLevel(), message.fixedHeader().isRetain(), message);
+        logger.info("Sent SUBSCRIBE message id: {}, d: {}, q: {}, r: {}. Message - [{}]", message.variableHeader().messageId(), message.fixedHeader().isDup(), message.fixedHeader().qosLevel(), message.fixedHeader().isRetain(), message);
     }
 
     private void handleSubAckMessage(MqttSubAckMessage subAckMessage) {
 		int id = subAckMessage.variableHeader().messageId();
         MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(id);
-		this.mqttAckMediator.remove(id);
-
         /* if (subscribeMessage == null) {
-            logger.error("Queue of waiting acknowledge messages returned null instead subscribeMessage");
+  			logger.warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already. [{}].", subAckMessage);
             //TODO resub?
             return;
         } */
-
+		this.mqttAckMediator.remove(id);
+		logger.info("Subscribe message has been acknowledged. SUBSCRIBE message - [{}]. SUBACK message - [{}].", subscribeMessage, subAckMessage);
+		
         List<MqttTopicSubscription> topics = subscribeMessage.payload().topicSubscriptions();
         List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
         if (subAckQos.size() != topics.size()) {
@@ -237,8 +237,6 @@ public class HmMq2tImpl implements HmMq2t {
                 message.fixedHeader().qosLevel(),
                 message.fixedHeader().isRetain()
         );
-
-        return publishFuture;
 	}
 	
 	public void publishAtLeastOnce(String topic, ByteBuf payload, boolean retain) {
@@ -262,20 +260,17 @@ public class HmMq2tImpl implements HmMq2t {
                 message.fixedHeader().qosLevel(),
                 message.fixedHeader().isRetain()
         );
-
-        return publishFuture;
 	}
 	
 	private void handlePubAckMessage(MqttPubAckMessage pubAckMessage) {
 		int id = pubAckMessage.variableHeader().messageId();
 		MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
-		this.mqttAckMediator.remove(id);
-		
 		/* if (publishMessage == null) {
-			logger.error("Collection of waiting confirmation publish QoS1 messages returned null instead publishMessage");
-			return;
-		} */
-
+			logger.warn("There is no stored PUBLISH message for PUBACK message. May be it was acknowledged already. [{}].", pubAckMessage);
+			 */return;
+		}
+		this.mqttAckMediator.remove(id);
+		logger.info("PublishMessage has been acknowledged. PUBLISH message - [{}]. PUBACK message - [{}].", publishMessage, pubAckMessage);
 		ReferenceCountUtil.release(publishMessage);
 	}
 	
@@ -300,20 +295,17 @@ public class HmMq2tImpl implements HmMq2t {
                 message.fixedHeader().qosLevel(),
                 message.fixedHeader().isRetain()
         );
-
-        return publishFuture;
 	}
 	
 	private void handlePubRecMessage(MqttPubRecMessage pubRecMessage) {
 		int id = pubRecMessage.variableHeader().messageId();
 		MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
-		this.mqttAckMediator.remove(id);
-		
-		/* if (publishMessage == null) {
-			logger.error("Collection of waiting confirmation publish QoS2 messages returned null instead publishMessage");
+		/* if (publishMessage == null ) {
+			logger.warn("There is no stored PUBLISH message for PUBREC message. May be it was acknowledged already. [{}].", pubRecMessage);
 			return;
 		} */
-
+		this.mqttAckMediator.remove(id);
+		logger.info("PublishMessage has been acknowledged. PUBLISH message - [{}]. PUBREC message - [{}].", publishMessage, pubRecMessage);
 		ReferenceCountUtil.release(publishMessage);
 		this.sendPubRelMessage(id);
 	}
@@ -330,12 +322,24 @@ public class HmMq2tImpl implements HmMq2t {
 		}
 		ReferenceCountUtil.retain(pubrelMessage); //TODO is it nessesary?
 		
+		this.writeAndFlush(pubrelMessage);
+		logger.info("Sent PUBREL message id: {}, d: {}, q: {}, r: {}.",
+                variableHeader.messageId(),
+                pubrelMessage.fixedHeader().isDup(),
+                pubrelMessage.fixedHeader().qosLevel(),
+                pubrelMessage.fixedHeader().isRetain()
+        ));
 	}
 	
 	private void handlePubCompMessage(MqttMessage pubCompMessage) {
 		int id = pubCompMessage.variableHeader().messageId();
 		MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
+		/* if (pubrelMessage == null ) {
+			logger.warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already. [{}].", pubCompMessage);
+			return;
+		} */
 		this.mqttAckMediator.remove(id);
+		logger.info("PubRelMessage has been acknowledged. PUBREL message - [{}]. PUBCOMP message - [{}].", pubrelMessage, pubCompMessage);
 		ReferenceCountUtil.release(pubrelMessage);
 		
 	}
@@ -355,11 +359,6 @@ public class HmMq2tImpl implements HmMq2t {
     private int getNewMessageId() {
         this.nextMessageId.compareAndSet(0xffff, 1);
         return this.nextMessageId.getAndIncrement();
-    }
-
-    @Override
-    public Promise<MqttSubAckMessage> subscribe() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override

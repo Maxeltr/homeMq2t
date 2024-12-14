@@ -12,9 +12,9 @@ function connect() {
     stompClient.connect({}, function (frame) {
         //setConnected(true);
         console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/onConnect', function (message) {
-            onConnect(JSON.parse(message.body));
-        });
+        //stompClient.subscribe('/topic/onConnect', function (message) {
+        //    onConnect(JSON.parse(message.body));
+        //});
         stompClient.subscribe('/topic/data', function (message) {
             showData(JSON.parse(message.body));
         });
@@ -37,19 +37,37 @@ function createCommand(id) {
     //stompClient.send("/app/connected", {}, JSON.stringify({'id': "connectsfgdsfgsdfg"}));
 }
 
-function onConnect(message) {
+/* function onConnect(message) {
     var dashboard = document.getElementById('dashboard');
     var payload = JSON.parse(message.payload);
     if (payload.name.toUpperCase() === 'ONCONNECT' && payload.status.toUpperCase() === 'OK') {
         setConnected(true);
     }
     dashboard.innerHTML = atob(payload.data);
-}
+} */
 
 function showData(message) {
-    payload = message.payload;
+	if (message.type.toUpperCase() !== "APPLICATION/JSON") {
+		console.log("Error. Incorrect payload type. Require application/json");
+		document.getElementById('dashboard').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type. Require application/json.</div>";
+		return;
+	}
+	
+	var payload = JSON.parse(message.payload);
+    if (payload.name.toUpperCase() === 'ONCONNECT') {
+		if (payload.name.type.toUpperCase() === 'TEXT/HTML;BASE64') { 
+			document.getElementById('dashboard').innerHTML = atob(payload.data);
+		} else {
+			console.log("Error. Incorrect payload type. Require text/html;base64");
+		}
+		if (payload.name.status.toUpperCase() === 'OK') {
+			setConnected(true);
+		}
+		return;
+	}
+	
     var card = payload.name;
-
+	
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
         document.getElementById(card + '-timestamp').innerHTML === 'undefined';

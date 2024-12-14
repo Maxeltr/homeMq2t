@@ -52,7 +52,6 @@ class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttConnectHandler.class);
 
-    @Autowired
     private MqttAckMediator mqttAckMediator;
 
 	@Value("${protocol-name:MQTT}")
@@ -175,7 +174,6 @@ class MqttConnectHandler extends ChannelInboundHandlerAdapter {
             case CONNECTION_REFUSED_SERVER_UNAVAILABLE:
             case CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION:
                 if (!future.isDone()) {
-                    //future.setSuccess(message);
                     future.cancel(true);
                 }
                 logger.info("Received CONNACK message. Connection refused {}.", message.variableHeader());
