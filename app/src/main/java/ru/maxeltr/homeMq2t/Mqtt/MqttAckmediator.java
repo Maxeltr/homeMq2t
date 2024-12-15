@@ -35,11 +35,17 @@ public interface MqttAckMediator {
 
     public Promise<? extends MqttMessage> get(String key);
 
-    public void add(int key, Promise<? extends MqttMessage> value);
+    public void add(int key, Promise<? extends MqttMessage> future, MqttMessage  message);
 
     public void remove(int key);
 
     public void setConnectFuture(Promise<MqttConnAckMessage> future);
 
     public Promise<MqttConnAckMessage> getConnectFuture();
+
+    public boolean isContainId(String key);
+
+    public Promise<? extends MqttMessage> getFuture(String key);
+
+    public <T extends MqttMessage> T getMessage(String key);
 }

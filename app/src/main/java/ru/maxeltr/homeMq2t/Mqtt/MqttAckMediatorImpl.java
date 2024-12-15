@@ -38,29 +38,28 @@ import org.springframework.beans.factory.annotation.Autowired;
  */
 public class MqttAckMediatorImpl implements MqttAckMediator {
 
-	private static final Logger logger = LoggerFactory.getLogger(MqttAckMediatorImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(MqttAckMediatorImpl.class);
 
     private Promise<MqttConnAckMessage> connectFuture;
 
     @Autowired
     private HmMq2t hmMq2t;
 
-	@Autowired
+    @Autowired
     private MqttPublishHandler publishHandler;
-	
+
     //@Autowired
     //private MqttConnectHandler mqttConnectHandler;
-
     private final ConcurrentHashMap<Integer, Promise<? extends MqttMessage>> futures = Collections.synchronizedMap(new LinkedHashMap());
-	
-	private final ConcurrentHashMap<Integer, <? extends MqttMessage> messages = Collections.synchronizedMap(new LinkedHashMap());
+
+    private final ConcurrentHashMap<Integer, <? extends MqttMessage>> messages  = Collections.synchronizedMap(new LinkedHashMap());
 
     @PostConstruct
     public void setMediator() {
         hmMq2t.setMediator(this);
-		logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, hmMq2t.class);
-		publishHandler.setMediator(this);
-		logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, publishHandler.class);
+        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, hmMq2t.class);
+        publishHandler.setMediator(this);
+        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, publishHandler.class);
         //mqttConnectHandler.setMediator(this);
     }
 
@@ -69,36 +68,36 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
         return this.futures.get(key);
     }
 
-	@Override
+    @Override
     public <? extends MqttMessage> getMessage(String key) {
         return this.messages.get(key);
     }
-	
-	@Override
+
+    @Override
     public boolean isContainId(String key) {
         return this.messages.contains(key) || this.futures.contains(key);
     }
-	
+
     @Override
     public void add(int key, Promise<? extends MqttMessage> future, <? extends MqttMessage> message) {
         this.futures.put(key, future);
-		logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, future, futures.size());
-		this.messages.put(key, message);
-		logger.debug("Message was added key: {} message: {}. Amount messages: {}", key, future, messages.size());
+        logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, future, futures.size());
+        this.messages.put(key, message);
+        logger.debug("Message was added key: {} message: {}. Amount messages: {}", key, future, messages.size());
     }
 
     @Override
     public void remove(int key) {
         this.futures.remove(key);
-		logger.debug("Future was removed key: {}. Amount futures: {}", key, futures.size());
-		this.messages.remove(key);
-		logger.debug("Message was removed key: {}. Amount messages: {}", key, messages.size());
+        logger.debug("Future was removed key: {}. Amount futures: {}", key, futures.size());
+        this.messages.remove(key);
+        logger.debug("Message was removed key: {}. Amount messages: {}", key, messages.size());
     }
 
     @Override
     public void setConnectFuture(Promise<MqttConnAckMessage> future) {
         this.connectFuture = future;
-		logger.debug("Connect future was set: {}.", future);
+        logger.debug("Connect future was set: {}.", future);
     }
 
     public Promise<MqttConnAckMessage> getConnectFuture() {
