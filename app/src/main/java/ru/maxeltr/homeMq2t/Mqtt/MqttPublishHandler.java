@@ -92,7 +92,7 @@ public class MqttPublishHandler extends SimpleChannelInboundHandler<MqttMessage>
                         pubAckMessage.fixedHeader().qosLevel(),
                         pubAckMessage.fixedHeader().isRetain()
                 );
-                Promise future = (Promise<MqttPublishMessage>) this.mqttAckMediator.get(String.valueOf(pubAckMessage.variableHeader().messageId()));
+                Promise future = (Promise<MqttPublishMessage>) this.mqttAckMediator.getFuture(pubAckMessage.variableHeader().messageId());
                 if (future == null) {
                     logger.warn("There is no stored future of PUBLISH message for PUBACK message. May be it was acknowledged already. [{}]. ", pubAckMessage);
                     return;
@@ -140,7 +140,7 @@ public class MqttPublishHandler extends SimpleChannelInboundHandler<MqttMessage>
     private void handlePubComp(MqttMessage message) {
         MqttMessageIdVariableHeader pubCompVariableHeader = (MqttMessageIdVariableHeader) message.variableHeader();
         int id = pubCompVariableHeader.messageId();
-        Promise future = (Promise<MqttMessage>) this.mqttAckMediator.get(String.valueOf(id));
+        Promise future = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(id);
         if (future == null) {
             logger.warn("There is no stored future of PUBREL message for PUBCOMP message. May be it was acknowledged already. [{}]. ", message);
             return;
@@ -150,7 +150,7 @@ public class MqttPublishHandler extends SimpleChannelInboundHandler<MqttMessage>
 
     private void handlePubrec(Channel channel, MqttMessage message) {
         MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.variableHeader();
-        Promise future = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(String.valueOf(variableHeader.messageId()));
+        Promise future = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(variableHeader.messageId());
         if (future == null) {
             logger.warn("There is no stored future of PUBLISH message for PUBREC message.May be it was acknowledged already. [{}].", message);
             return;
@@ -213,7 +213,7 @@ public class MqttPublishHandler extends SimpleChannelInboundHandler<MqttMessage>
 
                 break;
             case EXACTLY_ONCE:
-                if (!this.mqttAckMediator.isContainId(String.valueOf(message.variableHeader().packetId()))) {
+                if (!this.mqttAckMediator.isContainId(message.variableHeader().packetId())) {
                     ReferenceCountUtil.retain(message);
                     //save message and future
                     //Promise<? extends MqttMessage> pubRecFuture = new DefaultPromise<>(this.workerGroup.next());

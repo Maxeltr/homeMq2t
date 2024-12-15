@@ -27,6 +27,9 @@ import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -50,36 +53,37 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
 
     //@Autowired
     //private MqttConnectHandler mqttConnectHandler;
-    private final ConcurrentHashMap<Integer, Promise<? extends MqttMessage>> futures = Collections.synchronizedMap(new LinkedHashMap());
+    
+    private final Map<Integer, Promise<? extends MqttMessage>> futures = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    private final ConcurrentHashMap<Integer, <? extends MqttMessage>> messages  = Collections.synchronizedMap(new LinkedHashMap());
-
+    private final Map<Integer, MqttMessage> messages  = Collections.synchronizedMap(new LinkedHashMap<>());
+    
     @PostConstruct
     public void setMediator() {
         hmMq2t.setMediator(this);
-        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, hmMq2t.class);
+        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.hmMq2t.getClass());
         publishHandler.setMediator(this);
-        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, publishHandler.class);
+        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.publishHandler.getClass());
         //mqttConnectHandler.setMediator(this);
     }
 
     @Override
-    public Promise<? extends MqttMessage> getFuture(String key) {
+    public Promise<? extends MqttMessage> getFuture(int key) {
         return this.futures.get(key);
     }
 
     @Override
-    public <? extends MqttMessage> getMessage(String key) {
+    public MqttMessage getMessage(int key) {
         return this.messages.get(key);
     }
 
     @Override
-    public boolean isContainId(String key) {
-        return this.messages.contains(key) || this.futures.contains(key);
+    public boolean isContainId(int key) {
+        return this.messages.containsKey(key) || this.futures.containsKey(key);
     }
 
     @Override
-    public void add(int key, Promise<? extends MqttMessage> future, <? extends MqttMessage> message) {
+    public void add(int key, Promise<? extends MqttMessage> future, MqttMessage message) {
         this.futures.put(key, future);
         logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, future, futures.size());
         this.messages.put(key, message);
@@ -100,6 +104,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
         logger.debug("Connect future was set: {}.", future);
     }
 
+    @Override
     public Promise<MqttConnAckMessage> getConnectFuture() {
         return this.connectFuture;
     }

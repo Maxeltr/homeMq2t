@@ -82,6 +82,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     private Channel channel;
 
+    
     private MqttAckMediator mqttAckMediator;
 
     private ServiceMediator serviceMediator;
@@ -211,7 +212,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     private void handleSubAckMessage(MqttSubAckMessage subAckMessage) {
         int id = subAckMessage.variableHeader().messageId();
-        MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(String.valueOf(id));
+        MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(id);
         /* if (subscribeMessage == null) {
   			logger.warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already. [{}].", subAckMessage);
             //TODO resub?
@@ -279,7 +280,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     private void handlePubAckMessage(MqttPubAckMessage pubAckMessage) {
         int id = pubAckMessage.variableHeader().messageId();
-        MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(String.valueOf(id));
+        MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
         /* if (publishMessage == null) {
 			logger.warn("There is no stored PUBLISH message for PUBACK message. May be it was acknowledged already. [{}].", pubAckMessage);
 			 return;
@@ -314,11 +315,11 @@ public class HmMq2tImpl implements HmMq2t {
 
     private void handlePubRecMessage(MqttMessage pubRecMessage) {
         int id = ((MqttMessageIdVariableHeader)pubRecMessage.variableHeader()).messageId();
-        MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(String.valueOf(id));
+        MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
         /* if (publishMessage == null ) {
-			logger.warn("There is no stored PUBLISH message for PUBREC message. May be it was acknowledged already. [{}].", pubRecMessage);
-			return;
-		} */
+            logger.warn("There is no stored PUBLISH message for PUBREC message. May be it was acknowledged already. [{}].", pubRecMessage);
+            return;
+        } */
         this.mqttAckMediator.remove(id);
         logger.info("PublishMessage has been acknowledged. PUBLISH message - [{}]. PUBREC message - [{}].", publishMessage, pubRecMessage);
         ReferenceCountUtil.release(publishMessage);
@@ -348,7 +349,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     private void handlePubCompMessage(MqttMessage pubCompMessage) {
         int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();
-        MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(String.valueOf(id));
+        MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
         /* if (pubrelMessage == null ) {
 			logger.warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already. [{}].", pubCompMessage);
 			return;
