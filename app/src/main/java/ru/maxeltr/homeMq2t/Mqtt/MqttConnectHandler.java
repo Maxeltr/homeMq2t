@@ -48,58 +48,61 @@ import org.springframework.beans.factory.annotation.Value;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-class MqttConnectHandler extends ChannelInboundHandlerAdapter {
+public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttConnectHandler.class);
 
-    private MqttAckMediator mqttAckMediator;
+//    @Autowired
+    private final MqttAckMediator mqttAckMediator;
 
-	@Value("${protocol-name:MQTT}")
-	private String protocolName = "MQTT";
+    @Value("${protocol-name:MQTT}")
+    private String protocolName = "MQTT";
 
-	@Value("${protocol-version:4}")
-	private int version;
+    @Value("${protocol-version:4}")
+    private int version;
 
-	@Value("${has-user-name:true}")
-	private Boolean hasUserName;
+    @Value("${has-user-name:true}")
+    private Boolean hasUserName;
 
-	@Value("${has-password:true}")
-	private Boolean hasPassword;
+    @Value("${has-password:true}")
+    private Boolean hasPassword;
 
-	@Value("${will-retain:false}")
-	private Boolean willRetain;
+    @Value("${will-retain:false}")
+    private Boolean willRetain;
 
-	@Value("${will-qos:0}")
-	private int willQos;
+    @Value("${will-qos:0}")
+    private int willQos;
 
-	@Value("${will-flag:false}")
-	private Boolean willFlag;
+    @Value("${will-flag:false}")
+    private Boolean willFlag;
 
-	@Value("${clean-session:true}")
-	private Boolean cleanSession;
+    @Value("${clean-session:true}")
+    private Boolean cleanSession;
 
-	@Value("${keep-alive-timer:20}")
-	private int keepAliveTimer;
+    @Value("${keep-alive-timer:20}")
+    private int keepAliveTimer;
 
-	@Value("${client-id:defaultClientId}")
-	private String clientId;
+    @Value("${client-id:defaultClientId}")
+    private String clientId;
 
-	@Value("${will-topic:defaultWillTopic}")
-	private String willTopic;
+    @Value("${will-topic:defaultWillTopic}")
+    private String willTopic;
 
-	@Value("${will-message:defaultWillMessage}")
-	private String willMessage;
+    @Value("${will-message:defaultWillMessage}")
+    private String willMessage;
 
-	@Value("${mq2t-username:defaultUserName}")
-	private String username;
+    @Value("${mq2t-username:defaultUserName}")
+    private String username;
 
-	@Value("${mq2t-password:defaultPassword}")
-	private String password;
+    @Value("${mq2t-password:defaultPassword}")
+    private String password;
 
-    public void setMediator(MqttAckMediator mqttAckMediator) {
+    MqttConnectHandler(MqttAckMediator mqttAckMediator) {
         this.mqttAckMediator = mqttAckMediator;
     }
-
+//    public void setMediator(MqttAckMediator mqttAckMediator) {
+//        this.mqttAckMediator = mqttAckMediator;
+//    }
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof MqttMessage)) {
@@ -182,8 +185,6 @@ class MqttConnectHandler extends ChannelInboundHandlerAdapter {
                 // Don't start reconnect logic here
                 break;
         }
-
-
 
     }
 }

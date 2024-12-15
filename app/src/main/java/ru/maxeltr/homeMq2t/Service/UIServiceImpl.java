@@ -103,9 +103,9 @@ public class UIServiceImpl implements UIService {
     }
 
     @Override
-    public void disconnect() {
-        logger.info("Do disconnect.");
-        this.mediator.connect();
+    public void disconnect(byte reasonCode) {
+        logger.info("Do disconnect with reason code {}.", reasonCode);
+        this.mediator.disconnect(reasonCode);
     }
 
     private String getStartDashboard() {

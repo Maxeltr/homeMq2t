@@ -48,9 +48,17 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttSubscriptionHandler.class);
 
-    @Autowired
+//    @Autowired
     private MqttAckMediator mqttAckMediator;
 
+    MqttSubscriptionHandler(MqttAckMediator mqttAckMediator) {
+        this.mqttAckMediator = mqttAckMediator;
+    }
+    
+//    public void setMediator(MqttAckMediator mqttAckMediator) {
+//        this.mqttAckMediator = mqttAckMediator;
+//    }
+    
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof MqttMessage)) {

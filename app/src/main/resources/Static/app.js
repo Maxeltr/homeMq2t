@@ -38,36 +38,36 @@ function createCommand(id) {
 }
 
 /* function onConnect(message) {
-    var dashboard = document.getElementById('dashboard');
-    var payload = JSON.parse(message.payload);
-    if (payload.name.toUpperCase() === 'ONCONNECT' && payload.status.toUpperCase() === 'OK') {
-        setConnected(true);
-    }
-    dashboard.innerHTML = atob(payload.data);
-} */
+ var dashboard = document.getElementById('dashboard');
+ var payload = JSON.parse(message.payload);
+ if (payload.name.toUpperCase() === 'ONCONNECT' && payload.status.toUpperCase() === 'OK') {
+ setConnected(true);
+ }
+ dashboard.innerHTML = atob(payload.data);
+ } */
 
 function showData(message) {
-	if (message.type.toUpperCase() !== "APPLICATION/JSON") {
-		console.log("Error. Incorrect payload type. Require application/json");
-		document.getElementById('dashboard').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type. Require application/json.</div>";
-		return;
-	}
-	
-	var payload = JSON.parse(message.payload);
+    if (message.type.toUpperCase() !== "APPLICATION/JSON") {
+        console.log("Error. Incorrect payload type. Require application/json");
+        document.getElementById('dashboard').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type. Require application/json.</div>";
+        return;
+    }
+
+    var payload = JSON.parse(message.payload);
     if (payload.name.toUpperCase() === 'ONCONNECT') {
-		if (payload.name.type.toUpperCase() === 'TEXT/HTML;BASE64') { 
-			document.getElementById('dashboard').innerHTML = atob(payload.data);
-		} else {
-			console.log("Error. Incorrect payload type. Require text/html;base64");
-		}
-		if (payload.name.status.toUpperCase() === 'OK') {
-			setConnected(true);
-		}
-		return;
-	}
-	
+        if (payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
+            document.getElementById('dashboard').innerHTML = atob(payload.data);
+        } else {
+            console.log("Error. Incorrect payload type. Require text/html;base64");
+        }
+        if (payload.status.toUpperCase() === 'OK') {
+            setConnected(true);
+        }
+        return;
+    }
+
     var card = payload.name;
-	
+
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
         document.getElementById(card + '-timestamp').innerHTML === 'undefined';

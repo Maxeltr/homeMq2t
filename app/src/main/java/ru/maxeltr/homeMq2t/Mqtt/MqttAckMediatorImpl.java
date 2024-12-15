@@ -45,14 +45,14 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
 
     private Promise<MqttConnAckMessage> connectFuture;
 
-    @Autowired
-    private HmMq2t hmMq2t;
+//    @Autowired
+//    private HmMq2t hmMq2t;
 
     @Autowired
-    private MqttPublishHandler publishHandler;
+    private MqttPublishHandlerImpl publishHandler;
 
-    //@Autowired
-    //private MqttConnectHandler mqttConnectHandler;
+//    @Autowired
+//    private MqttSubscriptionHandler mqttSubscriptionHandler;
     
     private final Map<Integer, Promise<? extends MqttMessage>> futures = Collections.synchronizedMap(new LinkedHashMap<>());
 
@@ -60,11 +60,12 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     
     @PostConstruct
     public void setMediator() {
-        hmMq2t.setMediator(this);
-        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.hmMq2t.getClass());
+//        hmMq2t.setMediator(this);
+//        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.hmMq2t.getClass());
         publishHandler.setMediator(this);
         logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.publishHandler.getClass());
-        //mqttConnectHandler.setMediator(this);
+//        mqttSubscriptionHandler.setMediator(this);
+//        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.mqttSubscriptionHandler.getClass());
     }
 
     @Override

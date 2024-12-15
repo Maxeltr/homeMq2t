@@ -30,6 +30,7 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Service.UIService;
+import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 
 /**
  *
@@ -54,6 +55,6 @@ public class InputUIControllerImpl implements InputUIController {
     @MessageMapping("/disconnect")
     public void disconnect(Msg.Builder msg) {
         logger.info("Do disconnect. Msg.Builder was received - {}.", msg);
-        uiService.disconnect();
+        uiService.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
     }
 }

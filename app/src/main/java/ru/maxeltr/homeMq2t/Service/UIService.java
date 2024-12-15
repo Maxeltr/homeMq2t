@@ -33,7 +33,7 @@ public interface UIService {
 
     public void connect();
 
-    public void disconnect();
+    public void disconnect(byte reasonCode);
 
     public void publish(Msg message);
 

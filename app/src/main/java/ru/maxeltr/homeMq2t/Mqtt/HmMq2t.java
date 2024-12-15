@@ -24,7 +24,7 @@ public interface HmMq2t {
 
     public void publish();
 
-    public void setMediator(MqttAckMediator mqttAckMediator);
+//    public void setMediator(MqttAckMediator mqttAckMediator);
 
     public void setMediator(ServiceMediator serviceMediator);
 }

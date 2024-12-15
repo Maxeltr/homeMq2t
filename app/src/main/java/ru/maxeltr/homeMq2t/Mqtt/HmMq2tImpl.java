@@ -82,7 +82,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     private Channel channel;
 
-    
+    @Autowired
     private MqttAckMediator mqttAckMediator;
 
     private ServiceMediator serviceMediator;
@@ -93,8 +93,8 @@ public class HmMq2tImpl implements HmMq2t {
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
 
-    @Autowired
-    private AppProperties appProperties;
+//    @Autowired
+//    private AppProperties appProperties;
 
     @Value("${host:127.0.0.1}")
     private String host;
@@ -112,6 +112,11 @@ public class HmMq2tImpl implements HmMq2t {
 
     private final Map<String, MqttTopicSubscription> activeTopics = Collections.synchronizedMap(new LinkedHashMap());
 
+//    @Override
+//    public void setMediator(MqttAckMediator mqttAckMediator) {
+//        this.mqttAckMediator = mqttAckMediator;
+//    }
+    
     @Override
     public Promise<MqttConnAckMessage> connect() {
         workerGroup = new NioEventLoopGroup();
@@ -144,6 +149,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     }
 
+    @Override
     public void disconnect(byte reasonCode) {
         MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
         MqttReasonCodeAndPropertiesVariableHeader mqttDisconnectVariableHeader = new MqttReasonCodeAndPropertiesVariableHeader(reasonCode, MqttProperties.NO_PROPERTIES);
@@ -214,12 +220,12 @@ public class HmMq2tImpl implements HmMq2t {
         int id = subAckMessage.variableHeader().messageId();
         MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(id);
         /* if (subscribeMessage == null) {
-  			logger.warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already. [{}].", subAckMessage);
+            logger.warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already. [{}].", subAckMessage);
             //TODO resub?
             return;
         } */
         this.mqttAckMediator.remove(id);
-        logger.info("Subscribe message has been acknowledged. SUBSCRIBE message - [{}]. SUBACK message - [{}].", subscribeMessage, subAckMessage);
+        logger.info("Subscribe message {} has been acknowledged. SUBSCRIBE message - [{}]. SUBACK message - [{}].", id, subscribeMessage, subAckMessage);
 
         List<MqttTopicSubscription> topics = subscribeMessage.payload().topicSubscriptions();
         List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
@@ -282,9 +288,9 @@ public class HmMq2tImpl implements HmMq2t {
         int id = pubAckMessage.variableHeader().messageId();
         MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
         /* if (publishMessage == null) {
-			logger.warn("There is no stored PUBLISH message for PUBACK message. May be it was acknowledged already. [{}].", pubAckMessage);
-			 return;
-		}*/
+            logger.warn("There is no stored PUBLISH message for PUBACK message. May be it was acknowledged already. [{}].", pubAckMessage);
+             return;
+        }*/
         this.mqttAckMediator.remove(id);
         logger.info("PublishMessage has been acknowledged. PUBLISH message - [{}]. PUBACK message - [{}].", publishMessage, pubAckMessage);
         ReferenceCountUtil.release(publishMessage);
@@ -351,9 +357,9 @@ public class HmMq2tImpl implements HmMq2t {
         int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();
         MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
         /* if (pubrelMessage == null ) {
-			logger.warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already. [{}].", pubCompMessage);
-			return;
-		} */
+            logger.warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already. [{}].", pubCompMessage);
+            return;
+        } */
         this.mqttAckMediator.remove(id);
         logger.info("PubRelMessage has been acknowledged. PUBREL message - [{}]. PUBCOMP message - [{}].", pubrelMessage, pubCompMessage);
         ReferenceCountUtil.release(pubrelMessage);
@@ -385,11 +391,6 @@ public class HmMq2tImpl implements HmMq2t {
     @Override
     public void publish() {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public void setMediator(MqttAckMediator mqttAckMediator) {
-        this.mqttAckMediator = mqttAckMediator;
     }
 
     @Override
