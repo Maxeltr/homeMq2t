@@ -88,4 +88,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
         return hmMq2t.connect();
     }
 
+    @Override
+    public void disconnect(byte reasonCode) {
+        hmMq2t.disconnect(reasonCode);
+    }
 }

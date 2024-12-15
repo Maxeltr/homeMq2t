@@ -48,10 +48,17 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
     private ApplicationContext appContext;
 
+    @Autowired
     private MqttAckMediator mqttAckMediator;
     
     @Autowired
-    private MqttPublishHandler mqttPublishHandler;
+    private MqttPublishHandlerImpl mqttPublishHandler;
+    
+//    @Autowired
+//    private MqttSubscriptionHandler mqttSubscriptionHandler;
+    
+//    @Autowired
+//    private MqttConnectHandler mqttConnectHandler;
 
 	@Value("${max-bytes-in-message:8092000}")
 	private int maxBytesInMessage;
@@ -65,9 +72,11 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         ch.pipeline().addLast("mqttEncoder", this.createMqttEncoder());
         ch.pipeline().addLast("idleStateHandler", this.createIdleStateHandler());
         //ch.pipeline().addLast("mqttPingHandler", this.createMqttPingHandler());
-        ch.pipeline().addLast("mqttConnectHandler", this.createMqttConnectHandler());
-        //ch.pipeline().addLast("mqttSubscriptionHandler", this.createMqttSubscriptionHandler());
-        //ch.pipeline().addLast("mqttPublishHandler", this.createMqttPublishHandler());
+        ch.pipeline().addLast("mqttConnectHandler", this.createMqttConnectHandler(this.mqttAckMediator));
+        //ch.pipeline().addLast("mqttConnectHandler", this.mqttConnectHandler);
+        ch.pipeline().addLast("mqttSubscriptionHandler", this.createMqttSubscriptionHandler(this.mqttAckMediator));
+//        ch.pipeline().addLast("mqttSubscriptionHandler", this.mqttSubscriptionHandler);
+//        ch.pipeline().addLast("mqttPublishHandler", this.createMqttPublishHandler());
         ch.pipeline().addLast("mqttPublishHandler", this.mqttPublishHandler);
 //        ch.pipeline().addLast(new LoggingHandler(LogLevel.WARN));
         //ch.pipeline().addLast("exceptionHandler", this.createExceptionHandler());
@@ -90,8 +99,8 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         return new IdleStateHandler(0, keepAliveTimer, 0, TimeUnit.SECONDS);
     }
 
-    private MqttConnectHandler createMqttConnectHandler() {
-        var mqttConnectHandler = new MqttConnectHandler();
+    private MqttConnectHandler createMqttConnectHandler(MqttAckMediator mqttAckMediator) {
+        var mqttConnectHandler = new MqttConnectHandler(mqttAckMediator);
 
         AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
         autowireCapableBeanFactory.autowireBean(mqttConnectHandler);
@@ -99,7 +108,17 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
         return mqttConnectHandler;
     }
-	
+
+    private MqttSubscriptionHandler createMqttSubscriptionHandler(MqttAckMediator mqttAckMediator) {
+        var mqttSubscriptionHandler = new MqttSubscriptionHandler(mqttAckMediator);
+
+        AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
+        autowireCapableBeanFactory.autowireBean(mqttSubscriptionHandler);
+        autowireCapableBeanFactory.initializeBean(mqttSubscriptionHandler, "mqttConnectHandler");
+
+        return mqttSubscriptionHandler;
+    }
+    
 //    private MqttPublishHandler createMqttPublishHandler() {
 //        MqttPublishHandler mqttPublishHandler = new MqttPublishHandler();
 //		
