@@ -49,6 +49,9 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
     private ApplicationContext appContext;
 
     private MqttAckMediator mqttAckMediator;
+    
+    @Autowired
+    private MqttPublishHandler mqttPublishHandler;
 
 	@Value("${max-bytes-in-message:8092000}")
 	private int maxBytesInMessage;
@@ -64,7 +67,8 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         //ch.pipeline().addLast("mqttPingHandler", this.createMqttPingHandler());
         ch.pipeline().addLast("mqttConnectHandler", this.createMqttConnectHandler());
         //ch.pipeline().addLast("mqttSubscriptionHandler", this.createMqttSubscriptionHandler());
-        ch.pipeline().addLast("mqttPublishHandler", this.createMqttPublishHandler());
+        //ch.pipeline().addLast("mqttPublishHandler", this.createMqttPublishHandler());
+        ch.pipeline().addLast("mqttPublishHandler", this.mqttPublishHandler);
 //        ch.pipeline().addLast(new LoggingHandler(LogLevel.WARN));
         //ch.pipeline().addLast("exceptionHandler", this.createExceptionHandler());
     }
@@ -96,13 +100,13 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         return mqttConnectHandler;
     }
 	
-	private MqttPublishHandler createMqttPublishHandler() {
-        MqttPublishHandler mqttPublishHandler = new MqttPublishHandler();
-		
-        AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
-        autowireCapableBeanFactory.autowireBean(mqttPublishHandler);
-        autowireCapableBeanFactory.initializeBean(mqttPublishHandler, "mqttPublishHandler");
-
-        return mqttPublishHandler;
-    }
+//    private MqttPublishHandler createMqttPublishHandler() {
+//        MqttPublishHandler mqttPublishHandler = new MqttPublishHandler();
+//		
+//        AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
+//        autowireCapableBeanFactory.autowireBean(mqttPublishHandler);
+//        autowireCapableBeanFactory.initializeBean(mqttPublishHandler, "mqttPublishHandler");
+//
+//        return mqttPublishHandler;
+//    }
 }
