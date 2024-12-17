@@ -34,5 +34,5 @@ interface MqttPublishHandler {
 
     public void handlerAdded(ChannelHandlerContext ctx);
 
-    public void setMediator(ServiceMediator mediator);
+//    public void setMediator(ServiceMediator mediator);
 }

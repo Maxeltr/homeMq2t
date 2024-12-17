@@ -51,17 +51,17 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
     private ChannelHandlerContext ctx;
 
     private MqttAckMediator mqttAckMediator;
-    
+
     private ServiceMediator serviceMediator;
 
-    public MqttPublishHandlerImpl() {
-
+    public MqttPublishHandlerImpl(MqttAckMediator mqttAckMediator) {
+        this.mqttAckMediator = mqttAckMediator;
     }
 
-    public static MqttPublishHandlerImpl newInstance() {
-        return new MqttPublishHandlerImpl();
-
-    }
+//    public static MqttPublishHandlerImpl newInstance() {
+//        return new MqttPublishHandlerImpl();
+//
+//    }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
@@ -71,11 +71,11 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
     public void setMediator(MqttAckMediator mqttAckMediator) {
         this.mqttAckMediator = mqttAckMediator;
     }
-    
-    @Override
-    public void setMediator(ServiceMediator serviceMediator) {
-        this.serviceMediator = serviceMediator;
-    }
+
+//    @Override
+//    public void setMediator(ServiceMediator serviceMediator) {
+//        this.serviceMediator = serviceMediator;
+//    }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MqttMessage msg) throws Exception {
@@ -253,6 +253,6 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         return this.ctx;
     }
 
-    
+
 
 }

@@ -69,7 +69,7 @@ public class UIServiceImpl implements UIService {
         logger.info("Do connect.");
         Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
 
-        authFuture.awaitUninterruptibly();
+        authFuture.awaitUninterruptibly();  //TODO await(time) ? in order to interrupt long connection
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was failed.");
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();

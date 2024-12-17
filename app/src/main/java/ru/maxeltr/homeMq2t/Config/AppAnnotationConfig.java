@@ -77,27 +77,27 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public HmMq2t hmMq2t() {
+    public HmMq2t getHmMq2t() {
         return new HmMq2tImpl();
     }
 
     @Bean
-    public MqttChannelInitializer mqttChannelInitializer() {
+    public MqttChannelInitializer getMqttChannelInitializer() {
         return new MqttChannelInitializer();
     }
 
     @Bean
-    public MqttAckMediator mqttAckMediator() {
+    public MqttAckMediator getMqttAckMediator() {
         return new MqttAckMediatorImpl();
     }
 
     @Bean
-    public ServiceMediator serviceMediator() {
+    public ServiceMediator getServiceMediator() {
         return new ServiceMediatorImpl();
     }
 
     @Bean
-    public CommandService commandService() {
+    public CommandService getCommandService() {
         return new CommandServiceImpl();
     }
 
@@ -105,17 +105,17 @@ public class AppAnnotationConfig {
     public UIService getUIService() {
         return new UIServiceImpl();
     }
-    
+
     @Bean
-    public MqttPublishHandlerImpl getMqttPublishHandler() {
-        return new MqttPublishHandlerImpl();
+    public MqttPublishHandlerImpl getMqttPublishHandler(MqttAckMediator mqttAckMediator) {
+        return new MqttPublishHandlerImpl(mqttAckMediator);
     }
-    
+
 //    @Bean
 //    public MqttSubscriptionHandler getMqttSubscriptionHandler() {
 //        return new MqttSubscriptionHandler();
 //    }
-    
+
 //    @Bean
 //    public MqttConnectHandler getMqttConnectHandler() {
 //        return new MqttConnectHandler();

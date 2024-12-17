@@ -39,7 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class MqttAckMediatorImpl implements MqttAckMediator {
+public class MqttAckMediatorImpl implements MqttAckMediator {   //TODO synchronize
 
     private static final Logger logger = LoggerFactory.getLogger(MqttAckMediatorImpl.class);
 
@@ -48,25 +48,25 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
 //    @Autowired
 //    private HmMq2t hmMq2t;
 
-    @Autowired
-    private MqttPublishHandlerImpl publishHandler;
+//    @Autowired
+//    private MqttPublishHandlerImpl publishHandler;
 
 //    @Autowired
 //    private MqttSubscriptionHandler mqttSubscriptionHandler;
-    
+
     private final Map<Integer, Promise<? extends MqttMessage>> futures = Collections.synchronizedMap(new LinkedHashMap<>());
 
     private final Map<Integer, MqttMessage> messages  = Collections.synchronizedMap(new LinkedHashMap<>());
-    
-    @PostConstruct
-    public void setMediator() {
-//        hmMq2t.setMediator(this);
-//        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.hmMq2t.getClass());
-        publishHandler.setMediator(this);
-        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.publishHandler.getClass());
-//        mqttSubscriptionHandler.setMediator(this);
-//        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.mqttSubscriptionHandler.getClass());
-    }
+
+//    @PostConstruct
+//    public void setMediator() {
+////        hmMq2t.setMediator(this);
+////        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.hmMq2t.getClass());
+//        publishHandler.setMediator(this);
+//        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.publishHandler.getClass());
+////        mqttSubscriptionHandler.setMediator(this);
+////        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.mqttSubscriptionHandler.getClass());
+//    }
 
     @Override
     public Promise<? extends MqttMessage> getFuture(int key) {

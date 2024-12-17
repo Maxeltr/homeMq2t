@@ -116,7 +116,7 @@ public class HmMq2tImpl implements HmMq2t {
 //    public void setMediator(MqttAckMediator mqttAckMediator) {
 //        this.mqttAckMediator = mqttAckMediator;
 //    }
-    
+
     @Override
     public Promise<MqttConnAckMessage> connect() {
         workerGroup = new NioEventLoopGroup();
@@ -165,12 +165,16 @@ public class HmMq2tImpl implements HmMq2t {
         );
 
         try {
-            TimeUnit.MILLISECONDS.sleep(300);
+            TimeUnit.MILLISECONDS.sleep(500);
         } catch (InterruptedException ex) {
-            logger.info("InterruptedException", ex);
+            logger.info("Disconnect message has been send. InterruptedException while timeout.", ex);
         }
 
-	if (this.channel != null) {
+	this.shutdown();
+    }
+
+    public void shutdown() {
+        if (this.channel != null) {
             this.channel.close();
             logger.info("Close channel");
         }
