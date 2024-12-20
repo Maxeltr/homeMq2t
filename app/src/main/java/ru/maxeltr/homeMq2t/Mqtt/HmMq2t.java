@@ -1,7 +1,9 @@
 package ru.maxeltr.homeMq2t.Mqtt;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.util.concurrent.Promise;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
@@ -18,11 +20,11 @@ public interface HmMq2t {
 
     public void disconnect(byte reasonCode);
 
-    public void subscribe(List<MqttTopicSubscription> subscriptions);
+    public Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions);
 
-    public void unsubscribe();
+    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics);
 
-    public void publish();
+    public void publish(String topic, ByteBuf payload, MqttQoS qos, boolean retain);
 
 //    public void setMediator(MqttAckMediator mqttAckMediator);
 
