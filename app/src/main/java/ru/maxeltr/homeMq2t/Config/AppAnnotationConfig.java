@@ -129,7 +129,9 @@ public class AppAnnotationConfig {
         for (String dashboardName : listOfDashboardNames) {
             List<String> listOfCardsNames = (List<String>) env.getProperty(dashboardName + ".cards", List.class);
             for (String cardName : listOfCardsNames) {
-                Card card = new CardImpl(cardName);
+                String sub = env.getProperty(cardName + ".subscription", "");
+                String pub = env.getProperty(cardName + ".publication", "");
+                Card card = new CardImpl(cardName, sub, pub);
                 cards.add(card);
             }
             Dashboard dashboard = new DashboardImpl(dashboardName, cards);

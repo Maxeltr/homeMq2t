@@ -283,7 +283,7 @@ public class HmMq2tImpl implements HmMq2t {
                 }
             }
         }
-        logger.info("Active topics list=[{}].", this.getActiveTopicAndQosAsString());
+        logger.info("Active topics list=[{}].", this.getSubscribedTopicAndQosAsString());
     }
 
     @Override
@@ -483,7 +483,7 @@ public class HmMq2tImpl implements HmMq2t {
         this.serviceMediator = serviceMediator;
     }
 
-    public String getActiveTopicAndQosAsString() {
+    public String getSubscribedTopicAndQosAsString() {
         return this.subscribedTopics.keySet().stream().map(key -> key + "=" + this.subscribedTopics.get(key)).collect(Collectors.joining(", ", "{", "}"));
     }
 }
