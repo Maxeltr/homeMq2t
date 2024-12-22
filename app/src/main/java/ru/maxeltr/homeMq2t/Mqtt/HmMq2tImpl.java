@@ -27,7 +27,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -56,19 +55,16 @@ import io.netty.handler.codec.mqtt.MqttUnsubscribePayload;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -96,8 +92,6 @@ public class HmMq2tImpl implements HmMq2t {
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
 
-//    @Autowired
-//    private AppProperties appProperties;
     @Value("${host:127.0.0.1}")
     private String host;
 
@@ -107,20 +101,16 @@ public class HmMq2tImpl implements HmMq2t {
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
 
-    @Value("${subscriptions:}")
-    private List<String> subNames;
-
     @Value("${clean-session:true}")
     private boolean cleanSession;
+    
+    @Autowired
+    List<MqttTopicSubscription> subscriptions;
 
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
     private final Map<String, MqttTopicSubscription> subscribedTopics = Collections.synchronizedMap(new LinkedHashMap());
 
-//    @Override
-//    public void setMediator(MqttAckMediator mqttAckMediator) {
-//        this.mqttAckMediator = mqttAckMediator;
-//    }
     @Override
     public Promise<MqttConnAckMessage> connect() {
         workerGroup = new NioEventLoopGroup();
@@ -205,32 +195,8 @@ public class HmMq2tImpl implements HmMq2t {
         logger.info("Shutdown gracefully");
     }
 
-    private List<MqttTopicSubscription> getSubscriptionsFromConfig() {
-        List<MqttTopicSubscription> subscriptions = new ArrayList<>();
-        String topicName;
-        MqttQoS topicQos;
-        for (String sub : this.subNames) {
-            topicName = env.getProperty(sub + ".topicname", "");
-            if (topicName.length() == 0) {
-                logger.info("There is empty sub name in the config.");
-                continue;
-            }
-            topicQos = MqttQoS.valueOf(env.getProperty(sub + ".qos", MqttQoS.AT_MOST_ONCE.toString()));
-            MqttTopicSubscription subscription = new MqttTopicSubscription(topicName, topicQos);
-            subscriptions.add(subscription);
-            logger.info("Subscribing to the topic={} with QoS={}.", topicName, topicQos);
-        }
-
-        return subscriptions;
-    }
-
     public void subscribeOnTopicsFromConfig() {
-        List<MqttTopicSubscription> subs = HmMq2tImpl.this.getSubscriptionsFromConfig();
-        if (subs.isEmpty()) {
-            logger.info("There are no topics to subscribe in the config.");
-            return;
-        }
-        HmMq2tImpl.this.subscribe(subs);
+        HmMq2tImpl.this.subscribe(this.subscriptions);
     }
 
     @Override
@@ -384,7 +350,7 @@ public class HmMq2tImpl implements HmMq2t {
             return;
         } */
         this.mqttAckMediator.remove(id);
-        logger.info("PublishMessage has been acknowledged. PUBLISH message=[{}]. PUBREC message=[{}].", publishMessage, pubRecMessage);
+        logger.info("Publish message has been acknowledged. PUBLISH message=[{}]. PUBREC message=[{}].", publishMessage, pubRecMessage);
         ReferenceCountUtil.release(publishMessage);
         this.sendPubRelMessage(id);
     }

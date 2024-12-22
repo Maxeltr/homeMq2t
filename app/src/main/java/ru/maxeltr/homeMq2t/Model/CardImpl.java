@@ -46,10 +46,6 @@ public class CardImpl implements Card {
 
     private String name = "";
 
-    private String subscription = "";
-
-    private String publication = "";
-
     private String subTopic = "";
 
     private String pubTopic = "";
@@ -61,23 +57,8 @@ public class CardImpl implements Card {
         this.view = this.getViewTemplate();
     }
 
-    public CardImpl(String name, String sub) {
+    public CardImpl(String name, String subTopic, String pubTopic) {
         this.name = Objects.requireNonNullElse(name, "");
-        this.subscription = Objects.requireNonNullElse(sub, "");
-        this.view = this.getViewTemplate();
-    }
-
-    public CardImpl(String name, String sub, String pub) {
-        this.name = Objects.requireNonNullElse(name, "");
-        this.subscription = Objects.requireNonNullElse(sub, "");
-        this.publication = Objects.requireNonNullElse(pub, "");
-        this.view = this.getViewTemplate();
-    }
-
-    public CardImpl(String name, String sub, String pub, String subTopic, String pubTopic) {
-        this.name = Objects.requireNonNullElse(name, "");
-        this.subscription = Objects.requireNonNullElse(sub, "");
-        this.publication = Objects.requireNonNullElse(pub, "");
         this.subTopic = Objects.requireNonNullElse(subTopic, "");
         this.pubTopic = Objects.requireNonNullElse(pubTopic, "");
         this.view = this.getViewTemplate();
@@ -86,14 +67,6 @@ public class CardImpl implements Card {
     @Override
     public String getName() {
         return this.name;
-    }
-
-    public String getSubscription() {
-        return this.subscription;
-    }
-
-    public String getPublication() {
-        return this.publication;
     }
 
     public String getSubTopic() {
@@ -146,7 +119,13 @@ public class CardImpl implements Card {
 
         el = document.getElementById("sendCommand");
         if (el != null) {
-            el.attr("value", this.getName());
+            el.attr("value", this.getName() + "-publish");
+            //el.attr("id", this.getName() + "-publish");
+        }
+        
+        el = document.getElementById("card1-save");
+        if (el != null) {
+            el.attr("id", this.getName() + "-save");
         }
 
         el = document.select(".card-title").first();
@@ -165,7 +144,8 @@ public class CardImpl implements Card {
         StringBuilder sb = new StringBuilder();
         sb.append("CardImpl{")
                 .append("name=").append(this.name)
-                .append(", text=").append(this.subscription)
+                .append(", subTopic=").append(this.subTopic)
+                .append(", pubTopic=").append(this.pubTopic)
                 .append(", view=");
         String strView = this.view.toString();
         if (strView.length() > MAX_CHAR_TO_PRINT) {

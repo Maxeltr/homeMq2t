@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,9 +42,7 @@ import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
-import ru.maxeltr.homeMq2t.Mqtt.MqttConnectHandler;
 import ru.maxeltr.homeMq2t.Mqtt.MqttPublishHandlerImpl;
-import ru.maxeltr.homeMq2t.Mqtt.MqttSubscriptionHandler;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -61,15 +61,6 @@ public class AppAnnotationConfig {
 
     @Autowired
     private Environment env;
-
-//    public AppAnnotationConfig() {
-//        try {
-//            LogManager.getLogManager().readConfiguration(AppAnnotationConfig.class.getResourceAsStream("/logging.properties")
-//            );
-//        } catch (IOException | SecurityException ex) {
-//            System.err.println("Could not setup logger configuration: " + ex.toString());
-//        }
-//    }
 
     @Bean
     public AppProperties appProperty() {
@@ -111,35 +102,43 @@ public class AppAnnotationConfig {
         return new MqttPublishHandlerImpl(mqttAckMediator);
     }
 
-//    @Bean
-//    public MqttSubscriptionHandler getMqttSubscriptionHandler() {
-//        return new MqttSubscriptionHandler();
-//    }
-
-//    @Bean
-//    public MqttConnectHandler getMqttConnectHandler() {
-//        return new MqttConnectHandler();
-//    }
-
     @Bean
     public List<Dashboard> dashboards() {
-        List<Dashboard> dashboards = new ArrayList<>();
+        int i = 0;
         List<Card> cards = new ArrayList<>();
-        List<String> listOfDashboardNames = (List<String>) env.getProperty("dashboards", List.class);
-        for (String dashboardName : listOfDashboardNames) {
-            List<String> listOfCardsNames = (List<String>) env.getProperty(dashboardName + ".cards", List.class);
-            for (String cardName : listOfCardsNames) {
-                String sub = env.getProperty(cardName + ".subscription", "");
-                String pub = env.getProperty(cardName + ".publication", "");
+        List<Dashboard> dashboards = new ArrayList<>();
+        while (!env.getProperty("dashboard[" + i + "].name", "").isEmpty()) {
+            List<String> listOfCards = (List<String>) env.getProperty("dashboard[" + i + "].cards", List.class);
+            for (String cardNumber : listOfCards) {
+                String cardName = env.getProperty("card[" + cardNumber + "].name", "");
+                String sub = env.getProperty("card[" + cardNumber + "].subTopic", "");
+                String pub = env.getProperty("card[" + cardNumber + "].pubTopic", "");
                 Card card = new CardImpl(cardName, sub, pub);
                 cards.add(card);
             }
+            String dashboardName = env.getProperty("dashboard[" + i + "].name", "");
             Dashboard dashboard = new DashboardImpl(dashboardName, cards);
             dashboards.add(dashboard);
+            ++i;
         }
 
         return dashboards;
     }
-
-
+    
+    @Bean
+    public List<MqttTopicSubscription> subscriptions() {
+        int i = 0;
+        String topic;
+        MqttQoS topicQos;
+        List<MqttTopicSubscription> subscriptions = new ArrayList<>();
+        while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
+            topic = env.getProperty("card[" + i + "].subscription.topic", "");
+            topicQos = MqttQoS.valueOf(env.getProperty("card[" + i + "].subscription.qos", MqttQoS.AT_MOST_ONCE.toString()));
+            MqttTopicSubscription subscription = new MqttTopicSubscription(topic, topicQos);
+            subscriptions.add(subscription);
+            ++i;
+        }
+        
+        return subscriptions;
+    }
 }

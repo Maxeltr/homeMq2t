@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.Objects;
 
@@ -45,6 +46,9 @@ public interface Msg {
 
     public static class Builder {
 
+        @JsonProperty("id")
+        protected String id = "";
+
         protected String topic = "";
 
         protected String payload = "";
@@ -54,14 +58,11 @@ public interface Msg {
         protected String timestamp = "";
 
         public Builder() {
-
+            
         }
-
-        public Builder(String topic, String payload, String type, String timestamp) {
-            this.topic = Objects.requireNonNullElse(topic, "");
-            this.payload = Objects.requireNonNullElse(payload, "");
-            this.type = Objects.requireNonNullElse(type, "");
-            this.timestamp = Objects.requireNonNullElse(timestamp, "");
+        
+        public Builder(String id) {
+            this.id = id;
         }
 
         public Builder topic(String topic) {
@@ -92,7 +93,8 @@ public interface Msg {
         public String toString() {
             StringBuilder sb = new StringBuilder();
             sb.append("Msg.Builder{")
-                    .append("topic=").append(this.topic)
+                    .append("id=").append(this.id)
+                    .append(", topic=").append(this.topic)
                     .append(", type=").append(this.type)
                     .append(", timestamp=").append(this.timestamp)
                     .append(", payload=");

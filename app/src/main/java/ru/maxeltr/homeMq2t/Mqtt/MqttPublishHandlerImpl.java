@@ -167,20 +167,15 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         future.setSuccess(message);
     }
 
-    private void handlePubRel(Channel channel, MqttMessage message) throws InterruptedException {
-        MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.variableHeader();
-        //MqttPublishMessage publishMessage = this.pendingPubRel.get(variableHeader.messageId());
-        //if (publishMessage == null) {
-        logger.warn("Collection of waiting confirmation publish QoS2 messages returned null instead saved publishMessage");
-
-        //} else {
+    private void handlePubRel(Channel channel, MqttMessage pubRelMessage) {
+        MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) pubRelMessage.variableHeader();
+        MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(variableHeader.messageId());
         //TODO handle publish Message. delete message and future
         // this.messageHandler.handleMessage(publishMessage);
-        //this.pendingPubRel.remove(variableHeader.messageId());
-//            publishMessage.release();	//???
-        logger.info("Remove (from pending PUBREL) publish message id: {}", variableHeader.messageId());
-
-        //}
+        this.mqttAckMediator.remove(variableHeader.messageId());
+        logger.info("Publish message QoS2 has been acknowledged. PUBLISH message=[{}]. PUBREL message=[{}].", publishMessage, pubRelMessage);
+        ReferenceCountUtil.release(publishMessage);
+        
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBCOMP, false, MqttQoS.AT_MOST_ONCE, false, 0);
         MqttMessage pubCompMessage = new MqttMessage(fixedHeader, variableHeader);
 
@@ -227,7 +222,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                     Promise<? extends MqttMessage> publishFuture = channel.eventLoop().newPromise();
                     this.mqttAckMediator.add(message.variableHeader().packetId(), publishFuture, message);
                     publishFuture.addListener((FutureListener) (Future f) -> {
-                        MqttPublishHandlerImpl.this.handlePubRelMessage((MqttMessage) f.get());
+                        MqttPublishHandlerImpl.this.handlePubRel(channel, (MqttMessage) f.get());
                     });
                     logger.info("Publish message with QoS2 has been stored - [{}].", message);
                 } else {
@@ -256,7 +251,4 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         return this.ctx;
     }
 
-    private void handlePubRelMessage(MqttMessage pubRelMessage) {
-        // this.messageHandler.handleMessage(publishMessage);
-    }
 }

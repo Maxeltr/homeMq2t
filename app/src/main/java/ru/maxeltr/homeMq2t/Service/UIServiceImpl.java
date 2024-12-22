@@ -50,9 +50,6 @@ public class UIServiceImpl implements UIService {
     @Autowired
     private Environment env;
 
-//    @Autowired
-//    Objectmapper objectmapper;
-
     @Autowired
     private OutputUIController uiController;
 
@@ -73,7 +70,7 @@ public class UIServiceImpl implements UIService {
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was failed.");
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
-            Msg.Builder msg = new Msg.Builder()
+            Msg.Builder msg = new Msg.Builder("onConnect")
                     .type("application/json")
                     .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                             + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
@@ -83,7 +80,7 @@ public class UIServiceImpl implements UIService {
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed {}", authFuture.cause());
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
-            Msg.Builder msg = new MsgImpl.Builder()
+            Msg.Builder msg = new MsgImpl.Builder("onConnect")
                     .type("application/json")
                     .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                             + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
@@ -92,7 +89,7 @@ public class UIServiceImpl implements UIService {
             this.display(msg);
         } else {
             logger.info("Connection established successfully.");
-            Msg.Builder msg = new MsgImpl.Builder()
+            Msg.Builder msg = new MsgImpl.Builder("onConnect")
                     .type("application/json")
                     .payload("{\"name\": \"onConnect\", \"status\": \"ok\", \"type\": \"text/html;base64\", \"data\": \""
                             + Base64.getEncoder().encodeToString(this.getStartDashboard().getBytes())
