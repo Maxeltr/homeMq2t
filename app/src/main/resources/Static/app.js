@@ -10,16 +10,13 @@ function connect() {
     var socket = new SockJS('/mq2tClientDashboard');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function (frame) {
-        //setConnected(true);
         console.log('Connected: ' + frame);
-        //stompClient.subscribe('/topic/onConnect', function (message) {
-        //    onConnect(JSON.parse(message.body));
-        //});
         stompClient.subscribe('/topic/data', function (message) {
             showData(JSON.parse(message.body));
         });
         //stompClient.send("/app/connect", {}, JSON.stringify({'topic': "", 'type': "application/json", 'timestamp': Date.now(), 'payload': {'name': "connect"}}));
-        stompClient.send("/app/connect", {}, JSON.stringify({'topic': "onconnecte", 'payload': "-", 'type': "application/json", 'timestamp': "--"}));
+        //stompClient.send("/app/connect", {}, JSON.stringify({'topic': "onconnecte", 'payload': "-", 'type': "application/json", 'timestamp': "--"}));
+        stompClient.send("/app/connect", {}, JSON.stringify({'id': "doConnect"}));
     });
 }
 
@@ -33,7 +30,8 @@ function disconnect() {
 }
 
 function createCommand(id) {
-    //stompClient.send("/app/createCommand", {}, JSON.stringify({'commandId': id}));
+    console.log('createCommand ' + id);
+    stompClient.send("/app/publish", {}, JSON.stringify({'id': id}));
     //stompClient.send("/app/connected", {}, JSON.stringify({'id': "connectsfgdsfgsdfg"}));
 }
 
@@ -113,7 +111,8 @@ $(function () {
     $("#disconnect").click(function () {
         disconnect();
     });
-    $("#sendCommand ").click(function () {
+
+    $(document).on("click", "#sendCommand", function(){
         var arg = $(this).val();
         createCommand(arg);
     });

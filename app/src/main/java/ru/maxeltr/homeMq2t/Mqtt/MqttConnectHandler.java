@@ -103,10 +103,11 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 //    public void setMediator(MqttAckMediator mqttAckMediator) {
 //        this.mqttAckMediator = mqttAckMediator;
 //    }
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof MqttMessage)) {
-			logger.debug("Received non Mqtt message=[{}]", msg);
+            logger.debug("Received non Mqtt message=[{}]", msg);
             ctx.fireChannelRead(msg);
             return;
         }
