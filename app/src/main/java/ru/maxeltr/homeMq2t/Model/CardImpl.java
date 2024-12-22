@@ -74,6 +74,15 @@ public class CardImpl implements Card {
         this.view = this.getViewTemplate();
     }
 
+    public CardImpl(String name, String sub, String pub, String subTopic, String pubTopic) {
+        this.name = Objects.requireNonNullElse(name, "");
+        this.subscription = Objects.requireNonNullElse(sub, "");
+        this.publication = Objects.requireNonNullElse(pub, "");
+        this.subTopic = Objects.requireNonNullElse(subTopic, "");
+        this.pubTopic = Objects.requireNonNullElse(pubTopic, "");
+        this.view = this.getViewTemplate();
+    }
+
     @Override
     public String getName() {
         return this.name;

@@ -25,6 +25,7 @@ package ru.maxeltr.homeMq2t.Mqtt;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
@@ -35,6 +36,8 @@ import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.DefaultPromise;
+import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +65,6 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
 //        return new MqttPublishHandlerImpl();
 //
 //    }
-
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         this.ctx = ctx;
@@ -76,7 +78,6 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
 //    public void setMediator(ServiceMediator serviceMediator) {
 //        this.serviceMediator = serviceMediator;
 //    }
-
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MqttMessage msg) throws Exception {
         switch (msg.fixedHeader().messageType()) {
@@ -223,9 +224,11 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
             case EXACTLY_ONCE:
                 if (!this.mqttAckMediator.isContainId(message.variableHeader().packetId())) {
                     ReferenceCountUtil.retain(message);
-                    //save message and future
-                    //Promise<? extends MqttMessage> pubRecFuture = new DefaultPromise<>(this.workerGroup.next());
-                    //this.mqttAckMediator.add(message.variableHeader().packetId(), pubRecFuture, message);
+                    Promise<? extends MqttMessage> publishFuture = channel.eventLoop().newPromise();
+                    this.mqttAckMediator.add(message.variableHeader().packetId(), publishFuture, message);
+                    publishFuture.addListener((FutureListener) (Future f) -> {
+                        MqttPublishHandlerImpl.this.handlePubRelMessage((MqttMessage) f.get());
+                    });
                     logger.info("Publish message with QoS2 has been stored - [{}].", message);
                 } else {
                     logger.info("Received publish message with QoS2 is repeated - [{}].", message);
@@ -253,6 +256,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         return this.ctx;
     }
 
-
-
+    private void handlePubRelMessage(MqttMessage pubRelMessage) {
+        // this.messageHandler.handleMessage(publishMessage);
+    }
 }
