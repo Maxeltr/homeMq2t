@@ -25,11 +25,22 @@ package ru.maxeltr.homeMq2t.Service;
 
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
+import java.nio.charset.Charset;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
+import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
+import ru.maxeltr.homeMq2t.Mqtt.MqttPublishHandler;
 
 /**
  *
@@ -46,11 +57,33 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private HmMq2t hmMq2t;
 
+    @Autowired
+    private MqttChannelInitializer mqttChannelInitializer;
+
+    private final Map<String, List<String>> topicMatcher = new HashMap();
+
+    public ServiceMediatorImpl() {
+
+//        int i = 0;
+//        String topic;
+//        Map<String, List<Consumer<Msg.Builder>>> topicMatcher = new HashMap();
+//        List<Consumer<Msg.Builder>> methods = new ArrayList<>();
+//        while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
+//            topic = env.getProperty("card[" + i + "].subscription.topic", "");
+//            methods.add(this.uiService::display);
+//            topicMatcher.put(topic, methods);
+//            ++i;
+//        }
+
+
+    }
+
     @PostConstruct
     public void setMediator() {
         commandService.setMediator(this);
         uiService.setMediator(this);
         hmMq2t.setMediator(this);
+        mqttChannelInitializer.setMediator(this);
     }
 
     @Override
@@ -79,8 +112,12 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void handleMessage(MqttMessage message) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void handleMessage(MqttPublishMessage message) {
+        Msg.Builder msg = new Msg.Builder("receiveMessage").type("application/json");
+        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        msg.topic(message.variableHeader().topicName());
+        msg.payload(message.payload().toString(Charset.forName("UTF-8")));
+        this.display(msg);
     }
 
     @Override

@@ -45,14 +45,18 @@ function createCommand(id) {
  } */
 
 function showData(message) {
-    if (message.type.toUpperCase() !== "APPLICATION/JSON") {
+    if (message.type.toUpperCase() !== "APPLICATION/JSON"
+            || message.type.toUpperCase() === 'IMAGE/JPEG'
+            || message.type.toUpperCase() === 'TEXT/PLAIN'
+    ) {
         console.log("Error. Incorrect payload type. Require application/json");
         document.getElementById('dashboard').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type. Require application/json.</div>";
         return;
     }
 
     var payload = JSON.parse(message.payload);
-    if (payload.name.toUpperCase() === 'ONCONNECT') {
+
+    if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONCONNECT') {
         if (payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
             document.getElementById('dashboard').innerHTML = atob(payload.data);
         } else {
@@ -64,7 +68,7 @@ function showData(message) {
         return;
     }
 
-    var card = payload.name;
+    var card = payload.topic.replace("/", "-");
 
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');

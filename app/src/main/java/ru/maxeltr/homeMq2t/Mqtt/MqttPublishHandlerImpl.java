@@ -41,6 +41,7 @@ import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
@@ -57,8 +58,9 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
 
     private ServiceMediator serviceMediator;
 
-    public MqttPublishHandlerImpl(MqttAckMediator mqttAckMediator) {
+    public MqttPublishHandlerImpl(MqttAckMediator mqttAckMediator, ServiceMediator serviceMediator) {
         this.mqttAckMediator = mqttAckMediator;
+        this.serviceMediator = serviceMediator;
     }
 
 //    public static MqttPublishHandlerImpl newInstance() {
@@ -70,14 +72,15 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         this.ctx = ctx;
     }
 
-    public void setMediator(MqttAckMediator mqttAckMediator) {
-        this.mqttAckMediator = mqttAckMediator;
-    }
+//    public void setMediator(MqttAckMediator mqttAckMediator) {
+//        this.mqttAckMediator = mqttAckMediator;
+//    }
 
 //    @Override
 //    public void setMediator(ServiceMediator serviceMediator) {
 //        this.serviceMediator = serviceMediator;
 //    }
+
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, MqttMessage msg) throws Exception {
         switch (msg.fixedHeader().messageType()) {
@@ -175,7 +178,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         this.mqttAckMediator.remove(variableHeader.messageId());
         logger.info("Publish message QoS2 has been acknowledged. PUBLISH message=[{}]. PUBREL message=[{}].", publishMessage, pubRelMessage);
         ReferenceCountUtil.release(publishMessage);
-        
+
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBCOMP, false, MqttQoS.AT_MOST_ONCE, false, 0);
         MqttMessage pubCompMessage = new MqttMessage(fixedHeader, variableHeader);
 
@@ -195,7 +198,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         switch (message.fixedHeader().qosLevel()) {
             case AT_MOST_ONCE:
                 ReferenceCountUtil.retain(message);
-                //this.messageHandler.handleMessage(message);
+                this.serviceMediator.handleMessage(message);
 
                 break;
             case AT_LEAST_ONCE:

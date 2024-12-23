@@ -99,33 +99,33 @@ public class CardImpl implements Card {
         Element el = document.getElementById("card1");
         //el.removeAttr("id");
         if (el != null) {
-            el.attr("id", this.getName());
+            el.attr("id", this.getSubTopic().replaceAll("/", "-"));
         }
 
         el = document.getElementById("card1-payload");
         if (el != null) {
-            el.attr("id", this.getName() + "-payload");
+            el.attr("id", this.getSubTopic().replaceAll("/", "-") + "-payload");
         }
 
         el = document.getElementById("card1-save");
         if (el != null) {
-            el.attr("id", this.getName() + "-save");
+            el.attr("id", this.getSubTopic().replaceAll("/", "-") + "-save");
         }
 
         el = document.getElementById("card1-timestamp");
         if (el != null) {
-            el.attr("id", this.getName() + "-timestamp");
+            el.attr("id", this.getSubTopic().replaceAll("/", "-") + "-timestamp");
         }
 
         el = document.getElementById("sendCommand");
         if (el != null) {
-            el.attr("value", this.getName() + "-publish");
+            el.attr("value", this.getSubTopic().replaceAll("/", "-") + "-publish");
             //el.attr("id", this.getName() + "-publish");
         }
-        
+
         el = document.getElementById("card1-save");
         if (el != null) {
-            el.attr("id", this.getName() + "-save");
+            el.attr("id", this.getSubTopic().replaceAll("/", "-") + "-save");
         }
 
         el = document.select(".card-title").first();

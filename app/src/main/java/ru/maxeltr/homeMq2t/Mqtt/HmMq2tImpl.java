@@ -103,7 +103,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Value("${clean-session:true}")
     private boolean cleanSession;
-    
+
     @Autowired
     List<MqttTopicSubscription> subscriptions;
 

@@ -37,6 +37,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.annotation.Value;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
  *
@@ -50,6 +51,8 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
     @Autowired
     private MqttAckMediator mqttAckMediator;
+
+    private ServiceMediator serviceMediator;
 
 //    @Autowired
 //    private MqttPublishHandlerImpl mqttPublishHandler;
@@ -76,7 +79,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         //ch.pipeline().addLast("mqttConnectHandler", this.mqttConnectHandler);
         ch.pipeline().addLast("mqttSubscriptionHandler", this.createMqttSubscriptionHandler(this.mqttAckMediator));
 //        ch.pipeline().addLast("mqttSubscriptionHandler", this.mqttSubscriptionHandler);
-        ch.pipeline().addLast("mqttPublishHandler", this.createMqttPublishHandler(this.mqttAckMediator));
+        ch.pipeline().addLast("mqttPublishHandler", this.createMqttPublishHandler(this.mqttAckMediator, this.serviceMediator));
 //        ch.pipeline().addLast("mqttPublishHandler", this.mqttPublishHandler);
 //        ch.pipeline().addLast(new LoggingHandler(LogLevel.WARN));
         //ch.pipeline().addLast("exceptionHandler", this.createExceptionHandler());
@@ -85,6 +88,10 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
     @Override
     public void setApplicationContext(ApplicationContext appContext) throws BeansException {
         this.appContext = appContext;
+    }
+
+    public void setMediator(ServiceMediator serviceMediator) {
+        this.serviceMediator = serviceMediator;
     }
 
     private MqttDecoder createMqttDecoder() {
@@ -119,8 +126,8 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         return mqttSubscriptionHandler;
     }
 
-    private MqttPublishHandlerImpl createMqttPublishHandler(MqttAckMediator mqttAckMediator) {
-        MqttPublishHandlerImpl mqttPublishHandler = new MqttPublishHandlerImpl(mqttAckMediator);
+    private MqttPublishHandlerImpl createMqttPublishHandler(MqttAckMediator mqttAckMediator, ServiceMediator serviceMediator) {
+        MqttPublishHandlerImpl mqttPublishHandler = new MqttPublishHandlerImpl(mqttAckMediator, serviceMediator);
 
         AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
         autowireCapableBeanFactory.autowireBean(mqttPublishHandler);

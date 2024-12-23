@@ -25,6 +25,7 @@ package ru.maxeltr.homeMq2t.Service;
 
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
+import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.util.concurrent.Promise;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
@@ -44,9 +45,9 @@ public interface ServiceMediator {
 
     public void update(Component component);
 
-    public void handleMessage(MqttMessage message);
+    public void handleMessage(MqttPublishMessage message);
 
     public Promise<MqttConnAckMessage> connect();
-    
+
     public void disconnect(byte reasonCode);
 }

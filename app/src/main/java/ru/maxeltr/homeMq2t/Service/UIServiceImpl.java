@@ -31,6 +31,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
@@ -50,6 +51,9 @@ public class UIServiceImpl implements UIService {
     @Autowired
     private Environment env;
 
+    @Value("${connect-timeout:5000}")
+    private Integer connectTimeout;
+
     @Autowired
     private OutputUIController uiController;
 
@@ -64,39 +68,31 @@ public class UIServiceImpl implements UIService {
     @Override
     public void connect() {
         logger.info("Do connect.");
-        Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
+        Msg.Builder msg = new Msg.Builder("onConnect").type("application/json");
 
-        authFuture.awaitUninterruptibly();  //TODO await(time) ? in order to interrupt long connection
+        Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
+        authFuture.awaitUninterruptibly(this.connectTimeout);
+        
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was failed.");
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
-            Msg.Builder msg = new Msg.Builder("onConnect")
-                    .type("application/json")
-                    .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
-                            + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
-                            + "\"}")
-                    .timestamp(String.valueOf(Instant.now().toEpochMilli()));
-            this.display(msg);
+            msg.payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
+                    + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
+                    + "\"}");
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed {}", authFuture.cause());
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
-            Msg.Builder msg = new MsgImpl.Builder("onConnect")
-                    .type("application/json")
-                    .payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
-                            + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
-                            + "\"}")
-                    .timestamp(String.valueOf(Instant.now().toEpochMilli()));
-            this.display(msg);
+            msg.payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
+                    + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
+                    + "\"}");
         } else {
             logger.info("Connection established successfully.");
-            Msg.Builder msg = new MsgImpl.Builder("onConnect")
-                    .type("application/json")
-                    .payload("{\"name\": \"onConnect\", \"status\": \"ok\", \"type\": \"text/html;base64\", \"data\": \""
-                            + Base64.getEncoder().encodeToString(this.getStartDashboard().getBytes())
-                            + "\"}")
-                    .timestamp(String.valueOf(Instant.now().toEpochMilli()));
-            this.display(msg);
+            msg.payload("{\"name\": \"onConnect\", \"status\": \"ok\", \"type\": \"text/html;base64\", \"data\": \""
+                    + Base64.getEncoder().encodeToString(this.getStartDashboard().getBytes())
+                    + "\"}");
         }
+        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        this.display(msg);
     }
 
     @Override
