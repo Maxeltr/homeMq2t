@@ -48,7 +48,7 @@ function showData(message) {
     if (message.type.toUpperCase() !== "APPLICATION/JSON"
             || message.type.toUpperCase() === 'IMAGE/JPEG'
             || message.type.toUpperCase() === 'TEXT/PLAIN'
-    ) {
+            ) {
         console.log("Error. Incorrect payload type. Require application/json");
         document.getElementById('dashboard').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type. Require application/json.</div>";
         return;
@@ -57,18 +57,18 @@ function showData(message) {
     var payload = JSON.parse(message.payload);
 
     if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONCONNECT') {
-        if (payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
-            document.getElementById('dashboard').innerHTML = atob(payload.data);
+        if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
+            document.getElementById('dashboard').innerHTML = payload.hasOwnProperty("data") ? atob(payload.data) : "<div style=\"color:red;\">Error to show dashboard.</div>";
         } else {
             console.log("Error. Incorrect payload type. Require text/html;base64");
         }
-        if (payload.status.toUpperCase() === 'OK') {
+        if (payload.hasOwnProperty("status") && payload.status.toUpperCase() === 'OK') {
             setConnected(true);
         }
         return;
     }
 
-    var card = payload.topic.replace("/", "-");
+    var card = message.topic.replace("/", "-");
 
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
@@ -81,7 +81,10 @@ function showData(message) {
         document.getElementById(card + '-timestamp').innerHTML = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
-
+    if (!payload.hasOwnProperty("data")) {
+        console.log("There is no data property in message payload json.");
+        return;
+    }
 
     if (message.type !== 'undefined') {
         if (message.type.toUpperCase() === 'IMAGE/JPEG') {
@@ -92,15 +95,15 @@ function showData(message) {
             saveButton.setAttribute('href', image.src);
             saveButton.classList.remove("disabled");
         } else if (message.type.toUpperCase() === 'TEXT/PLAIN') {
-            document.getElementById(card + '-payload').innerHTML = '<p>' + atob(payload.data) + '</p>';
+            document.getElementById(card + '-payload').innerHTML = '<p>' + payload.data + '</p>';
         } else if (message.type.toUpperCase() === 'APPLICATION/JSON') {
-            console.log('message.type is APPLICATION/JSON ' + atob(payload.data));
+            console.log('message.type is APPLICATION/JSON ' + payload.data);
+            document.getElementById(card + '-payload').innerHTML = '<p>' + payload.data + '</p>';
         } else {
-            document.getElementById(card + '-payload').innerHTML = '<p>' + "Type is " + message.type + '<br>' + atob(payload.data) + '</p>';
+            console.log('Error: message type is ' + message.type);
         }
     } else {
-        console.log('message.type is undefined');
-        document.getElementById(card + '-payload').innerHTML = '<p>' + 'message.type is undefined' + '<br>' + atob(payload.data) + '</p>';
+        console.log('Error: message type is undefined');
     }
 
 }
@@ -116,7 +119,7 @@ $(function () {
         disconnect();
     });
 
-    $(document).on("click", "#sendCommand", function(){
+    $(document).on("click", "#sendCommand", function () {
         var arg = $(this).val();
         createCommand(arg);
     });
