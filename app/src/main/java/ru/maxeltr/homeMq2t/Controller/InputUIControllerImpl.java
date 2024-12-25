@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Controller;
 
+import io.netty.handler.codec.mqtt.MqttQoS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,6 @@ public class InputUIControllerImpl implements InputUIController {
     @MessageMapping("/publish")
     public void publish(Msg.Builder msg) {
         logger.info("Do publish. Msg.Builder was received - {}.", msg);
-        
+        uiService.publish(msg);
     }
 }

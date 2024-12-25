@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import io.netty.handler.codec.mqtt.MqttQoS;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
@@ -35,7 +36,7 @@ public interface UIService {
 
     public void disconnect(byte reasonCode);
 
-    public void publish(Msg message);
+    public void publish(Msg.Builder msg);
 
     public void display(Msg.Builder message);
 

@@ -26,6 +26,7 @@ package ru.maxeltr.homeMq2t.Service;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.Promise;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
@@ -35,7 +36,7 @@ import ru.maxeltr.homeMq2t.Model.Msg;
  */
 public interface ServiceMediator {
 
-    public void publish(Msg data);
+    public void publish(Msg msg, String topic, MqttQoS qos, boolean retain);
 
     public void execute(Msg command);
 
