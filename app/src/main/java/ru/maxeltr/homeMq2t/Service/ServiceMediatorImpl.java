@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
@@ -37,6 +38,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -49,6 +52,8 @@ import ru.maxeltr.homeMq2t.Mqtt.MqttPublishHandler;
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public class ServiceMediatorImpl implements ServiceMediator {
+    
+    private static final Logger logger = LoggerFactory.getLogger(ServiceMediatorImpl.class);
 
     @Autowired
     private CommandService commandService;
@@ -62,7 +67,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
 
-    private final Map<String, List<String>> topicMatcher = new HashMap();
+    private final Map<String, List<String>> topicCardSubscriptions = new HashMap();
 
     private final ObjectMapper mapper = new ObjectMapper();
 
@@ -114,19 +119,25 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void handleMessage(MqttPublishMessage message) {
-        Msg.Builder msg = new Msg.Builder("receiveMessage");
-        msg.topic(message.variableHeader().topicName());
-        String type = "";
-        String payload = message.payload().toString(Charset.forName("UTF-8"));
-        msg.payload(payload);
-        if (this.isJsonValid(payload)) {
-            type = "application/json";
+    public void handleMessage(MqttPublishMessage mqttMessage) {
+        //Msg.Builder msg = new Msg.Builder("receiveMessage");
+        //msg.topic(mqttMessage.variableHeader().topicName());
+        //String type = "";
+        Msg.Builder payload;
+        try {
+            payload = mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
+        } catch (JsonProcessingException ex) {
+            logger.warn("can not convert json to Msg. {}", mqttMessage.payload().toString(Charset.forName("UTF-8")), ex);
+            payload = new Msg.Builder("error"); //TODO
         }
-        msg.type(type);
-        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-        
-        this.display(msg);
+        //msg.payload(payload);
+        //if (this.isJsonValid(payload)) {
+        //    type = "application/json";
+        //}
+        //msg.type(type);
+        //msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+
+        this.display(payload);
     }
 
     @Override
@@ -139,13 +150,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
         hmMq2t.disconnect(reasonCode);
     }
 
-    private boolean isJsonValid(String jsonInString ) {
-    try {
+    private boolean isJsonValid(String jsonInString) {
+        try {
 
-       mapper.readTree(jsonInString);
-       return true;
-    } catch (IOException e) {
-       return false;
+            mapper.readTree(jsonInString);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
-  }
 }
