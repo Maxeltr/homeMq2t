@@ -23,11 +23,13 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -62,6 +64,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     private final Map<String, List<String>> topicMatcher = new HashMap();
 
+    private final ObjectMapper mapper = new ObjectMapper();
+
     public ServiceMediatorImpl() {
 
 //        int i = 0;
@@ -74,8 +78,6 @@ public class ServiceMediatorImpl implements ServiceMediator {
 //            topicMatcher.put(topic, methods);
 //            ++i;
 //        }
-
-
     }
 
     @PostConstruct
@@ -113,10 +115,17 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     @Override
     public void handleMessage(MqttPublishMessage message) {
-        Msg.Builder msg = new Msg.Builder("receiveMessage").type("application/json");
-        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        Msg.Builder msg = new Msg.Builder("receiveMessage");
         msg.topic(message.variableHeader().topicName());
-        msg.payload(message.payload().toString(Charset.forName("UTF-8")));
+        String type = "";
+        String payload = message.payload().toString(Charset.forName("UTF-8"));
+        msg.payload(payload);
+        if (this.isJsonValid(payload)) {
+            type = "application/json";
+        }
+        msg.type(type);
+        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        
         this.display(msg);
     }
 
@@ -129,4 +138,14 @@ public class ServiceMediatorImpl implements ServiceMediator {
     public void disconnect(byte reasonCode) {
         hmMq2t.disconnect(reasonCode);
     }
+
+    private boolean isJsonValid(String jsonInString ) {
+    try {
+
+       mapper.readTree(jsonInString);
+       return true;
+    } catch (IOException e) {
+       return false;
+    }
+  }
 }

@@ -135,7 +135,7 @@ public class HmMq2tImpl implements HmMq2t {
         ChannelFuture future = bootstrap.connect();
         future.addListener((ChannelFutureListener) f -> {
             HmMq2tImpl.this.channel = f.channel();
-            logger.debug("Connected. Waiting for ConnAckMessage. ChannelFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
+            logger.debug("Waiting for ConnAckMessage. ChannelFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
         });
 
         logger.info("Connecting to {} via port {}.", this.host, this.port);

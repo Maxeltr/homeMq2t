@@ -46,8 +46,8 @@ function createCommand(id) {
 
 function showData(message) {
     if (message.type.toUpperCase() !== "APPLICATION/JSON"
-            || message.type.toUpperCase() === 'IMAGE/JPEG'
-            || message.type.toUpperCase() === 'TEXT/PLAIN'
+            && message.type.toUpperCase() !== 'IMAGE/JPEG'
+            && message.type.toUpperCase() !== 'TEXT/PLAIN'
             ) {
         console.log("Error. Incorrect payload type. Require application/json");
         document.getElementById('dashboard').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type. Require application/json.</div>";

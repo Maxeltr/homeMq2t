@@ -54,20 +54,11 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
     private ServiceMediator serviceMediator;
 
-//    @Autowired
-//    private MqttPublishHandlerImpl mqttPublishHandler;
+    @Value("${max-bytes-in-message:8092000}")
+    private int maxBytesInMessage;
 
-//    @Autowired
-//    private MqttSubscriptionHandler mqttSubscriptionHandler;
-
-//    @Autowired
-//    private MqttConnectHandler mqttConnectHandler;
-
-	@Value("${max-bytes-in-message:8092000}")
-	private int maxBytesInMessage;
-
-	@Value("${keep-alive-timer:20}")
-	private int keepAliveTimer;
+    @Value("${keep-alive-timer:20}")
+    private int keepAliveTimer;
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {

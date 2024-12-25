@@ -26,9 +26,7 @@ package ru.maxeltr.homeMq2t.Config;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -44,7 +42,6 @@ import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
-import ru.maxeltr.homeMq2t.Mqtt.MqttPublishHandlerImpl;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -103,7 +100,6 @@ public class AppAnnotationConfig {
 //    public MqttPublishHandlerImpl getMqttPublishHandler(MqttAckMediator mqttAckMediator) {
 //        return new MqttPublishHandlerImpl(mqttAckMediator);
 //    }
-
     @Bean
     public List<Dashboard> dashboards() {
         int i = 0;
@@ -143,8 +139,6 @@ public class AppAnnotationConfig {
 
         return subscriptions;
     }
-
-
 
 
 }
