@@ -43,6 +43,8 @@ public class CardImpl implements Card {
     static final int MAX_CHAR_TO_PRINT = 256;
 
     private final String pathname = File.separator + "Static" + File.separator + "card.html";
+    
+    private String cardNumber = "";
 
     private String name = "";
 
@@ -57,13 +59,19 @@ public class CardImpl implements Card {
         this.view = this.getViewTemplate();
     }
 
-    public CardImpl(String name, String subTopic, String pubTopic) {
+    public CardImpl(String cardNumber, String name, String subTopic, String pubTopic) {
+        this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
         this.name = Objects.requireNonNullElse(name, "");
         this.subTopic = Objects.requireNonNullElse(subTopic, "");
         this.pubTopic = Objects.requireNonNullElse(pubTopic, "");
         this.view = this.getViewTemplate();
     }
 
+    @Override
+    public String getCardNumber() {
+        return this.cardNumber;
+    }
+    
     @Override
     public String getName() {
         return this.name;
@@ -99,33 +107,34 @@ public class CardImpl implements Card {
         Element el = document.getElementById("card1");
         //el.removeAttr("id");
         if (el != null) {
-            el.attr("id", this.getSubTopic().replaceAll("/", "-"));
+            el.attr("id", this.getCardNumber());
         }
 
         el = document.getElementById("card1-payload");
         if (el != null) {
-            el.attr("id", this.getSubTopic().replaceAll("/", "-") + "-payload");
+            el.attr("id", this.getCardNumber() + "-payload");
         }
 
         el = document.getElementById("card1-save");
         if (el != null) {
-            el.attr("id", this.getSubTopic().replaceAll("/", "-") + "-save");
+            el.attr("id", this.getCardNumber() + "-save");
         }
 
         el = document.getElementById("card1-timestamp");
         if (el != null) {
-            el.attr("id", this.getSubTopic().replaceAll("/", "-") + "-timestamp");
+            el.attr("id", this.getCardNumber() + "-timestamp");
         }
 
         el = document.getElementById("sendCommand");
         if (el != null) {
-            el.attr("value", this.getSubTopic().replaceAll("/", "-") + "-publish");
+            //el.attr("value", this.getCardNumber().replaceAll("/", "-") + "-publish");
+            el.attr("value", this.getCardNumber());
             //el.attr("id", this.getName() + "-publish");
         }
 
         el = document.getElementById("card1-save");
         if (el != null) {
-            el.attr("id", this.getSubTopic().replaceAll("/", "-") + "-save");
+            el.attr("id", this.getCardNumber() + "-save");
         }
 
         el = document.select(".card-title").first();

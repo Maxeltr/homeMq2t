@@ -38,7 +38,7 @@ public interface UIService {
 
     public void publish(Msg.Builder msg);
 
-    public void display(Msg.Builder message);
+    public void display(Msg.Builder message, String cardNumber);
 
     public void setMediator(ServiceMediator mediator);
 }

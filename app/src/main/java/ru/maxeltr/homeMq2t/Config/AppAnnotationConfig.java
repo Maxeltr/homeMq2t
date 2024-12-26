@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
@@ -111,7 +113,7 @@ public class AppAnnotationConfig {
                 String cardName = env.getProperty("card[" + cardNumber + "].name", "");
                 String sub = env.getProperty("card[" + cardNumber + "].subscription.topic", "");
                 String pub = env.getProperty("card[" + cardNumber + "].publication.topic", "");
-                Card card = new CardImpl(cardName, sub, pub);
+                Card card = new CardImpl(String.valueOf(cardNumber), cardName, sub, pub);
                 cards.add(card);
             }
             String dashboardName = env.getProperty("dashboard[" + i + "].name", "");
@@ -140,5 +142,10 @@ public class AppAnnotationConfig {
         return subscriptions;
     }
 
-
+    @Bean
+    public ObjectMapper getObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
+    }
 }
