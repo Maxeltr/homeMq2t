@@ -24,6 +24,7 @@
 package ru.maxeltr.homeMq2t.Service;
 
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.Promise;
 import java.time.Instant;
 import java.util.Base64;
@@ -106,8 +107,10 @@ public class UIServiceImpl implements UIService {
     }
 
     @Override
-    public void publish(Msg msg) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void publish(Msg.Builder msg) {
+        String topic = env.getProperty("card[" + cardNumber + "].subscription.topic", "");
+        
+        this.mediator.publish(msg, topic, qos, retain);
     }
 
     @Override

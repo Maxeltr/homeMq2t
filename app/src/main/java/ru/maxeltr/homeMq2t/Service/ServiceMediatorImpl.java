@@ -23,10 +23,13 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
@@ -37,6 +40,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -50,6 +56,11 @@ import ru.maxeltr.homeMq2t.Mqtt.MqttPublishHandler;
  */
 public class ServiceMediatorImpl implements ServiceMediator {
 
+    private static final Logger logger = LoggerFactory.getLogger(ServiceMediatorImpl.class);
+
+    @Autowired
+    private Environment env;
+
     @Autowired
     private CommandService commandService;
 
@@ -62,22 +73,19 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
 
-    private final Map<String, List<String>> topicMatcher = new HashMap();
+    private final Map<String, String> topicsAndCards = new HashMap();
 
     private final ObjectMapper mapper = new ObjectMapper();
 
     public ServiceMediatorImpl() {
-
-//        int i = 0;
-//        String topic;
-//        Map<String, List<Consumer<Msg.Builder>>> topicMatcher = new HashMap();
-//        List<Consumer<Msg.Builder>> methods = new ArrayList<>();
-//        while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
-//            topic = env.getProperty("card[" + i + "].subscription.topic", "");
-//            methods.add(this.uiService::display);
-//            topicMatcher.put(topic, methods);
-//            ++i;
-//        }
+        int i = 0;
+        while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
+            topicsAndCards.put(
+                    env.getProperty("card[" + i + "].subscription.topic", ""),
+                    env.getProperty("card[" + i + "].name", "")
+            );
+            ++i;
+        }
     }
 
     @PostConstruct
@@ -89,8 +97,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void publish(Msg data) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void publish(Msg msg, String topic, MqttQoS qos, boolean retain) {
+        try {
+            this.hmMq2t.publish(topic, Unpooled.wrappedBuffer(mapper.writeValueAsBytes(msg)), qos, retain);
+        } catch (JsonProcessingException ex) {
+            java.util.logging.Logger.getLogger(ServiceMediatorImpl.class.getName()).log(Level.SEVERE, null, ex);
+            logger.warn("can not convert msg to json {}", msg);
+        }
     }
 
     @Override
@@ -114,19 +127,29 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void handleMessage(MqttPublishMessage message) {
-        Msg.Builder msg = new Msg.Builder("receiveMessage");
-        msg.topic(message.variableHeader().topicName());
-        String type = "";
-        String payload = message.payload().toString(Charset.forName("UTF-8"));
-        msg.payload(payload);
-        if (this.isJsonValid(payload)) {
-            type = "application/json";
+    public void handleMessage(MqttPublishMessage mqttMessage) {
+        //Msg.Builder msg = new Msg.Builder("receiveMessage");
+        //msg.topic(mqttMessage.variableHeader().topicName());
+        //String type = "";
+        Msg.Builder payload;
+        try {
+            payload = mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
+        } catch (JsonProcessingException ex) {
+            logger.warn("can not convert json to Msg. {}", mqttMessage.payload().toString(Charset.forName("UTF-8")), ex);
+            payload = new Msg.Builder("error"); //TODO
         }
-        msg.type(type);
-        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-        
-        this.display(msg);
+        //msg.payload(payload);
+        //if (this.isJsonValid(payload)) {
+        //    type = "application/json";
+        //}
+        //msg.type(type);
+        //msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        if (this.topicsAndCards.containsKey(mqttMessage.variableHeader().topicName())) {
+            this.display(payload);
+        } else {
+            logger.warn("can not handle message. There are no actions for {}", mqttMessage);
+        }
+
     }
 
     @Override
@@ -139,13 +162,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
         hmMq2t.disconnect(reasonCode);
     }
 
-    private boolean isJsonValid(String jsonInString ) {
-    try {
+    private boolean isJsonValid(String jsonInString) {
+        try {
 
-       mapper.readTree(jsonInString);
-       return true;
-    } catch (IOException e) {
-       return false;
+            mapper.readTree(jsonInString);
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
     }
-  }
 }

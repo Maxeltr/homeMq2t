@@ -75,6 +75,7 @@ function showData(message) {
         document.getElementById(card + '-timestamp').innerHTML === 'undefined';
     } else {
         var date = new Date(parseInt(message.timestamp, 10));
+        console.log(date)
         var hours = date.getHours();
         var minutes = '0' + date.getMinutes();
         var seconds = '0' + date.getSeconds();

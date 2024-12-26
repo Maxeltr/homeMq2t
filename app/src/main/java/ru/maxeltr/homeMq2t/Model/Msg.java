@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.Objects;
@@ -32,6 +33,7 @@ import java.util.Objects;
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 @JsonDeserialize(as = Msg.Builder.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public interface Msg {
 
     static final int MAX_CHAR_TO_PRINT = 256;
@@ -49,12 +51,16 @@ public interface Msg {
         @JsonProperty("id")
         protected String id = "";
 
+        @JsonProperty("topic")
         protected String topic = "";
 
+        @JsonProperty("payload")
         protected String payload = "";
 
+        @JsonProperty("type")
         protected String type = "";
 
+        @JsonProperty("timestamp")
         protected String timestamp = "";
 
         public Builder() {

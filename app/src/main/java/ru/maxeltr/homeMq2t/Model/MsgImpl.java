@@ -70,7 +70,7 @@ public class MsgImpl implements Msg {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("MsgImpl{")
-                .append(", topic=").append(this.topic)
+                .append("topic=").append(this.topic)
                 .append(", type=").append(this.type)
                 .append(", timestamp=").append(this.timestamp)
                 .append(", payload=");
