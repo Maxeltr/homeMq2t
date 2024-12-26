@@ -73,7 +73,7 @@ public class UIServiceImpl implements UIService {
 
         Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
         authFuture.awaitUninterruptibly(this.connectTimeout);
-        
+
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was failed.");
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
@@ -109,7 +109,8 @@ public class UIServiceImpl implements UIService {
     @Override
     public void publish(Msg.Builder msg) {
         String topic = env.getProperty("card[" + cardNumber + "].subscription.topic", "");
-        
+        String topic = env.getProperty("card[" + cardNumber + "].subscription.topic", "");
+
         this.mediator.publish(msg, topic, qos, retain);
     }
 
