@@ -66,7 +66,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
 
-    private final Map<String, String> topicsAndCardNumbers = new HashMap();
+    private final Map<String, String> topicsAndCardNumbersForDisplay = new HashMap();
 
     @Autowired
     private ObjectMapper mapper;
@@ -88,7 +88,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         
         int i = 0;
         while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
-            topicsAndCardNumbers.put(
+            topicsAndCardNumbersForDisplay.put(
                     env.getProperty("card[" + i + "].subscription.topic", ""),
                     String.valueOf(i)
             );
@@ -143,8 +143,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
             return; //TODO
         }
         
-        if (this.topicsAndCardNumbers.containsKey(mqttMessage.variableHeader().topicName())) {
-            this.display(payload, this.topicsAndCardNumbers.get(mqttMessage.variableHeader().topicName()));
+        if (this.topicsAndCardNumbersForDisplay.containsKey(mqttMessage.variableHeader().topicName())) {
+            this.display(payload, this.topicsAndCardNumbersForDisplay.get(mqttMessage.variableHeader().topicName()));
         } else {
             logger.warn("can not handle message. There are no actions for {}", mqttMessage);
         }

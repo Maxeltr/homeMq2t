@@ -79,8 +79,7 @@ public class MqttPingHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        if (evt instanceof IdleStateEvent) {
-            IdleStateEvent event = (IdleStateEvent) evt;
+        if (evt instanceof IdleStateEvent event) {
             switch (event.state()) {
                 case READER_IDLE:
                     break;
@@ -96,7 +95,7 @@ public class MqttPingHandler extends ChannelInboundHandlerAdapter {
 //                            ctx.channel().writeAndFlush(new MqttMessage(fHeader));
                             logger.info("Ping response was not received for keepAlive time.");
                             //this.publishPingTimeoutEvent(); //TODO ?
-                        }, Integer.parseInt(this.env.getProperty("keep-alive-timer", "20")), TimeUnit.SECONDS);
+                        }, Integer.parseInt(this.env.getProperty("keep-alive-timer", "20")), TimeUnit.MILLISECONDS);
                     }
                     break;
             }

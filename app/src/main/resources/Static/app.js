@@ -86,6 +86,10 @@ console.log('number   =  ' + card)
         console.log("There is no data property in message payload json.");
         return;
     }
+    
+    if (payload.hasOwnProperty("name")) {
+        document.getElementById(card + '-text').innerHTML = payload.name;
+    }
 
     if (message.type !== 'undefined') {
         if (message.type.toUpperCase() === 'IMAGE/JPEG') {

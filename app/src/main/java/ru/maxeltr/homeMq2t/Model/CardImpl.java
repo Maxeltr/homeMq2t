@@ -48,10 +48,6 @@ public class CardImpl implements Card {
 
     private String name = "";
 
-    private String subTopic = "";
-
-    private String pubTopic = "";
-
     private final Document view;
 
     public CardImpl(String name) {
@@ -59,11 +55,9 @@ public class CardImpl implements Card {
         this.view = this.getViewTemplate();
     }
 
-    public CardImpl(String cardNumber, String name, String subTopic, String pubTopic) {
+    public CardImpl(String cardNumber, String name) {
         this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
         this.name = Objects.requireNonNullElse(name, "");
-        this.subTopic = Objects.requireNonNullElse(subTopic, "");
-        this.pubTopic = Objects.requireNonNullElse(pubTopic, "");
         this.view = this.getViewTemplate();
     }
 
@@ -75,14 +69,6 @@ public class CardImpl implements Card {
     @Override
     public String getName() {
         return this.name;
-    }
-
-    public String getSubTopic() {
-        return this.subTopic;
-    }
-
-    public String getPubTopic() {
-        return this.pubTopic;
     }
 
     @Override
@@ -136,6 +122,11 @@ public class CardImpl implements Card {
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-save");
         }
+        
+        el = document.getElementById("card1-text");
+        if (el != null) {
+            el.attr("id", this.getCardNumber() + "-text");
+        }
 
         el = document.select(".card-title").first();
         if (el != null) {
@@ -153,8 +144,6 @@ public class CardImpl implements Card {
         StringBuilder sb = new StringBuilder();
         sb.append("CardImpl{")
                 .append("name=").append(this.name)
-                .append(", subTopic=").append(this.subTopic)
-                .append(", pubTopic=").append(this.pubTopic)
                 .append(", view=");
         String strView = this.view.toString();
         if (strView.length() > MAX_CHAR_TO_PRINT) {
