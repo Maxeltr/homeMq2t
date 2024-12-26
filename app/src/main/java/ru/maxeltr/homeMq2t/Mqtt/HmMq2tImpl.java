@@ -60,6 +60,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -110,16 +111,27 @@ public class HmMq2tImpl implements HmMq2t {
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
     private final Map<String, MqttTopicSubscription> subscribedTopics = Collections.synchronizedMap(new LinkedHashMap());
+    
+    private final static AtomicBoolean connecting = new AtomicBoolean();
+    
+    private final static AtomicBoolean connected = new AtomicBoolean();
+    
+    private Promise<MqttConnAckMessage> authFuture;
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
+        if (connecting.get() || connected.get()) {
+            logger.warn("Connecting already {}", authFuture);
+            return this.authFuture;
+        }
+        connecting.set(true);
         workerGroup = new NioEventLoopGroup();
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(workerGroup);
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.handler(mqttChannelInitializer);
 
-        Promise<MqttConnAckMessage> authFuture = new DefaultPromise<>(workerGroup.next());
+        authFuture = new DefaultPromise<>(workerGroup.next());
         authFuture.addListener(f -> {
             if (f.isSuccess()) {
                 logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
@@ -127,6 +139,8 @@ public class HmMq2tImpl implements HmMq2t {
                 this.subscribeOnTopicsFromConfig();
             }
             logger.debug("authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
+            connecting.set(false);
+            connected.set(true);
         });
         mqttAckMediator.setConnectFuture(authFuture);
 
@@ -183,6 +197,8 @@ public class HmMq2tImpl implements HmMq2t {
         }
 
         this.shutdown();
+        
+        connected.set(false);
     }
 
     public void shutdown() {
