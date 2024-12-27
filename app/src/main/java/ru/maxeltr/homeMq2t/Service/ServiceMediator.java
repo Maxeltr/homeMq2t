@@ -40,7 +40,7 @@ public interface ServiceMediator {
 
     public void execute(Msg command);
 
-    public void display(Msg.Builder data);
+    public void display(Msg.Builder data, String cardNumber);
 
     public void update();
 

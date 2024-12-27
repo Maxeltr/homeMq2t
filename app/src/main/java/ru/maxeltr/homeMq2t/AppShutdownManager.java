@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2024 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2024 Dev.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,26 +21,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service;
+package ru.maxeltr.homeMq2t;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
-import ru.maxeltr.homeMq2t.Model.Msg;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ApplicationContext;
 
-/**
- *
- * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
- */
-public interface UIService {
+public class AppShutdownManager {
+    @Autowired
+    private ApplicationContext appContext;
 
-    public void connect();
-
-    public void disconnect(byte reasonCode);
-
-    public void publish(Msg.Builder msg);
-
-    public void display(Msg.Builder message, String cardNumber);
-
-    public void setMediator(ServiceMediator mediator);
-
-    public void shutdownApp();
+    public void shutdownApp(int returnCode){
+        SpringApplication.exit(appContext, () -> returnCode);
+    }
 }

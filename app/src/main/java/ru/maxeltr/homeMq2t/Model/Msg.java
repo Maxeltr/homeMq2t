@@ -40,9 +40,7 @@ public interface Msg {
 
     public String getType();
 
-    public String getTopic();
-
-    public String getPayload();
+    public String getData();
 
     public String getTimestamp();
 
@@ -51,11 +49,8 @@ public interface Msg {
         @JsonProperty("id")
         protected String id = "";
 
-        @JsonProperty("topic")
-        protected String topic = "";
-
-        @JsonProperty("payload")
-        protected String payload = "";
+        @JsonProperty("data")
+        protected String data = "";
 
         @JsonProperty("type")
         protected String type = "";
@@ -70,14 +65,25 @@ public interface Msg {
         public Builder(String id) {
             this.id = id;
         }
-
-        public Builder topic(String topic) {
-            this.topic = Objects.requireNonNullElse(topic, "");
-            return this;
+        
+        public String getId() {
+            return id;
         }
 
-        public Builder payload(String payload) {
-            this.payload = Objects.requireNonNullElse(payload, "");
+        public String getData() {
+            return data;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public String getTimestamp() {
+            return timestamp;
+        }
+
+        public Builder data(String data) {
+            this.data = Objects.requireNonNullElse(data, "");
             return this;
         }
 
@@ -92,7 +98,7 @@ public interface Msg {
         }
 
         public MsgImpl build() {
-            return new MsgImpl(this.topic, this.payload, this.type, this.timestamp);
+            return new MsgImpl(this.data, this.type, this.timestamp);
         }
 
         @Override
@@ -100,15 +106,14 @@ public interface Msg {
             StringBuilder sb = new StringBuilder();
             sb.append("Msg.Builder{")
                     .append("id=").append(this.id)
-                    .append(", topic=").append(this.topic)
                     .append(", type=").append(this.type)
                     .append(", timestamp=").append(this.timestamp)
-                    .append(", payload=");
-            if (this.payload.length() > MAX_CHAR_TO_PRINT) {
-                sb.append(this.payload.substring(0, MAX_CHAR_TO_PRINT));
+                    .append(", data=");
+            if (this.data.length() > MAX_CHAR_TO_PRINT) {
+                sb.append(this.data.substring(0, MAX_CHAR_TO_PRINT));
                 sb.append("...");
             } else {
-                sb.append(this.payload);
+                sb.append(this.data);
             }
             sb.append("}");
 

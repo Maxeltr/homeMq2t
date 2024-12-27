@@ -29,7 +29,9 @@ package ru.maxeltr.homeMq2t.Model;
  */
 public interface Card {
 
-	public String getName();
-	
+    public String getCardNumber();
+
+    public String getName();
+
     public String getHtml();
 }

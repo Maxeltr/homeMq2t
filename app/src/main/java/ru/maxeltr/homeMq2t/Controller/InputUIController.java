@@ -34,4 +34,6 @@ public interface InputUIController {
     public void connect(Msg.Builder msg);
 
     public void disconnect(Msg.Builder msg);
+    
+    public void shutdownApp(Msg.Builder msg);
 }

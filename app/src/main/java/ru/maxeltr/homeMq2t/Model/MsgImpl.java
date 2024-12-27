@@ -31,29 +31,21 @@ import java.util.Objects;
  */
 public class MsgImpl implements Msg {
 
-    private final String topic;
-
-    private final String payload;
+    private final String data;
 
     private final String type;
 
     private final String timestamp;
 
-    MsgImpl(String topic, String payload, String type, String timestamp) {
-        this.topic = Objects.requireNonNullElse(topic, "");
-        this.payload = Objects.requireNonNullElse(payload, "");
+    MsgImpl(String data, String type, String timestamp) {
+        this.data = Objects.requireNonNullElse(data, "");
         this.type = Objects.requireNonNullElse(type, "");
         this.timestamp = Objects.requireNonNullElse(timestamp, "");
     }
 
     @Override
-    public String getTopic() {
-        return this.topic;
-    }
-
-    @Override
-    public String getPayload() {
-        return this.payload;
+    public String getData() {
+        return this.data;
     }
 
     @Override
@@ -70,15 +62,14 @@ public class MsgImpl implements Msg {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("MsgImpl{")
-                .append("topic=").append(this.topic)
                 .append(", type=").append(this.type)
                 .append(", timestamp=").append(this.timestamp)
-                .append(", payload=");
-        if (this.payload.length() > MAX_CHAR_TO_PRINT) {
-            sb.append(this.payload.substring(0, MAX_CHAR_TO_PRINT));
+                .append(", data=");
+        if (this.data.length() > MAX_CHAR_TO_PRINT) {
+            sb.append(this.data.substring(0, MAX_CHAR_TO_PRINT));
             sb.append("...");
         } else {
-            sb.append(this.payload);
+            sb.append(this.data);
         }
         sb.append("}");
 
@@ -97,18 +88,16 @@ public class MsgImpl implements Msg {
 
         MsgImpl that = (MsgImpl) o;
 
-        return this.topic.equals(that.topic)
-                && this.type.equals(that.type)
+        return this.type.equals(that.type)
                 && this.timestamp.equals(that.timestamp)
-                && this.payload.equals(that.payload);
+                && this.data.equals(that.data);
     }
 
     @Override
     public int hashCode() {
-        int result = this.topic.hashCode();
-        result = 31 * result + this.type.hashCode();
+        int result = this.type.hashCode();
         result = 31 * result + this.timestamp.hashCode();
-        result = 31 * result + this.payload.hashCode();
+        result = 31 * result + this.data.hashCode();
 
         return result;
     }

@@ -3,7 +3,7 @@ var stompClient = null;
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
     $("#disconnect").prop("disabled", !connected);
-
+    $("#shutdown").prop("disabled", !connected);
 }
 
 function connect() {
@@ -12,7 +12,7 @@ function connect() {
     stompClient.connect({}, function (frame) {
         console.log('Connected: ' + frame);
         stompClient.subscribe('/topic/data', function (message) {
-            showData(JSON.parse(message.body));
+            showData(JSON.parse(message.body), message.headers.card);
         });
         //stompClient.send("/app/connect", {}, JSON.stringify({'topic': "", 'type': "application/json", 'timestamp': Date.now(), 'payload': {'name': "connect"}}));
         //stompClient.send("/app/connect", {}, JSON.stringify({'topic': "onconnecte", 'payload': "-", 'type': "application/json", 'timestamp': "--"}));
@@ -27,6 +27,12 @@ function disconnect() {
     }
     setConnected(false);
     console.log("Disconnected");
+}
+
+function shutdown() {
+    stompClient.send("/app/shutdownApp", {}, JSON.stringify({'id': "shutdown"}));
+    console.log("shutdown");
+    document.body.innerHTML="<div style=\"color:green;\">Bye!</div>";
 }
 
 function createCommand(id) {
@@ -44,7 +50,7 @@ function createCommand(id) {
  dashboard.innerHTML = atob(payload.data);
  } */
 
-function showData(message) {
+function showData(message, cardNumber) {
     if (message.type.toUpperCase() !== "APPLICATION/JSON"
             && message.type.toUpperCase() !== 'IMAGE/JPEG'
             && message.type.toUpperCase() !== 'TEXT/PLAIN'
@@ -54,7 +60,7 @@ function showData(message) {
         return;
     }
 
-    var payload = JSON.parse(message.payload);
+    var payload = JSON.parse(message.data);
 
     if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONCONNECT') {
         if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
@@ -68,8 +74,8 @@ function showData(message) {
         return;
     }
 
-    var card = message.topic.replace("/", "-");
-
+    var card = cardNumber;  //message.topic.replace("/", "-");
+console.log('number   =  ' + card)
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
         document.getElementById(card + '-timestamp').innerHTML === 'undefined';
@@ -85,6 +91,10 @@ function showData(message) {
     if (!payload.hasOwnProperty("data")) {
         console.log("There is no data property in message payload json.");
         return;
+    }
+    
+    if (payload.hasOwnProperty("name")) {
+        document.getElementById(card + '-text').innerHTML = payload.name;
     }
 
     if (message.type !== 'undefined') {
@@ -118,6 +128,9 @@ $(function () {
     });
     $("#disconnect").click(function () {
         disconnect();
+    });
+    $("#shutdown").click(function () {
+        shutdown();
     });
 
     $(document).on("click", "#sendCommand", function () {

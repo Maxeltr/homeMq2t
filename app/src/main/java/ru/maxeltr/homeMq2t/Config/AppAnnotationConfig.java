@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
@@ -33,6 +35,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Model.Card;
 import ru.maxeltr.homeMq2t.Model.CardImpl;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
@@ -109,9 +112,7 @@ public class AppAnnotationConfig {
             List<String> listOfCards = (List<String>) env.getProperty("dashboard[" + i + "].cards", List.class);
             for (String cardNumber : listOfCards) {
                 String cardName = env.getProperty("card[" + cardNumber + "].name", "");
-                String sub = env.getProperty("card[" + cardNumber + "].subscription.topic", "");
-                String pub = env.getProperty("card[" + cardNumber + "].publication.topic", "");
-                Card card = new CardImpl(cardName, sub, pub);
+                Card card = new CardImpl(String.valueOf(cardNumber), cardName);
                 cards.add(card);
             }
             String dashboardName = env.getProperty("dashboard[" + i + "].name", "");
@@ -140,5 +141,15 @@ public class AppAnnotationConfig {
         return subscriptions;
     }
 
-
+    @Bean
+    public ObjectMapper getObjectMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper;
+    }
+    
+    @Bean
+    public AppShutdownManager getAppShutdownManakger() {
+        return new AppShutdownManager();
+    }
 }

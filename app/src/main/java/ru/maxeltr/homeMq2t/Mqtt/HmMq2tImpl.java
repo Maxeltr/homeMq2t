@@ -60,6 +60,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -100,6 +101,9 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
+    
+    @Value("${wait-disconnect-while-shutdown:1000}")
+    private Integer waitDisconnect;
 
     @Value("${clean-session:true}")
     private boolean cleanSession;
@@ -110,23 +114,36 @@ public class HmMq2tImpl implements HmMq2t {
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
     private final Map<String, MqttTopicSubscription> subscribedTopics = Collections.synchronizedMap(new LinkedHashMap());
+    
+    private final static AtomicBoolean connecting = new AtomicBoolean();
+    
+    private final static AtomicBoolean connected = new AtomicBoolean();
+    
+    private Promise<MqttConnAckMessage> authFuture;
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
+        if (connecting.get() || connected.get()) {
+            logger.warn("Connecting or connected already {}", authFuture);
+            return this.authFuture;
+        }
+        connecting.set(true);
         workerGroup = new NioEventLoopGroup();
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(workerGroup);
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.handler(mqttChannelInitializer);
 
-        Promise<MqttConnAckMessage> authFuture = new DefaultPromise<>(workerGroup.next());
+        authFuture = new DefaultPromise<>(workerGroup.next());
         authFuture.addListener(f -> {
             if (f.isSuccess()) {
+                connected.set(true);
                 logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
                 //perform post-connection operations here
                 this.subscribeOnTopicsFromConfig();
             }
             logger.debug("authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
+            connecting.set(false);
         });
         mqttAckMediator.setConnectFuture(authFuture);
 
@@ -177,12 +194,14 @@ public class HmMq2tImpl implements HmMq2t {
         );
 
         try {
-            TimeUnit.MILLISECONDS.sleep(1000);
+            TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {
             logger.info("Disconnect message has been send. InterruptedException while timeout.", ex);
         }
 
         this.shutdown();
+        
+        connected.set(false);
     }
 
     public void shutdown() {
@@ -242,7 +261,6 @@ public class HmMq2tImpl implements HmMq2t {
                 if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
                     this.subscribedTopics.put(topics.get(i).topicName(), topics.get(i));
                     logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicName(), topics.get(i).qualityOfService());
-
                 } else {
                     logger.warn("Subscription on topic: {} with Qos: {} failed. Granted Qos: {}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
                     //TODO resub with lower QoS?

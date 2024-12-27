@@ -59,6 +59,13 @@ public class InputUIControllerImpl implements InputUIController {
         uiService.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
     }
     
+    @Override
+    @MessageMapping("/shutdownApp")
+    public void shutdownApp(Msg.Builder msg) {
+        logger.info("Do shutdown. Msg.Builder was received - {}.", msg);
+        uiService.shutdownApp();
+    }
+    
     @MessageMapping("/publish")
     public void publish(Msg.Builder msg) {
         logger.info("Do publish. Msg.Builder was received - {}.", msg);

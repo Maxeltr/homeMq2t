@@ -25,15 +25,18 @@ package ru.maxeltr.homeMq2t.Service;
 
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 import io.netty.util.concurrent.Promise;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -54,6 +57,9 @@ public class UIServiceImpl implements UIService {
 
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
+    
+    @Value("${wait-disconnect-while-shutdown:1000}")
+    private Integer waitDisconnect;
 
     @Autowired
     private OutputUIController uiController;
@@ -61,6 +67,9 @@ public class UIServiceImpl implements UIService {
     @Autowired
     private List<Dashboard> dashboards;
 
+    @Autowired
+    AppShutdownManager appShutdownManager;
+    
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
@@ -77,29 +86,43 @@ public class UIServiceImpl implements UIService {
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was failed.");
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
-            msg.payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
+            msg.data("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                     + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
                     + "\"}");
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed {}", authFuture.cause());
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
-            msg.payload("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
+            msg.data("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                     + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
                     + "\"}");
         } else {
             logger.info("Connection established successfully.");
-            msg.payload("{\"name\": \"onConnect\", \"status\": \"ok\", \"type\": \"text/html;base64\", \"data\": \""
+            msg.data("{\"name\": \"onConnect\", \"status\": \"ok\", \"type\": \"text/html;base64\", \"data\": \""
                     + Base64.getEncoder().encodeToString(this.getStartDashboard().getBytes())
                     + "\"}");
         }
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-        this.display(msg);
+        this.display(msg, "");
     }
 
     @Override
     public void disconnect(byte reasonCode) {
         logger.info("Do disconnect with reason code {}.", reasonCode);
         this.mediator.disconnect(reasonCode);
+    }
+    
+    
+    public void shutdownApp() {
+        logger.info("Do shutdown aplication.");
+        this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
+        
+        try {
+            TimeUnit.MILLISECONDS.sleep(waitDisconnect);
+        } catch (InterruptedException ex) {
+            logger.info("Shutdown. InterruptedException while disconnect timeout.", ex);
+        }
+        
+        this.appShutdownManager.shutdownApp(0);
     }
 
     private String getStartDashboard() {
@@ -108,16 +131,22 @@ public class UIServiceImpl implements UIService {
 
     @Override
     public void publish(Msg.Builder msg) {
-        String topic = env.getProperty("card[" + cardNumber + "].subscription.topic", "");
-        String topic = env.getProperty("card[" + cardNumber + "].subscription.topic", "");
-
-        this.mediator.publish(msg, topic, qos, retain);
+        String topic = env.getProperty("card[" + msg.getId() + "].publication.topic", "");
+        MqttQoS qos = MqttQoS.valueOf(env.getProperty("card[" + msg.getId() + "].publication.qos", "AT_MOST_ONCE"));
+        boolean retain = Boolean.getBoolean(env.getProperty("card[" + msg.getId() + "].publication.retain", "false"));
+        msg.data(env.getProperty("card[" + msg.getId() + "].publication.data", ""));
+        msg.type(env.getProperty("card[" + msg.getId() + "].publication.data.type", ""));
+        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        
+        logger.info("Create message {}.", msg);
+        
+        this.mediator.publish(msg.build(), topic, qos, retain);
     }
 
     @Override
-    public void display(Msg.Builder msg) {
+    public void display(Msg.Builder msg, String cardNumber) {
 
         //TODO sanitize name, payload, timestamp...
-        this.uiController.display(msg.build());
+        this.uiController.display(msg.build(), cardNumber);
     }
 }
