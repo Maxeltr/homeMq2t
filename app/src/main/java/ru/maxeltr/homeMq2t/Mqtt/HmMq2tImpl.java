@@ -101,6 +101,9 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
+    
+    @Value("${wait-disconnect-while-shutdown:1000}")
+    private Integer waitDisconnect;
 
     @Value("${clean-session:true}")
     private boolean cleanSession;
@@ -191,7 +194,7 @@ public class HmMq2tImpl implements HmMq2t {
         );
 
         try {
-            TimeUnit.MILLISECONDS.sleep(1000);
+            TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {
             logger.info("Disconnect message has been send. InterruptedException while timeout.", ex);
         }
@@ -258,7 +261,6 @@ public class HmMq2tImpl implements HmMq2t {
                 if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
                     this.subscribedTopics.put(topics.get(i).topicName(), topics.get(i));
                     logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicName(), topics.get(i).qualityOfService());
-
                 } else {
                     logger.warn("Subscription on topic: {} with Qos: {} failed. Granted Qos: {}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
                     //TODO resub with lower QoS?

@@ -57,6 +57,9 @@ public class UIServiceImpl implements UIService {
 
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
+    
+    @Value("${wait-disconnect-while-shutdown:1000}")
+    private Integer waitDisconnect;
 
     @Autowired
     private OutputUIController uiController;
@@ -114,7 +117,7 @@ public class UIServiceImpl implements UIService {
         this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
         
         try {
-            TimeUnit.MILLISECONDS.sleep(1000);
+            TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {
             logger.info("Shutdown. InterruptedException while disconnect timeout.", ex);
         }
@@ -131,10 +134,8 @@ public class UIServiceImpl implements UIService {
         String topic = env.getProperty("card[" + msg.getId() + "].publication.topic", "");
         MqttQoS qos = MqttQoS.valueOf(env.getProperty("card[" + msg.getId() + "].publication.qos", "AT_MOST_ONCE"));
         boolean retain = Boolean.getBoolean(env.getProperty("card[" + msg.getId() + "].publication.retain", "false"));
-        String data = env.getProperty("card[" + msg.getId() + "].publication.data", "");
-        String type = env.getProperty("card[" + msg.getId() + "].publication.data.type", "");
-        msg.data(data);
-        msg.type(type);
+        msg.data(env.getProperty("card[" + msg.getId() + "].publication.data", ""));
+        msg.type(env.getProperty("card[" + msg.getId() + "].publication.data.type", ""));
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         
         logger.info("Create message {}.", msg);

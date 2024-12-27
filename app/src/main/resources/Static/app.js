@@ -3,7 +3,7 @@ var stompClient = null;
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
     $("#disconnect").prop("disabled", !connected);
-
+    $("#shutdown").prop("disabled", !connected);
 }
 
 function connect() {
@@ -32,6 +32,7 @@ function disconnect() {
 function shutdown() {
     stompClient.send("/app/shutdownApp", {}, JSON.stringify({'id': "shutdown"}));
     console.log("shutdown");
+    document.body.innerHTML="<div style=\"color:green;\">Bye!</div>";
 }
 
 function createCommand(id) {

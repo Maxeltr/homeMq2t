@@ -46,7 +46,7 @@ public class OutputUIControllerImpl implements OutputUIController {
     @Override
     public void display(Msg msg, String cardNumber) {
         simpMessagingTemplate.convertAndSend("/topic/data", msg, Map.of("card", cardNumber));
-        logger.debug("Msg was sent to /topic/data. {}", msg);
+        logger.debug("Msg was sent to card {}. Message={}", cardNumber, msg);
     }
 
     public void onConnect(Msg msg) {
