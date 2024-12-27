@@ -121,7 +121,7 @@ public class HmMq2tImpl implements HmMq2t {
     @Override
     public Promise<MqttConnAckMessage> connect() {
         if (connecting.get() || connected.get()) {
-            logger.warn("Connecting already {}", authFuture);
+            logger.warn("Connecting or connected already {}", authFuture);
             return this.authFuture;
         }
         connecting.set(true);
@@ -134,13 +134,13 @@ public class HmMq2tImpl implements HmMq2t {
         authFuture = new DefaultPromise<>(workerGroup.next());
         authFuture.addListener(f -> {
             if (f.isSuccess()) {
+                connected.set(true);
                 logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
                 //perform post-connection operations here
                 this.subscribeOnTopicsFromConfig();
             }
             logger.debug("authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
             connecting.set(false);
-            connected.set(true);
         });
         mqttAckMediator.setConnectFuture(authFuture);
 

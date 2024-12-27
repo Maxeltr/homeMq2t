@@ -25,15 +25,18 @@ package ru.maxeltr.homeMq2t.Service;
 
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 import io.netty.util.concurrent.Promise;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -61,6 +64,9 @@ public class UIServiceImpl implements UIService {
     @Autowired
     private List<Dashboard> dashboards;
 
+    @Autowired
+    AppShutdownManager appShutdownManager;
+    
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
@@ -100,6 +106,20 @@ public class UIServiceImpl implements UIService {
     public void disconnect(byte reasonCode) {
         logger.info("Do disconnect with reason code {}.", reasonCode);
         this.mediator.disconnect(reasonCode);
+    }
+    
+    
+    public void shutdownApp() {
+        logger.info("Do shutdown aplication.");
+        this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
+        
+        try {
+            TimeUnit.MILLISECONDS.sleep(1000);
+        } catch (InterruptedException ex) {
+            logger.info("Shutdown. InterruptedException while disconnect timeout.", ex);
+        }
+        
+        this.appShutdownManager.shutdownApp(0);
     }
 
     private String getStartDashboard() {

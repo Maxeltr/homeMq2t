@@ -29,6 +29,11 @@ function disconnect() {
     console.log("Disconnected");
 }
 
+function shutdown() {
+    stompClient.send("/app/shutdownApp", {}, JSON.stringify({'id': "shutdown"}));
+    console.log("shutdown");
+}
+
 function createCommand(id) {
     console.log('createCommand ' + id);
     stompClient.send("/app/publish", {}, JSON.stringify({'id': id}));
@@ -122,6 +127,9 @@ $(function () {
     });
     $("#disconnect").click(function () {
         disconnect();
+    });
+    $("#shutdown").click(function () {
+        shutdown();
     });
 
     $(document).on("click", "#sendCommand", function () {

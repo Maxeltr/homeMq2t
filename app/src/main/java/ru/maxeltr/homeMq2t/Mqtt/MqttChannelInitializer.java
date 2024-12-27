@@ -65,7 +65,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         ch.pipeline().addLast("mqttDecoder", this.createMqttDecoder());
         ch.pipeline().addLast("mqttEncoder", this.createMqttEncoder());
         ch.pipeline().addLast("idleStateHandler", this.createIdleStateHandler());
-        ch.pipeline().addLast("mqttPingHandler", this.createMqttPingHandler());
+        ch.pipeline().addLast("mqttPingHandler", this.createMqttPingHandler(this.serviceMediator));
         ch.pipeline().addLast("mqttConnectHandler", this.createMqttConnectHandler(this.mqttAckMediator));
         //ch.pipeline().addLast("mqttConnectHandler", this.mqttConnectHandler);
         ch.pipeline().addLast("mqttSubscriptionHandler", this.createMqttSubscriptionHandler(this.mqttAckMediator));
@@ -127,8 +127,8 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         return mqttPublishHandler;
     }
     
-    private MqttPingHandler createMqttPingHandler() {
-        MqttPingHandler mqttPingHandler = new MqttPingHandler();
+    private MqttPingHandler createMqttPingHandler(ServiceMediator serviceMediator) {
+        MqttPingHandler mqttPingHandler = new MqttPingHandler(serviceMediator);
 
         AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
         autowireCapableBeanFactory.autowireBean(mqttPingHandler);

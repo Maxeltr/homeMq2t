@@ -29,6 +29,7 @@ import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.core.env.Environment;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
  *
@@ -50,6 +52,21 @@ public class MqttPingHandler extends ChannelInboundHandlerAdapter {
     private Environment env;
 
     private ScheduledFuture<?> pingRespTimeout;
+    
+    private final MqttMessage pingReqMsg;
+    
+    private final MqttMessage pingRespMsg;
+    
+    private final ServiceMediator serviceMediator;
+
+    MqttPingHandler(ServiceMediator serviceMediator) {
+        this.serviceMediator = serviceMediator;
+        MqttFixedHeader fixedHeaderReqMsg = new MqttFixedHeader(MqttMessageType.PINGREQ, false, MqttQoS.AT_MOST_ONCE, false, 0);
+        pingReqMsg = new MqttMessage(fixedHeaderReqMsg);
+        
+        MqttFixedHeader fixedHeaderRespMsg = new MqttFixedHeader(MqttMessageType.PINGRESP, false, MqttQoS.AT_MOST_ONCE, false, 0);
+        pingRespMsg = new MqttMessage(fixedHeaderRespMsg);
+    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -60,13 +77,11 @@ public class MqttPingHandler extends ChannelInboundHandlerAdapter {
 
         MqttMessage message = (MqttMessage) msg;
         if (message.fixedHeader().messageType() == MqttMessageType.PINGREQ) {
-            MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PINGRESP, false, MqttQoS.AT_MOST_ONCE, false, 0);
-            ctx.channel().writeAndFlush(new MqttMessage(fixedHeader));
+            ctx.channel().writeAndFlush(pingRespMsg);
             logger.info("Received ping request. Sent ping response. {}.", msg);
 //            ReferenceCountUtil.release(msg);
         } else if (message.fixedHeader().messageType() == MqttMessageType.PINGRESP) {
             logger.info("Received ping response {}.", msg);
-            System.out.println(String.format("Received ping response %s.", msg));
             if (this.pingRespTimeout != null && !this.pingRespTimeout.isCancelled() && !this.pingRespTimeout.isDone()) {
                 this.pingRespTimeout.cancel(true);
                 this.pingRespTimeout = null;
@@ -81,23 +96,20 @@ public class MqttPingHandler extends ChannelInboundHandlerAdapter {
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
         if (evt instanceof IdleStateEvent event) {
             switch (event.state()) {
-                case READER_IDLE:
-                    break;
-                case WRITER_IDLE:
-                    MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PINGREQ, false, MqttQoS.AT_MOST_ONCE, false, 0);
-                    MqttMessage msg = new MqttMessage(fixedHeader);
-                    ctx.writeAndFlush(msg);
-                    logger.info("Sent ping request {}.", msg);
+                case READER_IDLE -> {
+                }
+                case WRITER_IDLE -> {
+                    ctx.writeAndFlush(pingReqMsg);
+                    logger.info("Sent ping request {}.", pingReqMsg);
 
                     if (this.pingRespTimeout == null) {
                         this.pingRespTimeout = ctx.channel().eventLoop().schedule(() -> {
-//                            MqttFixedHeader fHeader = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
-//                            ctx.channel().writeAndFlush(new MqttMessage(fHeader));
                             logger.info("Ping response was not received for keepAlive time.");
+                            this.serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
                             //this.publishPingTimeoutEvent(); //TODO ?
                         }, Integer.parseInt(this.env.getProperty("keep-alive-timer", "20")), TimeUnit.MILLISECONDS);
                     }
-                    break;
+                }
             }
         } else {
             super.userEventTriggered(ctx, evt);
