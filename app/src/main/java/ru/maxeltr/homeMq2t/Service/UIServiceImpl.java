@@ -40,7 +40,6 @@ import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
  *
@@ -111,7 +110,7 @@ public class UIServiceImpl implements UIService {
         this.mediator.disconnect(reasonCode);
     }
     
-    
+    @Override
     public void shutdownApp() {
         logger.info("Do shutdown aplication.");
         this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);

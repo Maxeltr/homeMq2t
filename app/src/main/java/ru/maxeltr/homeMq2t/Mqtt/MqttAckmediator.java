@@ -33,8 +33,6 @@ import io.netty.util.concurrent.Promise;
  */
 public interface MqttAckMediator {
 
-    //public Promise<? extends MqttMessage> get(String key);
-
     public void add(int key, Promise<? extends MqttMessage> future, MqttMessage message);
 
     public void remove(int key);

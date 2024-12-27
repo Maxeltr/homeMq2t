@@ -74,18 +74,21 @@ function showData(message, cardNumber) {
         return;
     }
 
-    var card = cardNumber;  //message.topic.replace("/", "-");
-console.log('number   =  ' + card)
+    if (!cardNumber) {
+        console.log("Card number is empty");
+        return;
+    }
+
     if (message.timestamp === 'undefined') {
         console.log('message.timestamp is undefined');
-        document.getElementById(card + '-timestamp').innerHTML === 'undefined';
+        document.getElementById(cardNumber + '-timestamp').innerHTML === 'undefined';
     } else {
         var date = new Date(parseInt(message.timestamp, 10));
         console.log(date)
         var hours = date.getHours();
         var minutes = '0' + date.getMinutes();
         var seconds = '0' + date.getSeconds();
-        document.getElementById(card + '-timestamp').innerHTML = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+        document.getElementById(cardNumber + '-timestamp').innerHTML = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
     }
 
     if (!payload.hasOwnProperty("data")) {
@@ -94,22 +97,22 @@ console.log('number   =  ' + card)
     }
     
     if (payload.hasOwnProperty("name")) {
-        document.getElementById(card + '-text').innerHTML = payload.name;
+        document.getElementById(cardNumber + '-text').innerHTML = payload.name;
     }
 
     if (message.type !== 'undefined') {
         if (message.type.toUpperCase() === 'IMAGE/JPEG') {
             var image = new Image();
             image.src = 'data:image/jpeg;base64,' + payload.data;
-            document.getElementById(card + '-payload').innerHTML = '<img src="' + image.src + '" class="img-fluid" alt="...">';
-            var saveButton = document.getElementById(card + '-save');
+            document.getElementById(cardNumber + '-payload').innerHTML = '<img src="' + image.src + '" class="img-fluid" alt="...">';
+            var saveButton = document.getElementById(cardNumber + '-save');
             saveButton.setAttribute('href', image.src);
             saveButton.classList.remove("disabled");
         } else if (message.type.toUpperCase() === 'TEXT/PLAIN') {
-            document.getElementById(card + '-payload').innerHTML = '<p>' + payload.data + '</p>';
+            document.getElementById(cardNumber + '-payload').innerHTML = '<p>' + payload.data + '</p>';
         } else if (message.type.toUpperCase() === 'APPLICATION/JSON') {
             console.log('message.type is APPLICATION/JSON ' + payload.data);
-            document.getElementById(card + '-payload').innerHTML = '<p>' + payload.data + '</p>';
+            document.getElementById(cardNumber + '-payload').innerHTML = '<p>' + payload.data + '</p>';
         } else {
             console.log('Error: message type is ' + message.type);
         }

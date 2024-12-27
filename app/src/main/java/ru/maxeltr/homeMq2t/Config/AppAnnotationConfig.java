@@ -64,10 +64,10 @@ public class AppAnnotationConfig {
     @Autowired
     private Environment env;
 
-    @Bean
-    public AppProperties appProperty() {
-        return new AppProperties();
-    }
+//    @Bean
+//    public AppProperties appProperty() {
+//        return new AppProperties();
+//    }
 
     @Bean
     public HmMq2t getHmMq2t() {

@@ -26,87 +26,78 @@ package ru.maxeltr.homeMq2t.Mqtt;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
-import jakarta.annotation.PostConstruct;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class MqttAckMediatorImpl implements MqttAckMediator {   //TODO synchronize
+public class MqttAckMediatorImpl implements MqttAckMediator {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttAckMediatorImpl.class);
 
     private Promise<MqttConnAckMessage> connectFuture;
 
-//    @Autowired
-//    private HmMq2t hmMq2t;
+    private final Map<Integer, Promise<? extends MqttMessage>> futures = new LinkedHashMap<>();
 
-//    @Autowired
-//    private MqttPublishHandlerImpl publishHandler;
-
-//    @Autowired
-//    private MqttSubscriptionHandler mqttSubscriptionHandler;
-
-    private final Map<Integer, Promise<? extends MqttMessage>> futures = Collections.synchronizedMap(new LinkedHashMap<>());
-
-    private final Map<Integer, MqttMessage> messages  = Collections.synchronizedMap(new LinkedHashMap<>());
-
-//    @PostConstruct
-//    public void setMediator() {
-////        hmMq2t.setMediator(this);
-////        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.hmMq2t.getClass());
-//        publishHandler.setMediator(this);
-//        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.publishHandler.getClass());
-////        mqttSubscriptionHandler.setMediator(this);
-////        logger.debug("Set {} to the {}", MqttAckMediatorImpl.class, this.mqttSubscriptionHandler.getClass());
-//    }
+    private final Map<Integer, MqttMessage> messages = new LinkedHashMap<>();
 
     @Override
     public Promise<? extends MqttMessage> getFuture(int key) {
-        return this.futures.get(key);
+        synchronized (this) {
+            return this.futures.get(key);
+        }
     }
 
     @Override
     public MqttMessage getMessage(int key) {
-        return this.messages.get(key);
+        synchronized (this) {
+            return this.messages.get(key);
+        }
     }
 
     @Override
     public boolean isContainId(int key) {
-        return this.messages.containsKey(key) || this.futures.containsKey(key);
+        synchronized (this) {
+            return this.messages.containsKey(key) || this.futures.containsKey(key);
+        }
     }
 
     @Override
     public void add(int key, Promise<? extends MqttMessage> future, MqttMessage message) {
-        this.futures.put(key, future);
-        logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, future, futures.size());
-        this.messages.put(key, message);
-        logger.debug("Message was added key: {} message: {}. Amount messages: {}", key, future, messages.size());
+        synchronized (this) {
+            this.futures.put(key, future);
+            logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, future, futures.size());
+            this.messages.put(key, message);
+            logger.debug("Message was added key: {} message: {}. Amount messages: {}", key, future, messages.size());
+        }
     }
 
     @Override
     public void remove(int key) {
-        this.futures.remove(key);
-        logger.debug("Future was removed key: {}. Amount futures: {}", key, futures.size());
-        this.messages.remove(key);
-        logger.debug("Message was removed key: {}. Amount messages: {}", key, messages.size());
+        synchronized (this) {
+            this.futures.remove(key);
+            logger.debug("Future was removed key: {}. Amount futures: {}", key, futures.size());
+            this.messages.remove(key);
+            logger.debug("Message was removed key: {}. Amount messages: {}", key, messages.size());
+        }
     }
 
     @Override
     public void setConnectFuture(Promise<MqttConnAckMessage> future) {
-        this.connectFuture = future;
-        logger.debug("Connect future was set: {}.", future);
+        synchronized (this) {
+            this.connectFuture = future;
+            logger.debug("Connect future was set: {}.", future);
+        }
     }
 
     @Override
     public Promise<MqttConnAckMessage> getConnectFuture() {
-        return this.connectFuture;
+        synchronized (this) {
+            return this.connectFuture;
+        }
     }
 }
