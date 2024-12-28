@@ -49,8 +49,8 @@ public class OutputUIControllerImpl implements OutputUIController {
         logger.debug("Msg was sent to card {}. Message={}", cardNumber, msg);
     }
 
-    public void onConnect(Msg msg) {
-        simpMessagingTemplate.convertAndSend("/topic/onConnect", msg);
-        logger.debug("Msg was sent to /topic/onConnect. {}", msg);
-    }
+//    public void onConnect(Msg msg) {
+//        simpMessagingTemplate.convertAndSend("/topic/onConnect", msg);
+//        logger.debug("Msg was sent to /topic/onConnect. {}", msg);
+//    }
 }
