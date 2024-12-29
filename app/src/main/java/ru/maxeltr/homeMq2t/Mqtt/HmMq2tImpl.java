@@ -172,7 +172,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Override
     public void disconnect(byte reasonCode) {
-        //clear pending messages. stop retransmit. unsubscribe if clean session = false
+        //TODO clear pending messages. stop retransmit. 
         if (!this.cleanSession) {
             List<String> topics = this.subscribedTopics.keySet().stream().collect(Collectors.toList());
             logger.info("Unsubscribing from topics=[{}]", topics);
@@ -204,7 +204,7 @@ public class HmMq2tImpl implements HmMq2t {
         connected.set(false);
     }
 
-    public void shutdown() {
+    private void shutdown() {
         if (this.channel != null) {
             this.channel.close();
             logger.info("Close channel");

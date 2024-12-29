@@ -105,9 +105,9 @@ public class MqttPingHandler extends ChannelInboundHandlerAdapter {
                     if (this.pingRespTimeout == null) {
                         this.pingRespTimeout = ctx.channel().eventLoop().schedule(() -> {
                             logger.info("Ping response was not received for keepAlive time.");
-                            this.serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
+                            //this.serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
                             //this.publishPingTimeoutEvent(); //TODO ?
-                        }, Integer.parseInt(this.env.getProperty("keep-alive-timer", "20")), TimeUnit.MILLISECONDS);
+                        }, Integer.parseInt(this.env.getProperty("keep-alive-timer", "2000")), TimeUnit.MILLISECONDS);
                     }
                 }
             }
