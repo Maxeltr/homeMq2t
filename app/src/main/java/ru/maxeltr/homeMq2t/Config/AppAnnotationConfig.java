@@ -35,6 +35,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Model.Card;
 import ru.maxeltr.homeMq2t.Model.CardImpl;
@@ -51,6 +53,8 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
 import ru.maxeltr.homeMq2t.Service.UIService;
 import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -151,5 +155,21 @@ public class AppAnnotationConfig {
     @Bean
     public AppShutdownManager getAppShutdownManakger() {
         return new AppShutdownManager();
+    }
+    
+    @Bean
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+        threadPoolTaskScheduler.setPoolSize(10);
+        threadPoolTaskScheduler.setThreadNamePrefix("Mq2tThreadPoolTaskScheduler");
+        return threadPoolTaskScheduler;
+    }
+    
+    @Bean(name = "pingPeriodicTrigger")
+    public PeriodicTrigger pingPeriodicTrigger() {
+        Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("keep-alive-timer", "20000")));
+        PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
+        periodicTrigger.setInitialDelay(duration);
+        return periodicTrigger;
     }
 }

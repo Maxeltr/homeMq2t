@@ -155,6 +155,10 @@ public class ServiceMediatorImpl implements ServiceMediator {
     public Promise<MqttConnAckMessage> connect() {
         return hmMq2t.connect();
     }
+    
+    public void reconnect() {
+        this.hmMq2t.reconnect();
+    }
 
     @Override
     public void disconnect(byte reasonCode) {

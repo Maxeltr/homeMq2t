@@ -17,6 +17,8 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 public interface HmMq2t {
 
     public Promise<MqttConnAckMessage> connect();
+    
+    public void reconnect();
 
     public void disconnect(byte reasonCode);
 

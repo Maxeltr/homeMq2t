@@ -124,7 +124,7 @@ public class HmMq2tImpl implements HmMq2t {
     @Override
     public Promise<MqttConnAckMessage> connect() {
         if (connecting.get() || connected.get()) {
-            logger.warn("Connecting or connected already {}", authFuture);
+            logger.warn("Connecting or connected already. connecting={}. connected={}. auhtFuture={}", connecting.get(), connected.get(), authFuture);
             return this.authFuture;
         }
         connecting.set(true);
@@ -141,6 +141,7 @@ public class HmMq2tImpl implements HmMq2t {
                 logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
                 //perform post-connection operations here
                 this.subscribeOnTopicsFromConfig();
+                //TODO start ping
             }
             logger.debug("authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
             connecting.set(false);
@@ -159,8 +160,12 @@ public class HmMq2tImpl implements HmMq2t {
         future.awaitUninterruptibly();
         if (future.isCancelled()) {
             logger.info("Connection attempt cancelled.");
+            connecting.set(false);
+            connected.set(false);
         } else if (!future.isSuccess()) {
             logger.info("Connection attempt failed {}.", future.cause());
+            connecting.set(false);
+            connected.set(false);
         } else {
             logger.info("Connected to {} via port {}.", this.host, this.port);
         }
@@ -168,6 +173,10 @@ public class HmMq2tImpl implements HmMq2t {
 
         return authFuture;
 
+    }
+    
+    public void reconnect() {
+        logger.info("Reconnect!");
     }
 
     @Override
@@ -210,7 +219,7 @@ public class HmMq2tImpl implements HmMq2t {
             logger.info("Close channel");
         }
 
-        this.workerGroup.shutdownGracefully();
+        this.workerGroup.shutdownGracefully().awaitUninterruptibly();
         logger.info("Shutdown gracefully");
     }
 
