@@ -80,8 +80,9 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
     }
     
     //@PostConstruct
-    public void start() {
+    public void startPing() {
         this.future = threadPoolTaskScheduler.schedule(new RunnableTask(), pingPeriodicTrigger);
+        logger.info("Start ping. {}", this);
     }
 
     @Override
@@ -89,7 +90,7 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
         this.ctx = ctx;
     }
     
-    public void stop() {
+    public void stopPing() {
         this.future.cancel(false);
         logger.info("The ping was canceled. {}", this);
     }

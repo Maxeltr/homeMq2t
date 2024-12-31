@@ -61,8 +61,6 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
     @Value("${keep-alive-timer:20}")
     private int keepAliveTimer;
-    
-    private SocketChannel channel;
 
     @Override
     protected void initChannel(SocketChannel ch) throws Exception {
@@ -148,9 +146,5 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         autowireCapableBeanFactory.initializeBean(mqttPingHandler, "mqttPingHandler");
 
         return mqttPingHandler;
-    }
-    
-    public MqttPingScheduleHandler getPingHandler() {
-        return (MqttPingScheduleHandler) channel.pipeline().get("mqttPingHandler");
     }
 }
