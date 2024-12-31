@@ -141,7 +141,7 @@ public class HmMq2tImpl implements HmMq2t {
                 logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
                 //perform post-connection operations here
                 this.subscribeOnTopicsFromConfig();
-                //TODO start ping
+                mqttChannelInitializer.getPingHandler().start();
             }
             logger.debug("authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
             connecting.set(false);
@@ -182,6 +182,8 @@ public class HmMq2tImpl implements HmMq2t {
     @Override
     public void disconnect(byte reasonCode) {
         //TODO clear pending messages. stop retransmit. 
+        mqttChannelInitializer.getPingHandler().stop();
+        
         if (!this.cleanSession) {
             List<String> topics = this.subscribedTopics.keySet().stream().collect(Collectors.toList());
             logger.info("Unsubscribing from topics=[{}]", topics);
