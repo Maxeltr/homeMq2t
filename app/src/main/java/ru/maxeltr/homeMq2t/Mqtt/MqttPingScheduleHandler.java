@@ -77,12 +77,14 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
         
         MqttFixedHeader fixedHeaderRespMsg = new MqttFixedHeader(MqttMessageType.PINGRESP, false, MqttQoS.AT_MOST_ONCE, false, 0);
         pingRespMsg = new MqttMessage(fixedHeaderRespMsg);
+        
+        logger.debug("Create {}.", MqttPingScheduleHandler.class);
     }
     
-    //@PostConstruct
+    @PostConstruct
     public void startPing() {
-        this.future = threadPoolTaskScheduler.schedule(new RunnableTask(), pingPeriodicTrigger);
         logger.info("Start ping. {}", this);
+        this.future = threadPoolTaskScheduler.schedule(new RunnableTask(), pingPeriodicTrigger);
     }
 
     @Override
@@ -122,14 +124,14 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
         public void run() {
             if (pingRespTimeout) {
                 logger.info("Ping response was not received for keep-alive time. {}", this);
-//                MqttPingScheduleHandler.this.future.cancel(false);
+                MqttPingScheduleHandler.this.future.cancel(false);
                 //publishPingTimeoutEvent();
                 if (reconnect) {
+                    logger.debug("Start reconnection attempt.");
                     serviceMediator.reconnect();
-                    logger.debug("Reconnection attempt.");
                 } else {
-                    serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
                     future.cancel(false);
+                    serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
                     logger.debug("Disconnection.");
                 }
                 

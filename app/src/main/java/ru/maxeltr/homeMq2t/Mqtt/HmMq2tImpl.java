@@ -59,6 +59,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -101,12 +102,18 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
-    
+
     @Value("${wait-disconnect-while-shutdown:1000}")
     private Integer waitDisconnect;
 
     @Value("${clean-session:true}")
     private boolean cleanSession;
+
+    @Value("${reconnect:true}")
+    private boolean reconnect;
+
+    @Value("${reconnect-delay:3000}")
+    private int reconnectDelay;
 
     @Autowired
     List<MqttTopicSubscription> subscriptions;
@@ -114,18 +121,20 @@ public class HmMq2tImpl implements HmMq2t {
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
     private final Map<String, MqttTopicSubscription> subscribedTopics = Collections.synchronizedMap(new LinkedHashMap());
-    
+
     private final static AtomicBoolean connecting = new AtomicBoolean();
-    
+
     private final static AtomicBoolean connected = new AtomicBoolean();
-    
-    private Promise<MqttConnAckMessage> authFuture;
+
+    private final static AtomicBoolean reconnecting = new AtomicBoolean();
+
+    private static Integer reconnectAttempts = 0;
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
         if (connecting.get() || connected.get()) {
-            logger.warn("Connecting or connected already. connecting={}. connected={}. auhtFuture={}", connecting.get(), connected.get(), authFuture);
-            return this.authFuture;
+            logger.warn("Connecting or connected already. connecting={}. connected={}. auhtFuture={}", connecting.get(), connected.get(), mqttAckMediator.getConnectFuture());
+            return mqttAckMediator.getConnectFuture();
         }
         connecting.set(true);
         workerGroup = new NioEventLoopGroup();
@@ -134,55 +143,90 @@ public class HmMq2tImpl implements HmMq2t {
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.handler(mqttChannelInitializer);
 
-        authFuture = new DefaultPromise<>(workerGroup.next());
+        Promise<MqttConnAckMessage> authFuture = new DefaultPromise<>(workerGroup.next());
         authFuture.addListener(f -> {
             if (f.isSuccess()) {
                 connected.set(true);
                 logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
                 //perform post-connection operations here
                 this.subscribeOnTopicsFromConfig();
-                ((MqttPingScheduleHandler)channel.pipeline().get("mqttPingHandler")).startPing();
+                reconnectAttempts = 0;
             }
-            logger.debug("authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
+            logger.debug("Connection attempt completed. authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
             connecting.set(false);
         });
         mqttAckMediator.setConnectFuture(authFuture);
 
         bootstrap.remoteAddress(this.host, this.port);
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.connectTimeout);
-        ChannelFuture future = bootstrap.connect();
-        future.addListener((ChannelFutureListener) f -> {
+        ChannelFuture channelFuture = bootstrap.connect();
+        channelFuture.addListener((ChannelFutureListener) f -> {
             HmMq2tImpl.this.channel = f.channel();
             logger.debug("Waiting for ConnAckMessage. ChannelFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
         });
 
         logger.info("Connecting to {} via port {}.", this.host, this.port);
-        future.awaitUninterruptibly();
-        if (future.isCancelled()) {
+        channelFuture.awaitUninterruptibly();
+        if (channelFuture.isCancelled()) {
             logger.info("Connection attempt cancelled.");
             connecting.set(false);
             connected.set(false);
-        } else if (!future.isSuccess()) {
-            logger.info("Connection attempt failed {}.", future.cause());
+        } else if (!channelFuture.isSuccess()) {
+            logger.info("Connection attempt failed {}.", channelFuture.cause().getMessage());
             connecting.set(false);
             connected.set(false);
         } else {
             logger.info("Connected to {} via port {}.", this.host, this.port);
         }
-        logger.debug("authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", authFuture.isDone(), authFuture.isSuccess(), authFuture.isCancelled(), authFuture);
 
         return authFuture;
 
     }
-    
+
+    @Override
     public void reconnect() {
-        logger.info("Reconnect!");
+        logger.debug("Reconnect!");
+        if (!this.reconnect) {
+            logger.info("Reconnect is not allowed by config.");
+            return;
+        }
+
+        if (reconnecting.get() || connecting.get()) {
+            logger.info("Unable to start reconnecting. The connection is being reconnected.");
+            return;
+        }
+
+        reconnecting.set(true);
+        reconnectAttempts = reconnectAttempts + 1;
+        logger.info("Start reconnect! Attempt {}.", reconnectAttempts);
+        this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
+
+        try {
+            TimeUnit.MILLISECONDS.sleep(this.reconnectDelay);
+        } catch (InterruptedException ex) {
+            logger.info("InterruptedException while reconnect delay.", ex);
+        }
+
+        Promise<MqttConnAckMessage> reconnectFuture = this.connect();
+        reconnectFuture.awaitUninterruptibly(this.connectTimeout);
+        if (reconnectFuture.isCancelled()) {
+            logger.info("Reconnection failed.");
+        } else if (!reconnectFuture.isSuccess()) {
+            logger.info("Reconnection failed");
+        } else {
+            logger.info("Reconnection is successful.");
+        }
+        reconnecting.set(false);
+    }
+
+    private Optional<MqttPingScheduleHandler> getPingHandler() {
+        return Optional.ofNullable(((MqttPingScheduleHandler) channel.pipeline().get("mqttPingHandler")));
     }
 
     @Override
     public void disconnect(byte reasonCode) {
         //TODO clear pending messages. stop retransmit. 
-        ((MqttPingScheduleHandler)channel.pipeline().get("mqttPingHandler")).stopPing();
+        this.getPingHandler().ifPresent(pingHandler -> pingHandler.stopPing());
         
         if (!this.cleanSession) {
             List<String> topics = this.subscribedTopics.keySet().stream().collect(Collectors.toList());
@@ -190,6 +234,7 @@ public class HmMq2tImpl implements HmMq2t {
             Promise<MqttUnsubAckMessage> unSubscribeFuture = this.unsubscribe(topics);
             unSubscribeFuture.awaitUninterruptibly(this.connectTimeout);
         }
+        this.subscribedTopics.clear();
 
         MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
         MqttReasonCodeAndPropertiesVariableHeader mqttDisconnectVariableHeader = new MqttReasonCodeAndPropertiesVariableHeader(reasonCode, MqttProperties.NO_PROPERTIES);
@@ -211,7 +256,7 @@ public class HmMq2tImpl implements HmMq2t {
         }
 
         this.shutdown();
-        
+
         connected.set(false);
     }
 
@@ -447,7 +492,7 @@ public class HmMq2tImpl implements HmMq2t {
         Promise<MqttUnsubAckMessage> unSubscribeFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, unSubscribeFuture, unSubscribeMessage);
         unSubscribeFuture.addListener((FutureListener) (Future f) -> {
-            HmMq2tImpl.this.handleUnSubscribeMessage((MqttUnsubAckMessage) f.get());
+            HmMq2tImpl.this.handleUnSubAckMessage((MqttUnsubAckMessage) f.get());
         });
 
         ReferenceCountUtil.retain(unSubscribeMessage); //TODO is it nessesary?
@@ -463,7 +508,7 @@ public class HmMq2tImpl implements HmMq2t {
         return unSubscribeFuture;
     }
 
-    private void handleUnSubscribeMessage(MqttUnsubAckMessage unSubAckMessage) {
+    private void handleUnSubAckMessage(MqttUnsubAckMessage unSubAckMessage) {
         int id = unSubAckMessage.variableHeader().messageId();
         MqttUnsubscribeMessage unSubscribeMessage = this.mqttAckMediator.getMessage(id);
         this.mqttAckMediator.remove(id);

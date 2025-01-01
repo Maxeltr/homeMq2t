@@ -83,13 +83,13 @@ public class UIServiceImpl implements UIService {
         authFuture.awaitUninterruptibly(this.connectTimeout);
 
         if (authFuture.isCancelled()) {
-            logger.info("Connection attempt to remote server was failed.");
+            logger.info("Connection attempt to remote server was canceled.");
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
             msg.data("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                     + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
                     + "\"}");
         } else if (!authFuture.isSuccess()) {
-            logger.info("Connection established failed {}", authFuture.cause());
+            logger.info("Connection established failed.");
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
             msg.data("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                     + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
