@@ -128,7 +128,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     private final static AtomicBoolean reconnecting = new AtomicBoolean();
 
-    private static Integer reconnectAttempts = 0;
+    private static int reconnectAttempts = 0;
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
@@ -137,6 +137,7 @@ public class HmMq2tImpl implements HmMq2t {
             return mqttAckMediator.getConnectFuture();
         }
         connecting.set(true);
+        logger.info("Start connection attempt.");
         workerGroup = new NioEventLoopGroup();
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(workerGroup);
@@ -199,10 +200,11 @@ public class HmMq2tImpl implements HmMq2t {
         reconnecting.set(true);
         reconnectAttempts = reconnectAttempts + 1;
         logger.info("Start reconnect! Attempt {}.", reconnectAttempts);
+        
         this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
 
         try {
-            TimeUnit.MILLISECONDS.sleep(this.reconnectDelay);
+            TimeUnit.MILLISECONDS.sleep(this.reconnectDelay * reconnectAttempts);   
         } catch (InterruptedException ex) {
             logger.info("InterruptedException while reconnect delay.", ex);
         }
