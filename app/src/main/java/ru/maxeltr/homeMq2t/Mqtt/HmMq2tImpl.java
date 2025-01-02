@@ -243,6 +243,7 @@ public class HmMq2tImpl implements HmMq2t {
         //TODO clear pending messages. stop retransmit. 
         this.getPingHandler().ifPresent(pingHandler -> pingHandler.stopPing());
         retransmitScheduler.stop();
+        this.mqttAckMediator.clear();
         
         if (!this.cleanSession) {
             List<String> topics = this.subscribedTopics.keySet().stream().collect(Collectors.toList());

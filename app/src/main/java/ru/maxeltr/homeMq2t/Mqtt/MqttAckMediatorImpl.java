@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class MqttAckMediatorImpl implements MqttAckMediator, Iterable<MqttMessage> {
+public class MqttAckMediatorImpl implements MqttAckMediator {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttAckMediatorImpl.class);
 
@@ -101,9 +101,19 @@ public class MqttAckMediatorImpl implements MqttAckMediator, Iterable<MqttMessag
             return this.connectFuture;
         }
     }
-    
+
     @Override
     public Iterator<MqttMessage> iterator() {
-        return messages.values().iterator();
+        synchronized (this) {
+            return this.messages.values().iterator();
+        }
+    }
+    
+    @Override
+    public void clear() {
+        synchronized (this) {
+            this.messages.clear();
+            this.futures.clear();
+        }
     }
 }

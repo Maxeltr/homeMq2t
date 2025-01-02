@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Mqtt;
 
+import io.netty.handler.codec.mqtt.MqttMessage;
 import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,14 +56,21 @@ public class MqttRetransmitSchedulerImpl implements MqttRetransmitScheduler {
 
     @Override
     public void start() {
-        logger.info("Start retransmit");
-        this.retransmitScheduledFuture = this.threadPoolTaskScheduler.schedule(new RetransmitTask(), this.retransmitPeriodicTrigger);
+        if (this.retransmitScheduledFuture == null) {
+            logger.info("Start retransmit task");
+            this.retransmitScheduledFuture = this.threadPoolTaskScheduler.schedule(new RetransmitTask(), this.retransmitPeriodicTrigger);
+        } else {
+            logger.warn("Could not start retransmit task. Previous retransmit task was not stopped.");
+        }
     }
 
     @Override
     public void stop() {
-        this.retransmitScheduledFuture.cancel(false);
-        logger.info("Retransmission has been stopped");
+        if (this.retransmitScheduledFuture != null && !this.retransmitScheduledFuture.isCancelled()) {
+            this.retransmitScheduledFuture.cancel(false);
+            this.retransmitScheduledFuture = null;
+            logger.info("Retransmit task has been stopped");
+        }
     }
     
     class RetransmitTask implements Runnable {
@@ -70,7 +78,9 @@ public class MqttRetransmitSchedulerImpl implements MqttRetransmitScheduler {
         @Override
         public void run() {
             logger.info("Strart retransmission");
-            
+            for (MqttMessage message: ackMediator) {
+                logger.info("message={}", message.toString());
+            }
         }
     }
 }
