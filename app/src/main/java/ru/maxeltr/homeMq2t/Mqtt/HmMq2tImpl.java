@@ -93,6 +93,9 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
+    
+    @Autowired
+    private MqttRetransmitScheduler retransmitScheduler;
 
     @Value("${host:127.0.0.1}")
     private String host;
@@ -114,6 +117,9 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Value("${reconnect-delay:3000}")
     private int reconnectDelay;
+    
+    @Value("${reconnect-delay-max:1800000}")
+    private int reconnectDelayMax;
 
     @Autowired
     List<MqttTopicSubscription> subscriptions;
@@ -132,6 +138,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
+        logger.debug("Start connect method.");
         if (connecting.get() || connected.get()) {
             logger.warn("Connecting or connected already. connecting={}. connected={}. auhtFuture={}", connecting.get(), connected.get(), mqttAckMediator.getConnectFuture());
             return mqttAckMediator.getConnectFuture();
@@ -152,6 +159,7 @@ public class HmMq2tImpl implements HmMq2t {
                 //perform post-connection operations here
                 this.subscribeOnTopicsFromConfig();
                 reconnectAttempts = 0;
+                retransmitScheduler.start();
             }
             logger.debug("Connection attempt completed. authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
             connecting.set(false);
@@ -186,7 +194,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Override
     public void reconnect() {
-        logger.debug("Reconnect!");
+        logger.debug("Start reconnect method.");
         if (!this.reconnect) {
             logger.info("Reconnect is not allowed by config.");
             return;
@@ -202,9 +210,14 @@ public class HmMq2tImpl implements HmMq2t {
         logger.info("Start reconnect! Attempt {}.", reconnectAttempts);
         
         this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
-
+        
+        int timeout = this.reconnectDelay * reconnectAttempts;
+        if (timeout > this.reconnectDelayMax) {
+            timeout = this.reconnectDelayMax;
+        }
+        
         try {
-            TimeUnit.MILLISECONDS.sleep(this.reconnectDelay * reconnectAttempts);   
+            TimeUnit.MILLISECONDS.sleep(timeout);   
         } catch (InterruptedException ex) {
             logger.info("InterruptedException while reconnect delay.", ex);
         }
@@ -212,7 +225,7 @@ public class HmMq2tImpl implements HmMq2t {
         Promise<MqttConnAckMessage> reconnectFuture = this.connect();
         reconnectFuture.awaitUninterruptibly(this.connectTimeout);
         if (reconnectFuture.isCancelled()) {
-            logger.info("Reconnection failed.");
+            logger.info("Reconnection canceled.");
         } else if (!reconnectFuture.isSuccess()) {
             logger.info("Reconnection failed");
         } else {
@@ -229,6 +242,7 @@ public class HmMq2tImpl implements HmMq2t {
     public void disconnect(byte reasonCode) {
         //TODO clear pending messages. stop retransmit. 
         this.getPingHandler().ifPresent(pingHandler -> pingHandler.stopPing());
+        retransmitScheduler.stop();
         
         if (!this.cleanSession) {
             List<String> topics = this.subscribedTopics.keySet().stream().collect(Collectors.toList());

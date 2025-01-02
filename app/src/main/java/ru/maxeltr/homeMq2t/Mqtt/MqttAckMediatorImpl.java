@@ -26,6 +26,7 @@ package ru.maxeltr.homeMq2t.Mqtt;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class MqttAckMediatorImpl implements MqttAckMediator {
+public class MqttAckMediatorImpl implements MqttAckMediator, Iterable<MqttMessage> {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttAckMediatorImpl.class);
 
@@ -99,5 +100,10 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
         synchronized (this) {
             return this.connectFuture;
         }
+    }
+    
+    @Override
+    public Iterator<MqttMessage> iterator() {
+        return messages.values().iterator();
     }
 }

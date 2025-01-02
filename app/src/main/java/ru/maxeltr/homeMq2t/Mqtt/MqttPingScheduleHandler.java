@@ -68,7 +68,7 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
     private final MqttMessage pingRespMsg;
     
     private boolean pingRespTimeout;
-    
+
     public MqttPingScheduleHandler(ServiceMediator serviceMediator) {
         this.serviceMediator = serviceMediator;
 
@@ -78,7 +78,7 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
         MqttFixedHeader fixedHeaderRespMsg = new MqttFixedHeader(MqttMessageType.PINGRESP, false, MqttQoS.AT_MOST_ONCE, false, 0);
         pingRespMsg = new MqttMessage(fixedHeaderRespMsg);
         
-        logger.debug("Create {}.", MqttPingScheduleHandler.class);
+        logger.debug("Create {}.", this);
     }
     
     @PostConstruct

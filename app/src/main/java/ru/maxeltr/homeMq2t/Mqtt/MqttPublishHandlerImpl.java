@@ -61,6 +61,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
     public MqttPublishHandlerImpl(MqttAckMediator mqttAckMediator, ServiceMediator serviceMediator) {
         this.mqttAckMediator = mqttAckMediator;
         this.serviceMediator = serviceMediator;
+        logger.debug("Create {}.", this);
     }
 
 //    public static MqttPublishHandlerImpl newInstance() {
@@ -174,7 +175,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) pubRelMessage.variableHeader();
         MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(variableHeader.messageId());
         //TODO handle publish Message. delete message and future
-        // this.messageHandler.handleMessage(publishMessage);
+        this.serviceMediator.handleMessage(publishMessage);
         this.mqttAckMediator.remove(variableHeader.messageId());
         logger.info("Publish message QoS2 has been acknowledged. PUBLISH message=[{}]. PUBREL message=[{}].", publishMessage, pubRelMessage);
         ReferenceCountUtil.release(publishMessage);
@@ -203,7 +204,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                 break;
             case AT_LEAST_ONCE:
                 ReferenceCountUtil.retain(message);
-                //this.messageHandler.handleMessage(message);	//TODO check DUP first!
+                this.serviceMediator.handleMessage(message);	//TODO check DUP first!
 
                 fixedHeader = new MqttFixedHeader(MqttMessageType.PUBACK, false, MqttQoS.AT_MOST_ONCE, false, 0);
                 variableHeader = MqttMessageIdVariableHeader.from(message.variableHeader().packetId());

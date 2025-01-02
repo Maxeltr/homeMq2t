@@ -47,6 +47,8 @@ import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
+import ru.maxeltr.homeMq2t.Mqtt.MqttRetransmitScheduler;
+import ru.maxeltr.homeMq2t.Mqtt.MqttRetransmitSchedulerImpl;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -103,10 +105,6 @@ public class AppAnnotationConfig {
         return new UIServiceImpl();
     }
 
-//    @Bean
-//    public MqttPublishHandlerImpl getMqttPublishHandler(MqttAckMediator mqttAckMediator) {
-//        return new MqttPublishHandlerImpl(mqttAckMediator);
-//    }
     @Bean
     public List<Dashboard> dashboards() {
         int i = 0;
@@ -153,8 +151,13 @@ public class AppAnnotationConfig {
     }
     
     @Bean
-    public AppShutdownManager getAppShutdownManakger() {
+    public AppShutdownManager getAppShutdownManager() {
         return new AppShutdownManager();
+    }
+    
+    @Bean
+    public MqttRetransmitScheduler getRetransmitScheduler() {
+        return new MqttRetransmitSchedulerImpl();
     }
     
     @Bean
@@ -169,6 +172,16 @@ public class AppAnnotationConfig {
     public PeriodicTrigger pingPeriodicTrigger() {
         Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("keep-alive-timer", "20000")));
         PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
+        periodicTrigger.setInitialDelay(duration);
+        periodicTrigger.setInitialDelay(duration);
+        return periodicTrigger;
+    }
+    
+    @Bean(name = "retransmitPeriodicTrigger")
+    public PeriodicTrigger retransmitPeriodicTrigger() {
+        Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("retransmit-delay", "60000")));
+        PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
+        periodicTrigger.setInitialDelay(duration);
         periodicTrigger.setInitialDelay(duration);
         return periodicTrigger;
     }

@@ -99,6 +99,7 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     MqttConnectHandler(MqttAckMediator mqttAckMediator) {
         this.mqttAckMediator = mqttAckMediator;
+        logger.debug("Create {}.", this);
     }
 //    public void setMediator(MqttAckMediator mqttAckMediator) {
 //        this.mqttAckMediator = mqttAckMediator;
