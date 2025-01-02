@@ -73,7 +73,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
             this.futures.put(key, future);
             logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, future, futures.size());
             this.messages.put(key, message);
-            logger.debug("Message was added key: {} message: {}. Amount messages: {}", key, future, messages.size());
+            logger.debug("Message was added key: {} message: {}. Amount messages: {}", key, message, messages.size());
         }
     }
 

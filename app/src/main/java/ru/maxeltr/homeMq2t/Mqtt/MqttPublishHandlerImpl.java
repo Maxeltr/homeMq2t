@@ -228,9 +228,9 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                     publishFuture.addListener((FutureListener) (Future f) -> {
                         MqttPublishHandlerImpl.this.handlePubRel(channel, (MqttMessage) f.get());
                     });
-                    logger.info("Publish message with QoS2 has been stored - [{}].", message);
+                    logger.info("Publish message with QoS2 has been stored - {}.", message);
                 } else {
-                    logger.info("Received publish message with QoS2 is repeated - [{}].", message);
+                    logger.info("Received publish message with QoS2 is repeated - {}.", message);
                     //TODO
                 }
                 //send pubRec

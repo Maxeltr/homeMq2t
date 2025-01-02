@@ -240,11 +240,15 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Override
     public void disconnect(byte reasonCode) {
-        //TODO clear pending messages. stop retransmit. 
         this.getPingHandler().ifPresent(pingHandler -> pingHandler.stopPing());
-        retransmitScheduler.stop();
-        this.mqttAckMediator.clear();
         
+        retransmitScheduler.stop();
+        
+        if (this.cleanSession) {
+            this.mqttAckMediator.clear();
+        }
+        
+        //unsubscribe because we subscribe again when we connect 
         if (!this.cleanSession) {
             List<String> topics = this.subscribedTopics.keySet().stream().collect(Collectors.toList());
             logger.info("Unsubscribing from topics=[{}]", topics);
@@ -388,7 +392,7 @@ public class HmMq2tImpl implements HmMq2t {
         ReferenceCountUtil.retain(message); //TODO is it nessesary?
 
         this.writeAndFlush(message);
-        logger.info("Sent publish message id={}, ={}, d={}, q={}, r={}.",
+        logger.info("Sent publish message id={}, t={}, d={}, q={}, r={}.",
                 message.variableHeader().packetId(),
                 message.variableHeader().topicName(),
                 message.fixedHeader().isDup(),
