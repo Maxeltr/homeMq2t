@@ -174,7 +174,11 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
                 channel.flush();
             }
 
-            case CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD, CONNECTION_REFUSED_IDENTIFIER_REJECTED, CONNECTION_REFUSED_NOT_AUTHORIZED, CONNECTION_REFUSED_SERVER_UNAVAILABLE, CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION -> {
+            case CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD, 
+                    CONNECTION_REFUSED_IDENTIFIER_REJECTED, 
+                    CONNECTION_REFUSED_NOT_AUTHORIZED, 
+                    CONNECTION_REFUSED_SERVER_UNAVAILABLE, 
+                    CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION -> {
                 if (!future.isDone()) {
                     future.cancel(true);
                 }

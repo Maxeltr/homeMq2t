@@ -156,6 +156,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         return hmMq2t.connect();
     }
     
+    @Override
     public void reconnect() {
         this.hmMq2t.reconnect();
     }

@@ -23,8 +23,6 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
-import ru.maxeltr.homeMq2t.Service.ServiceMediator;
-
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>

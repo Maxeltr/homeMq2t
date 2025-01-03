@@ -167,7 +167,7 @@ public class HmMq2tImpl implements HmMq2t {
                 //perform post-connection operations here
                 this.subscribeOnTopicsFromConfig();
                 reconnectAttempts = 0;
-                this.start();
+                this.startRetransmitTask();
             }
             logger.debug("Connection attempt completed. authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
             connecting.set(false);
@@ -250,7 +250,7 @@ public class HmMq2tImpl implements HmMq2t {
     public void disconnect(byte reasonCode) {
         this.getPingHandler().ifPresent(pingHandler -> pingHandler.stopPing());
 
-        this.stop();
+        this.stopRetransmitTask();
 
         if (this.cleanSession) {
             this.mqttAckMediator.clear();
@@ -556,16 +556,16 @@ public class HmMq2tImpl implements HmMq2t {
         return this.subscribedTopics.keySet().stream().map(key -> key + "=" + this.subscribedTopics.get(key)).collect(Collectors.joining(", ", "{", "}"));
     }
 
-    private void start() {
+    private void startRetransmitTask() {
         if (this.retransmitScheduledFuture == null) {
-            logger.info("Start retransmit task");
+            logger.info("Start retransmit task.");
             this.retransmitScheduledFuture = this.threadPoolTaskScheduler.schedule(new RetransmitTask(), this.retransmitPeriodicTrigger);
         } else {
             logger.warn("Could not start retransmit task. Previous retransmit task was not stopped.");
         }
     }
 
-    private void stop() {
+    private void stopRetransmitTask() {
         if (this.retransmitScheduledFuture != null && !this.retransmitScheduledFuture.isCancelled()) {
             this.retransmitScheduledFuture.cancel(false);
             this.retransmitScheduledFuture = null;
@@ -577,34 +577,44 @@ public class HmMq2tImpl implements HmMq2t {
 
         @Override
         public void run() {     //TODO syncronized?
-            logger.info("Strart retransmission");
+            logger.info("Start retransmission");
             for (MqttMessage message : mqttAckMediator) {
                 logger.info("message={}", message.toString());
                 MqttMessageType messageType = message.fixedHeader().messageType();
                 switch (messageType) {
                     case MqttMessageType.PUBLISH -> {
                         MqttPublishMessage initialMessage = (MqttPublishMessage) message;
-                        MqttFixedHeader fixedHeader = new MqttFixedHeader(
-                                initialMessage.fixedHeader().messageType(),
-                                true, //change Dup on true
-                                initialMessage.fixedHeader().qosLevel(),
-                                initialMessage.fixedHeader().isRetain(),
-                                initialMessage.fixedHeader().remainingLength()
-                        );
-                        MqttPublishMessage dupMessage = new MqttPublishMessage(fixedHeader, initialMessage.variableHeader(), initialMessage.payload());
+                        MqttQoS qos = initialMessage.fixedHeader().qosLevel();
+                        if (qos == MqttQoS.AT_LEAST_ONCE || qos == MqttQoS.EXACTLY_ONCE) {
+                            MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                                    initialMessage.fixedHeader().messageType(),
+                                    true, //change Dup on true
+                                    initialMessage.fixedHeader().qosLevel(),
+                                    initialMessage.fixedHeader().isRetain(),
+                                    initialMessage.fixedHeader().remainingLength()
+                            );
+                            MqttPublishMessage dupMessage = new MqttPublishMessage(fixedHeader, initialMessage.variableHeader(), initialMessage.payload());
 
-                        //this.writeAndFlush(message);
+                            //this.writeAndFlush(dupMessage);
+                            logger.info("Publish message has been retransmited. id={}, t={}, d={}, q={}, r={}",
+                                    dupMessage.variableHeader().packetId(),
+                                    dupMessage.variableHeader().topicName(),
+                                    dupMessage.fixedHeader().isDup(),
+                                    dupMessage.fixedHeader().qosLevel(),
+                                    dupMessage.fixedHeader().isRetain()
+                            );
+                        }
                     }
                     case MqttMessageType.SUBSCRIBE -> {
-                        
+
                     }
                     case MqttMessageType.UNSUBSCRIBE -> {
-                        
+
                     }
                     case MqttMessageType.PUBREL -> {
-                        
+
                     }
-                    
+
                 }
 
             }

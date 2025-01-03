@@ -107,7 +107,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                 );
                 Promise future = (Promise<MqttPublishMessage>) this.mqttAckMediator.getFuture(pubAckMessage.variableHeader().messageId());
                 if (future == null) {
-                    logger.warn("There is no stored future of PUBLISH message for PUBACK message. May be it was acknowledged already. [{}]. ", pubAckMessage);
+                    logger.warn("There is no stored future of PUBLISH message for PUBACK message. May be it was acknowledged already. {}. ", pubAckMessage);
                     return;
                 }
                 future.setSuccess(pubAckMessage);
@@ -155,7 +155,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         int id = pubCompVariableHeader.messageId();
         Promise future = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(id);
         if (future == null) {
-            logger.warn("There is no stored future of PUBREL message for PUBCOMP message. May be it was acknowledged already. [{}]. ", message);
+            logger.warn("There is no stored future of PUBREL message for PUBCOMP message. May be it was acknowledged already. {}. ", message);
             return;
         }
         future.setSuccess(message);
@@ -165,7 +165,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.variableHeader();
         Promise future = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(variableHeader.messageId());
         if (future == null) {
-            logger.warn("There is no stored future of PUBLISH message for PUBREC message.May be it was acknowledged already. [{}].", message);
+            logger.warn("There is no stored future of PUBLISH message for PUBREC message.May be it was acknowledged already. {}.", message);
             return;
         }
         future.setSuccess(message);
@@ -177,7 +177,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         //TODO handle publish Message. delete message and future
         this.serviceMediator.handleMessage(publishMessage);
         this.mqttAckMediator.remove(variableHeader.messageId());
-        logger.info("Publish message QoS2 has been acknowledged. PUBLISH message=[{}]. PUBREL message=[{}].", publishMessage, pubRelMessage);
+        logger.info("Publish message QoS2 id={} has been acknowledged. PUBLISH message={}. PUBREL message={}.", publishMessage.variableHeader().packetId(), publishMessage, pubRelMessage);
         ReferenceCountUtil.release(publishMessage);
 
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBCOMP, false, MqttQoS.AT_MOST_ONCE, false, 0);
@@ -228,9 +228,9 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                     publishFuture.addListener((FutureListener) (Future f) -> {
                         MqttPublishHandlerImpl.this.handlePubRel(channel, (MqttMessage) f.get());
                     });
-                    logger.info("Publish message with QoS2 has been stored - {}.", message);
+                    logger.info("Publish message with QoS2 id={} has been stored - {}.", message.variableHeader().packetId(), message);
                 } else {
-                    logger.info("Received publish message with QoS2 is repeated - {}.", message);
+                    logger.info("Received publish message with QoS2 id={} is repeated - {}.", message.variableHeader().packetId(), message);
                     //TODO
                 }
                 //send pubRec
