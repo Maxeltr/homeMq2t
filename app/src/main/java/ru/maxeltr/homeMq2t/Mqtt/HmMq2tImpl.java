@@ -60,6 +60,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -70,6 +71,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.support.PeriodicTrigger;
 
 /**
  *
@@ -84,6 +87,12 @@ public class HmMq2tImpl implements HmMq2t {
     private Channel channel;
 
     @Autowired
+    private ThreadPoolTaskScheduler threadPoolTaskScheduler;
+
+    @Autowired
+    private PeriodicTrigger retransmitPeriodicTrigger;
+
+    @Autowired
     private MqttAckMediator mqttAckMediator;
 
     private ServiceMediator serviceMediator;
@@ -93,9 +102,6 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
-    
-    @Autowired
-    private MqttRetransmitScheduler retransmitScheduler;
 
     @Value("${host:127.0.0.1}")
     private String host;
@@ -117,7 +123,7 @@ public class HmMq2tImpl implements HmMq2t {
 
     @Value("${reconnect-delay:3000}")
     private int reconnectDelay;
-    
+
     @Value("${reconnect-delay-max:1800000}")
     private int reconnectDelayMax;
 
@@ -135,6 +141,8 @@ public class HmMq2tImpl implements HmMq2t {
     private final static AtomicBoolean reconnecting = new AtomicBoolean();
 
     private static int reconnectAttempts = 0;
+
+    private ScheduledFuture<?> retransmitScheduledFuture;
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
@@ -159,7 +167,7 @@ public class HmMq2tImpl implements HmMq2t {
                 //perform post-connection operations here
                 this.subscribeOnTopicsFromConfig();
                 reconnectAttempts = 0;
-                retransmitScheduler.start();
+                this.start();
             }
             logger.debug("Connection attempt completed. authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
             connecting.set(false);
@@ -208,16 +216,16 @@ public class HmMq2tImpl implements HmMq2t {
         reconnecting.set(true);
         reconnectAttempts = reconnectAttempts + 1;
         logger.info("Start reconnect! Attempt {}.", reconnectAttempts);
-        
+
         this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
-        
+
         int timeout = this.reconnectDelay * reconnectAttempts;
         if (timeout > this.reconnectDelayMax) {
             timeout = this.reconnectDelayMax;
         }
-        
+
         try {
-            TimeUnit.MILLISECONDS.sleep(timeout);   
+            TimeUnit.MILLISECONDS.sleep(timeout);
         } catch (InterruptedException ex) {
             logger.info("InterruptedException while reconnect delay.", ex);
         }
@@ -241,13 +249,13 @@ public class HmMq2tImpl implements HmMq2t {
     @Override
     public void disconnect(byte reasonCode) {
         this.getPingHandler().ifPresent(pingHandler -> pingHandler.stopPing());
-        
-        retransmitScheduler.stop();
-        
+
+        this.stop();
+
         if (this.cleanSession) {
             this.mqttAckMediator.clear();
         }
-        
+
         //unsubscribe because we subscribe again when we connect 
         if (!this.cleanSession) {
             List<String> topics = this.subscribedTopics.keySet().stream().collect(Collectors.toList());
@@ -547,4 +555,61 @@ public class HmMq2tImpl implements HmMq2t {
     public String getSubscribedTopicAndQosAsString() {
         return this.subscribedTopics.keySet().stream().map(key -> key + "=" + this.subscribedTopics.get(key)).collect(Collectors.joining(", ", "{", "}"));
     }
+
+    private void start() {
+        if (this.retransmitScheduledFuture == null) {
+            logger.info("Start retransmit task");
+            this.retransmitScheduledFuture = this.threadPoolTaskScheduler.schedule(new RetransmitTask(), this.retransmitPeriodicTrigger);
+        } else {
+            logger.warn("Could not start retransmit task. Previous retransmit task was not stopped.");
+        }
+    }
+
+    private void stop() {
+        if (this.retransmitScheduledFuture != null && !this.retransmitScheduledFuture.isCancelled()) {
+            this.retransmitScheduledFuture.cancel(false);
+            this.retransmitScheduledFuture = null;
+            logger.info("Retransmit task has been stopped");
+        }
+    }
+
+    class RetransmitTask implements Runnable {
+
+        @Override
+        public void run() {     //TODO syncronized?
+            logger.info("Strart retransmission");
+            for (MqttMessage message : mqttAckMediator) {
+                logger.info("message={}", message.toString());
+                MqttMessageType messageType = message.fixedHeader().messageType();
+                switch (messageType) {
+                    case MqttMessageType.PUBLISH -> {
+                        MqttPublishMessage initialMessage = (MqttPublishMessage) message;
+                        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+                                initialMessage.fixedHeader().messageType(),
+                                true, //change Dup on true
+                                initialMessage.fixedHeader().qosLevel(),
+                                initialMessage.fixedHeader().isRetain(),
+                                initialMessage.fixedHeader().remainingLength()
+                        );
+                        MqttPublishMessage dupMessage = new MqttPublishMessage(fixedHeader, initialMessage.variableHeader(), initialMessage.payload());
+
+                        //this.writeAndFlush(message);
+                    }
+                    case MqttMessageType.SUBSCRIBE -> {
+                        
+                    }
+                    case MqttMessageType.UNSUBSCRIBE -> {
+                        
+                    }
+                    case MqttMessageType.PUBREL -> {
+                        
+                    }
+                    
+                }
+
+            }
+        }
+
+    }
+
 }

@@ -47,8 +47,6 @@ import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
-import ru.maxeltr.homeMq2t.Mqtt.MqttRetransmitScheduler;
-import ru.maxeltr.homeMq2t.Mqtt.MqttRetransmitSchedulerImpl;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -153,11 +151,6 @@ public class AppAnnotationConfig {
     @Bean
     public AppShutdownManager getAppShutdownManager() {
         return new AppShutdownManager();
-    }
-    
-    @Bean
-    public MqttRetransmitScheduler getRetransmitScheduler() {
-        return new MqttRetransmitSchedulerImpl();
     }
     
     @Bean
