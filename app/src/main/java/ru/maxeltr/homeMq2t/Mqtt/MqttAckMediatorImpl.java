@@ -71,19 +71,19 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     public void add(int key, Promise<? extends MqttMessage> future, MqttMessage message) {
         synchronized (this) {
             this.futures.put(key, future);
-            logger.debug("Future was added key: {} future: {}. Amount futures: {}", key, future, futures.size());
+            logger.debug("Future was added key={} future={}. Amount futures={}", key, future, futures.size());
             this.messages.put(key, message);
-            logger.debug("Message was added key: {} message: {}. Amount messages: {}", key, message, messages.size());
+            logger.debug("Message was added key={} message={}. Amount messages={}", key, message, messages.size());
         }
     }
 
     @Override
     public void remove(int key) {
         synchronized (this) {
-            this.futures.remove(key);
-            logger.debug("Future was removed key: {}. Amount futures: {}", key, futures.size());
-            this.messages.remove(key);
-            logger.debug("Message was removed key: {}. Amount messages: {}", key, messages.size());
+            Promise<? extends MqttMessage> future = this.futures.remove(key);
+            logger.debug("Future was removed key={}. Amount futures={}. Future={}", key, futures.size(), future);
+            MqttMessage message = this.messages.remove(key);
+            logger.debug("Message was removed key={}. Amount messages={}. Message={}", key, messages.size(), message);
         }
     }
 
@@ -114,6 +114,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
         synchronized (this) {
             this.messages.clear();
             this.futures.clear();
+            logger.debug("AckMediator clear");
         }
     }
 }

@@ -99,11 +99,12 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                 break;
             case PUBACK:
                 MqttPubAckMessage pubAckMessage = (MqttPubAckMessage) msg;
-                logger.info("Received PUBACK. Message id: {}, d: {}, q: {}, r: {}.",
+                logger.info("Received PUBACK. Message id: {}, d: {}, q: {}, r: {}. pubAckMessage={}",
                         pubAckMessage.variableHeader().messageId(),
                         pubAckMessage.fixedHeader().isDup(),
                         pubAckMessage.fixedHeader().qosLevel(),
-                        pubAckMessage.fixedHeader().isRetain()
+                        pubAckMessage.fixedHeader().isRetain(),
+                        pubAckMessage
                 );
                 Promise future = (Promise<MqttPublishMessage>) this.mqttAckMediator.getFuture(pubAckMessage.variableHeader().messageId());
                 if (future == null) {
@@ -116,33 +117,36 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
             case PUBREC:
                 MqttMessage pubRecMessage = (MqttMessage) msg;
                 MqttMessageIdVariableHeader pubRecVariableHeader = (MqttMessageIdVariableHeader) pubRecMessage.variableHeader();
-                logger.info("Received PUBREC. Message id: {}, d: {}, q: {}, r: {}.",
+                logger.info("Received PUBREC. Message id: {}, d: {}, q: {}, r: {}. pubRecMessage={}",
                         pubRecVariableHeader.messageId(),
                         pubRecMessage.fixedHeader().isDup(),
                         pubRecMessage.fixedHeader().qosLevel(),
-                        pubRecMessage.fixedHeader().isRetain()
+                        pubRecMessage.fixedHeader().isRetain(),
+                        pubRecMessage
                 );
-                this.handlePubrec(ctx.channel(), msg);
+                this.handlePubRec(ctx.channel(), msg);
 
                 break;
             case PUBREL:
-                MqttMessage pubrelMessage = (MqttMessage) msg;
-                logger.info("Received PUBREL. Message id: {}, d: {}, q: {}, r: {}.",
-                        ((MqttMessageIdVariableHeader) pubrelMessage.variableHeader()).messageId(),
-                        pubrelMessage.fixedHeader().isDup(),
-                        pubrelMessage.fixedHeader().qosLevel(),
-                        pubrelMessage.fixedHeader().isRetain()
+                MqttMessage pubRelMessage = (MqttMessage) msg;
+                logger.info("Received PUBREL. Message id: {}, d: {}, q: {}, r: {}. pubRelMessage={}",
+                        ((MqttMessageIdVariableHeader) pubRelMessage.variableHeader()).messageId(),
+                        pubRelMessage.fixedHeader().isDup(),
+                        pubRelMessage.fixedHeader().qosLevel(),
+                        pubRelMessage.fixedHeader().isRetain(),
+                        pubRelMessage
                 );
-                this.handlePubRel(ctx.channel(), msg);
+                this.handlePubRel(ctx.channel(), msg);  //TODO handle like PubAck/ use future
 
                 break;
             case PUBCOMP:
-                MqttMessage pubcompMessage = (MqttMessage) msg;
-                logger.info("Received PUBCOMP. Message id: {}, d: {}, q: {}, r: {}.",
-                        ((MqttMessageIdVariableHeader) pubcompMessage.variableHeader()).messageId(),
-                        pubcompMessage.fixedHeader().isDup(),
-                        pubcompMessage.fixedHeader().qosLevel(),
-                        pubcompMessage.fixedHeader().isRetain()
+                MqttMessage pubCompMessage = (MqttMessage) msg;
+                logger.info("Received PUBCOMP. Message id: {}, d: {}, q: {}, r: {}. pubCompMessage={}",
+                        ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId(),
+                        pubCompMessage.fixedHeader().isDup(),
+                        pubCompMessage.fixedHeader().qosLevel(),
+                        pubCompMessage.fixedHeader().isRetain(),
+                        pubCompMessage
                 );
                 this.handlePubComp(msg);
 
@@ -161,11 +165,12 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         future.setSuccess(message);
     }
 
-    private void handlePubrec(Channel channel, MqttMessage message) {
+    private void handlePubRec(Channel channel, MqttMessage message) {
         MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) message.variableHeader();
-        Promise future = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(variableHeader.messageId());
+        int id = variableHeader.messageId();
+        Promise future = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(id);
         if (future == null) {
-            logger.warn("There is no stored future of PUBLISH message for PUBREC message.May be it was acknowledged already. {}.", message);
+            logger.warn("There is no stored future of PUBLISH message for PUBREC message id={}.May be it was acknowledged already. {}.", id, message);
             return;
         }
         future.setSuccess(message);
@@ -174,7 +179,6 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
     private void handlePubRel(Channel channel, MqttMessage pubRelMessage) {
         MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) pubRelMessage.variableHeader();
         MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(variableHeader.messageId());
-        //TODO handle publish Message. delete message and future
         this.serviceMediator.handleMessage(publishMessage);
         this.mqttAckMediator.remove(variableHeader.messageId());
         logger.info("Publish message QoS2 id={} has been acknowledged. PUBLISH message={}. PUBREL message={}.", publishMessage.variableHeader().packetId(), publishMessage, pubRelMessage);

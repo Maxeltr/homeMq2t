@@ -334,7 +334,7 @@ public class HmMq2tImpl implements HmMq2t {
             return;
         } */
         this.mqttAckMediator.remove(id);
-        logger.info("Subscribe message {} has been acknowledged. SUBSCRIBE message=[{}]. SUBACK message=[{}].", id, subscribeMessage, subAckMessage);
+        logger.info("Subscribe message id={} has been acknowledged. SUBSCRIBE message=[{}]. SUBACK message=[{}].", id, subscribeMessage, subAckMessage);
 
         List<MqttTopicSubscription> topics = subscribeMessage.payload().topicSubscriptions();
         List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
@@ -381,8 +381,7 @@ public class HmMq2tImpl implements HmMq2t {
                 message.variableHeader().topicName(),
                 message.fixedHeader().isDup(),
                 message.fixedHeader().qosLevel(),
-                message.fixedHeader().isRetain()
-        );
+                message.fixedHeader().isRetain());
     }
 
     public void publishAtLeastOnce(String topic, ByteBuf payload, boolean retain) {
@@ -453,7 +452,7 @@ public class HmMq2tImpl implements HmMq2t {
             return;
         } */
         this.mqttAckMediator.remove(id);
-        logger.info("Publish message has been acknowledged. PUBLISH message=[{}]. PUBREC message=[{}].", publishMessage, pubRecMessage);
+        logger.info("Publish message id={} has been acknowledged. PUBLISH message={}. PUBREC message={}.", id, publishMessage, pubRecMessage);
         ReferenceCountUtil.release(publishMessage);
         this.sendPubRelMessage(id);
     }
@@ -471,7 +470,7 @@ public class HmMq2tImpl implements HmMq2t {
 
         ReferenceCountUtil.retain(pubrelMessage); //TODO is it nessesary?
 
-        this.writeAndFlush(pubrelMessage);
+        //this.writeAndFlush(pubrelMessage);
         logger.info("Sent PUBREL message id={}, d={}, q={}, r={}.",
                 variableHeader.messageId(),
                 pubrelMessage.fixedHeader().isDup(),
@@ -542,7 +541,7 @@ public class HmMq2tImpl implements HmMq2t {
         MqttUnsubscribeMessage unSubscribeMessage = this.mqttAckMediator.getMessage(id);
         this.mqttAckMediator.remove(id);
         this.subscribedTopics.keySet().removeAll(unSubscribeMessage.payload().topics());
-        logger.info("Unsubscribe message has been acknowledged. Unsubscribe message=[{}]. UnsubAckMessage message=[{}].", unSubscribeMessage, unSubAckMessage);
+        logger.info("Unsubscribe message id={} has been acknowledged. Unsubscribe message=[{}]. UnsubAckMessage message=[{}].", id, unSubscribeMessage, unSubAckMessage);
         logger.info("Clear active topics. List=[{}].", unSubscribeMessage.payload().topics());
         ReferenceCountUtil.release(unSubscribeMessage);
     }
@@ -595,7 +594,7 @@ public class HmMq2tImpl implements HmMq2t {
                             );
                             MqttPublishMessage dupMessage = new MqttPublishMessage(fixedHeader, initialMessage.variableHeader(), initialMessage.payload());
 
-                            //this.writeAndFlush(dupMessage);
+                            writeAndFlush(dupMessage);
                             logger.info("Publish message has been retransmited. id={}, t={}, d={}, q={}, r={}",
                                     dupMessage.variableHeader().packetId(),
                                     dupMessage.variableHeader().topicName(),
@@ -606,13 +605,32 @@ public class HmMq2tImpl implements HmMq2t {
                         }
                     }
                     case MqttMessageType.SUBSCRIBE -> {
-
+                        writeAndFlush(message);
+                        MqttSubscribeMessage initialMessage = (MqttSubscribeMessage) message;
+                        logger.info("Subscribe message has been retransmited. id={}, q={}, r={}",
+                            initialMessage.variableHeader().messageId(),
+                            initialMessage.fixedHeader().qosLevel(),
+                            initialMessage.fixedHeader().isRetain()
+                        );
                     }
                     case MqttMessageType.UNSUBSCRIBE -> {
-
+                        writeAndFlush(message);
+                        MqttUnsubscribeMessage initialMessage = (MqttUnsubscribeMessage) message;
+                        logger.info("Unsubscribe message has been retransmited. id={}, q={}, r={}",
+                            initialMessage.variableHeader().messageId(),
+                            initialMessage.fixedHeader().qosLevel(),
+                            initialMessage.fixedHeader().isRetain()
+                        );
                     }
                     case MqttMessageType.PUBREL -> {
-
+                        writeAndFlush(message);
+                        MqttMessageIdVariableHeader idVariableHeader = (MqttMessageIdVariableHeader) message.variableHeader();
+                        logger.info("PubRel message has been retransmited. id={}, d={}, q={}, r={}",
+                            idVariableHeader.messageId(),
+                            message.fixedHeader().isDup(),
+                            message.fixedHeader().qosLevel(),
+                            message.fixedHeader().isRetain()
+                        );
                     }
 
                 }
