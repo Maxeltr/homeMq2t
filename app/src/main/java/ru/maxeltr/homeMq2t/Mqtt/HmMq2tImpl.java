@@ -416,7 +416,7 @@ public class HmMq2tImpl implements HmMq2t {
              return;
         }*/
         this.mqttAckMediator.remove(id);
-        logger.info("PublishMessage has been acknowledged. PUBLISH message=[{}]. PUBACK message=[{}].", publishMessage, pubAckMessage);
+        logger.info("PublishMessage id={} has been acknowledged. PUBLISH message={}. PUBACK message={}.", id, publishMessage, pubAckMessage);
         ReferenceCountUtil.release(publishMessage);
     }
 
@@ -470,7 +470,7 @@ public class HmMq2tImpl implements HmMq2t {
 
         ReferenceCountUtil.retain(pubrelMessage); //TODO is it nessesary?
 
-        //this.writeAndFlush(pubrelMessage);
+        this.writeAndFlush(pubrelMessage);
         logger.info("Sent PUBREL message id={}, d={}, q={}, r={}.",
                 variableHeader.messageId(),
                 pubrelMessage.fixedHeader().isDup(),
@@ -483,11 +483,11 @@ public class HmMq2tImpl implements HmMq2t {
         int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();
         MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
         /* if (pubrelMessage == null ) {
-            logger.warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already. [{}].", pubCompMessage);
+            logger.warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already. {}.", pubCompMessage);
             return;
         } */
         this.mqttAckMediator.remove(id);
-        logger.info("PubRelMessage has been acknowledged. PUBREL message=[{}]. PUBCOMP message=[{}].", pubrelMessage, pubCompMessage);
+        logger.info("PubRelMessage id={} has been acknowledged. PUBREL message={}. PUBCOMP message={}.", id, pubrelMessage, pubCompMessage);
         ReferenceCountUtil.release(pubrelMessage);
 
     }
