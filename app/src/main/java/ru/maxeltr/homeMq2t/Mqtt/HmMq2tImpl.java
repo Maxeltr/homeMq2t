@@ -505,8 +505,22 @@ public class HmMq2tImpl implements HmMq2t {
     }
 
     private int getNewMessageId() {
+        int i = 0;
         this.nextMessageId.compareAndSet(0xffff, 1);
-        return this.nextMessageId.getAndIncrement();
+        int id = this.nextMessageId.getAndIncrement();
+        
+        while (this.mqttAckMediator.isContainId(id)) {
+            if (this.nextMessageId.compareAndSet(0xffff, 1)) {
+                ++i;
+                if (i >= 2) {
+                    this.mqttAckMediator.clear();
+                    this.disconnect((byte) 1);
+                }
+            }
+            id = this.nextMessageId.getAndIncrement();
+        }
+        
+        return id;
     }
 
     @Override

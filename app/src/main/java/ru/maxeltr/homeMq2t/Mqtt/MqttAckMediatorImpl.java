@@ -70,10 +70,16 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     @Override
     public void add(int key, Promise<? extends MqttMessage> future, MqttMessage message) {
         synchronized (this) {
+            int futuresSize = futures.size();
+            int messagesSize = messages.size();
+            if (futuresSize >= 65535 || messagesSize >= 65535) {
+                logger.error("Error. Overflow. Amount futures={}. Amount messages={}", futuresSize, messagesSize);
+                //TODO 
+            }
             this.futures.put(key, future);
-            logger.debug("Future was added key={} future={}. Amount futures={}", key, future, futures.size());
+            logger.debug("Future was added key={} future={}. Amount futures={}", key, future, futuresSize);
             this.messages.put(key, message);
-            logger.debug("Message was added key={} message={}. Amount messages={}", key, message, messages.size());
+            logger.debug("Message was added key={} message={}. Amount messages={}", key, message, messagesSize);
         }
     }
 
