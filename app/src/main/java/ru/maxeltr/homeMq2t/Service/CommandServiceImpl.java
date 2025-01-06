@@ -23,8 +23,16 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.time.Instant;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.Async;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
@@ -37,14 +45,88 @@ public class CommandServiceImpl implements CommandService {
 
     private ServiceMediator mediator;
 
+    @Autowired
+    private Map<String, String> CommandsAndNumbers;
+
+    @Autowired
+    private Environment env;
+
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
     }
 
+    @Async("processExecutor")
     @Override
-    public void execute(Msg command) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void execute(Msg.Builder command) {
+        logger.info("Start command task. Msg={}.", msg);
+
+        String command = "";
+        if (msg.getType().equalsIgnoreCase("text/plain")) {
+            command = msg.getData();
+        } else if (msg.getType().equalsIgnoreCase("application/json")) {
+            //TODO
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        if (command.trim().isEmpty()) {
+            logger.warn("Command is empty.");
+            return "";
+        }
+
+        String commandNumber = CommandsAndNumbers.get(command);
+
+        String commandPath = env.getProperty("command[" + commandNumber + "]." + "path", "");   //TODO move to app prop class. left here only - getCommandPath(command)/ the rest likewise
+        if (commandPath.trim().isEmpty()) {
+            logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
+            return "";
+        }
+
+        String arguments = env.getProperty("command[" + commandNumber + "]." + "arguments", "");
+
+        Msg.Builder msg = new Msg.Builder("onExecuteCommand").type("text/plain");   //TODO create ENUM fot mime types
+        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        msg.data(this.executeCommand(command.build()));
+
+        logger.info("Create message {}.", msg);
+
+        this.mediator.publish(msg.build(), topic, qos, retain);
+    }
+
+    private String executeCommand(Msg msg) {
+
+
+        logger.info("Start execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
+
+        String line;
+        ProcessBuilder pb = new ProcessBuilder(commandPath, arguments);
+        pb.redirectErrorStream(true);
+        Process p;
+        try {
+            p = pb.start();
+        } catch (IOException ex) {
+            logger.warn("ProcessBuilder cannot start. Command name={}. {}", command, ex.getMessage());
+            return "";
+        }
+
+        String result = "";
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+            while (true) {
+                line = br.readLine();
+                if (line == null) {
+                    break;
+                }
+                result += line;
+            }
+        } catch (IOException ex) {
+            logger.warn("Can not read process output of command name={}. {}", command, ex.getMessage());
+            return "";
+        }
+
+        logger.info("End command task. Msg={}.", msg);
+
+        return result;
     }
 
 }

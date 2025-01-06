@@ -33,5 +33,5 @@ public interface CommandService {
 
     public void setMediator(ServiceMediator mediator);
 
-    public void execute(Msg command);
+    public void execute(Msg.Builder command);
 }

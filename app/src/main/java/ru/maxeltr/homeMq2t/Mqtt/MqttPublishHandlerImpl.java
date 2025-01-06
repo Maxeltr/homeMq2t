@@ -25,7 +25,6 @@ package ru.maxeltr.homeMq2t.Mqtt;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
@@ -35,13 +34,11 @@ import io.netty.handler.codec.mqtt.MqttPubAckMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.ReferenceCountUtil;
-import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
@@ -186,9 +183,11 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
             logger.warn("Error. There is no stored publish message for received PUBREL message id={}.", id);
             return;
         }
-        this.serviceMediator.handleMessage((MqttPublishMessage) storedMessage);
+
         this.mqttAckMediator.remove(id);
         logger.info("Publish message QoS2 id={} has been acknowledged. PUBLISH message={}. PUBREL message={}.", id, storedMessage, pubRelMessage);
+
+        this.serviceMediator.handleMessage((MqttPublishMessage) storedMessage);
         ReferenceCountUtil.release(storedMessage);
 
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBCOMP, false, MqttQoS.AT_MOST_ONCE, false, 0);
@@ -202,6 +201,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                 pubCompMessage.fixedHeader().qosLevel(),
                 pubCompMessage.fixedHeader().isRetain()
         );
+
     }
 
     private void handlePublish(Channel channel, MqttPublishMessage message) {

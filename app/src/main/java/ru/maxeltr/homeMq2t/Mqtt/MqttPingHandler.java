@@ -29,15 +29,12 @@ import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttQoS;
-import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.core.env.Environment;
+import org.springframework.beans.factory.annotation.Value;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
@@ -48,22 +45,22 @@ public class MqttPingHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttPingHandler.class);
 
-    @Autowired
-    private Environment env;
+    @Value("${keep-alive-timer:20000}")
+    private int keepAliveTimer;
 
     private ScheduledFuture<?> pingRespTimeout;
-    
+
     private final MqttMessage pingReqMsg;
-    
+
     private final MqttMessage pingRespMsg;
-    
+
     private final ServiceMediator serviceMediator;
 
     MqttPingHandler(ServiceMediator serviceMediator) {
         this.serviceMediator = serviceMediator;
         MqttFixedHeader fixedHeaderReqMsg = new MqttFixedHeader(MqttMessageType.PINGREQ, false, MqttQoS.AT_MOST_ONCE, false, 0);
         pingReqMsg = new MqttMessage(fixedHeaderReqMsg);
-        
+
         MqttFixedHeader fixedHeaderRespMsg = new MqttFixedHeader(MqttMessageType.PINGRESP, false, MqttQoS.AT_MOST_ONCE, false, 0);
         pingRespMsg = new MqttMessage(fixedHeaderRespMsg);
     }
@@ -107,7 +104,7 @@ public class MqttPingHandler extends ChannelInboundHandlerAdapter {
                             logger.info("Ping response was not received for keepAlive time.");
                             //this.serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
                             //this.publishPingTimeoutEvent(); //TODO ?
-                        }, Integer.parseInt(this.env.getProperty("keep-alive-timer", "2000")), TimeUnit.MILLISECONDS);
+                        }, keepAliveTimer, TimeUnit.MILLISECONDS);
                     }
                 }
             }

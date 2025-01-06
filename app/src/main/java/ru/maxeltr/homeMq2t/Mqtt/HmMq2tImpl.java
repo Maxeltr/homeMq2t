@@ -70,7 +70,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 
@@ -96,9 +95,6 @@ public class HmMq2tImpl implements HmMq2t {
     private MqttAckMediator mqttAckMediator;
 
     private ServiceMediator serviceMediator;
-
-    @Autowired
-    private Environment env;
 
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
@@ -256,7 +252,7 @@ public class HmMq2tImpl implements HmMq2t {
             this.mqttAckMediator.clear();
         }
 
-        //unsubscribe because we subscribe again when we connect 
+        //unsubscribe because we subscribe again when we connect
         if (!this.cleanSession) {
             List<String> topics = this.subscribedTopics.keySet().stream().collect(Collectors.toList());
             logger.info("Unsubscribing from topics=[{}]", topics);
@@ -508,7 +504,7 @@ public class HmMq2tImpl implements HmMq2t {
         int i = 0;
         this.nextMessageId.compareAndSet(0xffff, 1);
         int id = this.nextMessageId.getAndIncrement();
-        
+
         while (this.mqttAckMediator.isContainId(id)) {
             if (this.nextMessageId.compareAndSet(0xffff, 1)) {
                 ++i;
@@ -519,7 +515,7 @@ public class HmMq2tImpl implements HmMq2t {
             }
             id = this.nextMessageId.getAndIncrement();
         }
-        
+
         return id;
     }
 

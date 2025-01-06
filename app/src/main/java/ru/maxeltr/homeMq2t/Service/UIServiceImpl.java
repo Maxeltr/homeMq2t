@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.Async;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
@@ -56,7 +57,7 @@ public class UIServiceImpl implements UIService {
 
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
-    
+
     @Value("${wait-disconnect-while-shutdown:1000}")
     private Integer waitDisconnect;
 
@@ -68,7 +69,7 @@ public class UIServiceImpl implements UIService {
 
     @Autowired
     AppShutdownManager appShutdownManager;
-    
+
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
@@ -109,18 +110,18 @@ public class UIServiceImpl implements UIService {
         logger.info("Do disconnect with reason code {}.", reasonCode);
         this.mediator.disconnect(reasonCode);
     }
-    
+
     @Override
     public void shutdownApp() {
         logger.info("Do shutdown aplication.");
         this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
-        
+
         try {
             TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {
             logger.info("Shutdown. InterruptedException while disconnect timeout.", ex);
         }
-        
+
         this.appShutdownManager.shutdownApp(0);
     }
 
@@ -136,12 +137,13 @@ public class UIServiceImpl implements UIService {
         msg.data(env.getProperty("card[" + msg.getId() + "].publication.data", ""));
         msg.type(env.getProperty("card[" + msg.getId() + "].publication.data.type", ""));
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-        
+
         logger.info("Create message {}.", msg);
-        
+
         this.mediator.publish(msg.build(), topic, qos, retain);
     }
 
+    @Async("processExecutor")
     @Override
     public void display(Msg.Builder msg, String cardNumber) {
 

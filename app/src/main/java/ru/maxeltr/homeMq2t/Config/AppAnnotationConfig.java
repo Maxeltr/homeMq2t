@@ -27,14 +27,19 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
@@ -53,8 +58,6 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
 import ru.maxeltr.homeMq2t.Service.UIService;
 import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
-import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -68,10 +71,16 @@ public class AppAnnotationConfig {
     @Autowired
     private Environment env;
 
-//    @Bean
-//    public AppProperties appProperty() {
-//        return new AppProperties();
-//    }
+    @Bean(name = "processExecutor")
+    public TaskExecutor workExecutor() {
+        ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
+        threadPoolTaskExecutor.setThreadNamePrefix("Async-");
+        threadPoolTaskExecutor.setCorePoolSize(10);
+        threadPoolTaskExecutor.setMaxPoolSize(20);
+        threadPoolTaskExecutor.setQueueCapacity(600);
+        threadPoolTaskExecutor.afterPropertiesSet();
+        return threadPoolTaskExecutor;
+    }
 
     @Bean
     public HmMq2t getHmMq2t() {
@@ -104,6 +113,51 @@ public class AppAnnotationConfig {
     }
 
     @Bean
+    public Map<String, String> topicsAndCardNumbers() {
+        Map<String, String> map = new HashMap();
+        int i = 0;
+        while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
+            map.put(
+                    env.getProperty("card[" + i + "].subscription.topic", ""),
+                    String.valueOf(i)
+            );
+            ++i;
+        }
+
+        return map;
+    }
+
+    @Bean
+    public Map<String, String> topicsAndCommands() {
+        Map<String, String> map = new HashMap();
+        int i = 0;
+        while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
+            map.put(
+                    env.getProperty("command[" + i + "].subscription.topic", ""),
+                    String.valueOf(i)
+            );
+            ++i;
+        }
+
+        return map;
+    }
+
+    @Bean
+    public Map<String, String> CommandsAndNumbers() {
+        Map<String, String> map = new HashMap();
+        int i = 0;
+        while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
+            map.put(
+                    env.getProperty("command[" + i + "].name", ""),
+                    String.valueOf(i)
+            );
+            ++i;
+        }
+
+        return map;
+    }
+
+    @Bean
     public List<Dashboard> dashboards() {
         int i = 0;
         List<Card> cards = new ArrayList<>();
@@ -126,14 +180,26 @@ public class AppAnnotationConfig {
 
     @Bean
     public List<MqttTopicSubscription> subscriptions() {
-        int i = 0;
+        int i;
         String topic;
         MqttQoS topicQos;
         List<MqttTopicSubscription> subscriptions = new ArrayList<>();
+        MqttTopicSubscription subscription;
+
+        i = 0;
         while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
             topic = env.getProperty("card[" + i + "].subscription.topic", "");
             topicQos = MqttQoS.valueOf(env.getProperty("card[" + i + "].subscription.qos", MqttQoS.AT_MOST_ONCE.toString()));
-            MqttTopicSubscription subscription = new MqttTopicSubscription(topic, topicQos);
+            subscription = new MqttTopicSubscription(topic, topicQos);
+            subscriptions.add(subscription);
+            ++i;
+        }
+
+        i = 0;
+        while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
+            topic = env.getProperty("command[" + i + "].subscription.topic", "");
+            topicQos = MqttQoS.valueOf(env.getProperty("command[" + i + "].subscription.qos", MqttQoS.AT_MOST_ONCE.toString()));
+            subscription = new MqttTopicSubscription(topic, topicQos);
             subscriptions.add(subscription);
             ++i;
         }
@@ -147,12 +213,12 @@ public class AppAnnotationConfig {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return mapper;
     }
-    
+
     @Bean
     public AppShutdownManager getAppShutdownManager() {
         return new AppShutdownManager();
     }
-    
+
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
@@ -160,7 +226,7 @@ public class AppAnnotationConfig {
         threadPoolTaskScheduler.setThreadNamePrefix("Mq2tThreadPoolTaskScheduler");
         return threadPoolTaskScheduler;
     }
-    
+
     @Bean(name = "pingPeriodicTrigger")
     public PeriodicTrigger pingPeriodicTrigger() {
         Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("keep-alive-timer", "20000")));
@@ -169,7 +235,7 @@ public class AppAnnotationConfig {
         periodicTrigger.setInitialDelay(duration);
         return periodicTrigger;
     }
-    
+
     @Bean(name = "retransmitPeriodicTrigger")
     public PeriodicTrigger retransmitPeriodicTrigger() {
         Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("retransmit-delay", "60000")));
