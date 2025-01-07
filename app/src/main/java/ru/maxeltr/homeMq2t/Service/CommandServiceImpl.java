@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import io.netty.handler.codec.mqtt.MqttQoS;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -58,10 +59,10 @@ public class CommandServiceImpl implements CommandService {
 
     @Async("processExecutor")
     @Override
-    public void execute(Msg.Builder command) {
-        logger.info("Start command task. Msg={}.", msg);
-
+    public void execute(Msg.Builder msgBuilder) {
         String command = "";
+
+        Msg msg = msgBuilder.build();
         if (msg.getType().equalsIgnoreCase("text/plain")) {
             command = msg.getData();
         } else if (msg.getType().equalsIgnoreCase("application/json")) {
@@ -71,44 +72,57 @@ public class CommandServiceImpl implements CommandService {
 
         if (command.trim().isEmpty()) {
             logger.warn("Command is empty.");
-            return "";
+            return;
         }
 
         String commandNumber = CommandsAndNumbers.get(command);
 
+        String topic = env.getProperty("command[" + commandNumber + "]." + "publication.topic", "");
+        MqttQoS qos = MqttQoS.valueOf(env.getProperty("command[" + commandNumber + "]." + "publication.qos", "EXACTLY_ONCE"));
+        boolean retain = Boolean.parseBoolean(env.getProperty("command[" + commandNumber + "]." + "publication.retain", "false"));
+
+        if (topic.trim().isEmpty()) {
+            logger.warn("Command {} publication topic is empty.", command);
+            return;
+        }
+
         String commandPath = env.getProperty("command[" + commandNumber + "]." + "path", "");   //TODO move to app prop class. left here only - getCommandPath(command)/ the rest likewise
         if (commandPath.trim().isEmpty()) {
             logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
-            return "";
+            return;
         }
 
         String arguments = env.getProperty("command[" + commandNumber + "]." + "arguments", "");
 
-        Msg.Builder msg = new Msg.Builder("onExecuteCommand").type("text/plain");   //TODO create ENUM fot mime types
-        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-        msg.data(this.executeCommand(command.build()));
+        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
 
-        logger.info("Create message {}.", msg);
-
-        this.mediator.publish(msg.build(), topic, qos, retain);
+        this.sendReply(this.executeCommand(commandPath, arguments), topic, qos, retain);
     }
 
-    private String executeCommand(Msg msg) {
+    private void sendReply(String data, String topic, MqttQoS qos, boolean retain) {
+        Msg.Builder builder = new Msg.Builder("onExecuteCommand").type("text/plain");   //TODO create ENUM fot mime types
+        builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        builder.data(data);
+        Msg msg = builder.build();
+        this.mediator.publish(msg, topic, qos, retain);
 
+        logger.info("Reply has been sent. Msg={}, topic={}, qos={}, retain={}.", msg, topic, qos, retain);
+    }
 
-        logger.info("Start execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
+    private String executeCommand(String commandPath, String arguments) {
+        logger.debug("Start command task. commandPath={}, arguments={}.", commandPath, arguments);
 
-        String line;
         ProcessBuilder pb = new ProcessBuilder(commandPath, arguments);
         pb.redirectErrorStream(true);
         Process p;
         try {
             p = pb.start();
         } catch (IOException ex) {
-            logger.warn("ProcessBuilder cannot start. Command name={}. {}", command, ex.getMessage());
+            logger.warn("ProcessBuilder cannot start. commandPath={}, arguments={}. {}", commandPath, arguments, ex.getMessage());
             return "";
         }
 
+        String line;
         String result = "";
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
@@ -120,11 +134,11 @@ public class CommandServiceImpl implements CommandService {
                 result += line;
             }
         } catch (IOException ex) {
-            logger.warn("Can not read process output of command name={}. {}", command, ex.getMessage());
+            logger.warn("Can not read process output of command. commandPath={}, arguments={}. {}", commandPath, arguments, ex.getMessage());
             return "";
         }
 
-        logger.info("End command task. Msg={}.", msg);
+        logger.debug("End command task. commandPath={}, arguments={}.", commandPath, arguments);
 
         return result;
     }

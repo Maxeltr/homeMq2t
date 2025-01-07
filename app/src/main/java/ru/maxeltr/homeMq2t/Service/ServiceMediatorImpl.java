@@ -119,6 +119,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     @Override
     public void handleMessage(MqttPublishMessage mqttMessage) {
+        int id = mqttMessage.variableHeader().packetId();
+        logger.debug("Start handle message id={}. mqttMessage={}.", id, mqttMessage);
         Msg.Builder payload;
         try {
             payload = mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
@@ -129,14 +131,16 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
         if (this.topicsAndCardNumbers.containsKey(mqttMessage.variableHeader().topicName())) {
             this.display(payload, this.topicsAndCardNumbers.get(mqttMessage.variableHeader().topicName()));
+            logger.debug("Message id={} has been sent to display. mqttMessage={}.", id, mqttMessage);
 
         } else if (this.topicsAndCommands.containsKey(mqttMessage.variableHeader().topicName())) {
             this.commandService.execute(payload);
+            logger.debug("Message id={} has been sent to execute. mqttMessage={}.", id, mqttMessage);
 
         } else {
             logger.warn("can not handle message. There are no actions for {}", mqttMessage);
         }
-
+        logger.debug("End handle message id={}. mqttMessage={}.", id, mqttMessage);
     }
 
     @Override
