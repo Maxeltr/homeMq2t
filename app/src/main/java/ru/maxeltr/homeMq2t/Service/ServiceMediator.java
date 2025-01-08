@@ -49,6 +49,8 @@ public interface ServiceMediator {
     public void handleMessage(MqttPublishMessage message);
 
     public Promise<MqttConnAckMessage> connect();
+    
+    public void reconnect();
 
     public void disconnect(byte reasonCode);
 }

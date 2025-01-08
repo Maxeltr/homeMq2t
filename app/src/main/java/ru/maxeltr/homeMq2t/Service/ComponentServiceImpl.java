@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2025 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>..
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,17 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Mqtt;
+package ru.maxeltr.homeMq2t.Service;
 
-import io.netty.handler.codec.mqtt.MqttMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-interface RetransmitSheduler {
+public class ComponentServiceImpl implements ComponentService {
 
-    public void start();
+    private static final Logger logger = LoggerFactory.getLogger(ComponentServiceImpl.class);
 
-    public void stop();
+    private ServiceMediator mediator;
+    
+    @Override
+    public void setMediator(ServiceMediator mediator) {
+        this.mediator = mediator;
+    }
+
+    @Override
+    public void update() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void update(Component component) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void update(String component) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+    
 }

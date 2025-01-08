@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2021 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2024 Dev.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,42 +29,74 @@ import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttQoS;
-import io.netty.handler.timeout.IdleStateEvent;
-import io.netty.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import java.util.concurrent.ScheduledFuture;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
- * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
+ * @author Dev
  */
-public class MqttPingHandler extends ChannelInboundHandlerAdapter {
-
-    private static final Logger logger = LoggerFactory.getLogger(MqttPingHandler.class);
-
-    @Value("${keep-alive-timer:20000}")
-    private int keepAliveTimer;
-
-    private ScheduledFuture<?> pingRespTimeout;
+public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
+    
+    private static final Logger logger = LoggerFactory.getLogger(MqttPingScheduleHandler.class);
+    
+    @Autowired
+    private ThreadPoolTaskScheduler threadPoolTaskScheduler;
+    
+    @Autowired
+    private PeriodicTrigger pingPeriodicTrigger;
+    
+    @Value("${reconnect:true}")
+    private boolean reconnect;
+    
+    private ChannelHandlerContext ctx;
+    
+    private final ServiceMediator serviceMediator;
+    
+    private ScheduledFuture<?> future;
 
     private final MqttMessage pingReqMsg;
-
+    
     private final MqttMessage pingRespMsg;
+    
+    private boolean pingRespTimeout;
 
-    private final ServiceMediator serviceMediator;
-
-    MqttPingHandler(ServiceMediator serviceMediator) {
+    public MqttPingScheduleHandler(ServiceMediator serviceMediator) {
         this.serviceMediator = serviceMediator;
+
         MqttFixedHeader fixedHeaderReqMsg = new MqttFixedHeader(MqttMessageType.PINGREQ, false, MqttQoS.AT_MOST_ONCE, false, 0);
         pingReqMsg = new MqttMessage(fixedHeaderReqMsg);
-
+        
         MqttFixedHeader fixedHeaderRespMsg = new MqttFixedHeader(MqttMessageType.PINGRESP, false, MqttQoS.AT_MOST_ONCE, false, 0);
         pingRespMsg = new MqttMessage(fixedHeaderRespMsg);
+        
+        logger.debug("Create {}.", this);
+    }
+    
+    @PostConstruct
+    public void startPing() {
+        logger.info("Start ping. {}", this);
+        this.future = threadPoolTaskScheduler.schedule(new RunnableTask(), pingPeriodicTrigger);
     }
 
+    @Override
+    public void handlerAdded(ChannelHandlerContext ctx) {
+        this.ctx = ctx;
+    }
+    
+    public void stopPing() {
+        this.future.cancel(false);
+        logger.info("The ping was canceled. {}", this);
+    }
+    
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof MqttMessage)) {
@@ -75,43 +107,41 @@ public class MqttPingHandler extends ChannelInboundHandlerAdapter {
         MqttMessage message = (MqttMessage) msg;
         if (message.fixedHeader().messageType() == MqttMessageType.PINGREQ) {
             ctx.channel().writeAndFlush(pingRespMsg);
-            logger.info("Received ping request. Sent ping response. {}.", msg);
+            logger.info("Received ping request={}. Sent ping response={}.", msg, pingRespMsg);
 //            ReferenceCountUtil.release(msg);
         } else if (message.fixedHeader().messageType() == MqttMessageType.PINGRESP) {
-            logger.info("Received ping response {}.", msg);
-            if (this.pingRespTimeout != null && !this.pingRespTimeout.isCancelled() && !this.pingRespTimeout.isDone()) {
-                this.pingRespTimeout.cancel(true);
-                this.pingRespTimeout = null;
-            }
+            logger.info("Received ping response={}.", msg);
+            this.pingRespTimeout = false;
 //            ReferenceCountUtil.release(msg);
         } else {
             ctx.fireChannelRead(msg);   //ctx.fireChannelRead(ReferenceCountUtil.retain(msg));
         }
     }
+    
+    class RunnableTask implements Runnable {
 
-    @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        if (evt instanceof IdleStateEvent event) {
-            switch (event.state()) {
-                case READER_IDLE -> {
+        @Override
+        public void run() {
+            if (pingRespTimeout) {
+                logger.info("Ping response was not received for keep-alive time. {}", this);
+                MqttPingScheduleHandler.this.future.cancel(false);
+                //publishPingTimeoutEvent();
+                if (reconnect) {
+                    logger.debug("Start reconnection attempt.");
+                    serviceMediator.reconnect();
+                } else {
+                    future.cancel(false);
+                    serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
+                    logger.debug("Disconnection.");
                 }
-                case WRITER_IDLE -> {
-                    ctx.writeAndFlush(pingReqMsg);
-                    logger.info("Sent ping request {}.", pingReqMsg);
-
-                    if (this.pingRespTimeout == null) {
-                        this.pingRespTimeout = ctx.channel().eventLoop().schedule(() -> {
-                            logger.info("Ping response was not received for keepAlive time.");
-                            //this.serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
-                            //this.publishPingTimeoutEvent(); //TODO ?
-                        }, keepAliveTimer, TimeUnit.MILLISECONDS);
-                    }
-                }
+                
+                return;
             }
-        } else {
-            super.userEventTriggered(ctx, evt);
+
+            ctx.writeAndFlush(pingReqMsg);
+            pingRespTimeout = true;
+            logger.info("Sent ping request. {}. Message {}.", this, pingReqMsg);
+
         }
-
     }
-
 }

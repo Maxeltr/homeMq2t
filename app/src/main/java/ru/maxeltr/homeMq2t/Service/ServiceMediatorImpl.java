@@ -33,12 +33,10 @@ import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.HashMap;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
@@ -52,9 +50,6 @@ public class ServiceMediatorImpl implements ServiceMediator {
     private static final Logger logger = LoggerFactory.getLogger(ServiceMediatorImpl.class);
 
     @Autowired
-    private Environment env;
-
-    @Autowired
     private CommandService commandService;
 
     @Autowired
@@ -66,36 +61,25 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
 
-    private final Map<String, String> topicsAndCardNumbersForDisplay = new HashMap();
+    @Autowired
+    private Map<String, String> topicsAndCardNumbers;
+
+    @Autowired
+    private Map<String, String> topicsAndCommands;
 
     @Autowired
     private ObjectMapper mapper;
 
-//    public ServiceMediatorImpl() {
-//        int i = 0;
-//        while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
-//            topicsAndCards.put(
-//                    env.getProperty("card[" + i + "].subscription.topic", ""),
-//                    env.getProperty("card[" + i + "].name", "")
-//            );
-//            ++i;
-//        }
-//    }
+    public ServiceMediatorImpl() {
+        logger.info("Create service mediator");
+    }
 
     @PostConstruct
     public void postConstruct() {
+        logger.info("post construct service mediator");
         this.setMediator();
-        
-        int i = 0;
-        while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
-            topicsAndCardNumbersForDisplay.put(
-                    env.getProperty("card[" + i + "].subscription.topic", ""),
-                    String.valueOf(i)
-            );
-            ++i;
-        }
     }
-    
+
     public void setMediator() {
         commandService.setMediator(this);
         uiService.setMediator(this);
@@ -135,6 +119,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     @Override
     public void handleMessage(MqttPublishMessage mqttMessage) {
+        int id = mqttMessage.variableHeader().packetId();
+        logger.debug("Start handle message id={}. mqttMessage={}.", id, mqttMessage);
         Msg.Builder payload;
         try {
             payload = mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
@@ -142,18 +128,29 @@ public class ServiceMediatorImpl implements ServiceMediator {
             logger.warn("can not convert json to Msg. {}", mqttMessage.payload().toString(Charset.forName("UTF-8")), ex);
             return; //TODO
         }
-        
-        if (this.topicsAndCardNumbersForDisplay.containsKey(mqttMessage.variableHeader().topicName())) {
-            this.display(payload, this.topicsAndCardNumbersForDisplay.get(mqttMessage.variableHeader().topicName()));
+
+        if (this.topicsAndCardNumbers.containsKey(mqttMessage.variableHeader().topicName())) {
+            this.display(payload, this.topicsAndCardNumbers.get(mqttMessage.variableHeader().topicName()));
+            logger.debug("Message id={} has been sent to display. mqttMessage={}.", id, mqttMessage);
+
+        } else if (this.topicsAndCommands.containsKey(mqttMessage.variableHeader().topicName())) {
+            this.commandService.execute(payload);
+            logger.debug("Message id={} has been sent to execute. mqttMessage={}.", id, mqttMessage);
+
         } else {
             logger.warn("can not handle message. There are no actions for {}", mqttMessage);
         }
-
+        logger.debug("End handle message id={}. mqttMessage={}.", id, mqttMessage);
     }
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
         return hmMq2t.connect();
+    }
+
+    @Override
+    public void reconnect() {
+        this.hmMq2t.reconnect();
     }
 
     @Override

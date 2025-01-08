@@ -41,80 +41,95 @@ function createCommand(id) {
     //stompClient.send("/app/connected", {}, JSON.stringify({'id': "connectsfgdsfgsdfg"}));
 }
 
-/* function onConnect(message) {
- var dashboard = document.getElementById('dashboard');
- var payload = JSON.parse(message.payload);
- if (payload.name.toUpperCase() === 'ONCONNECT' && payload.status.toUpperCase() === 'OK') {
- setConnected(true);
- }
- dashboard.innerHTML = atob(payload.data);
- } */
-
 function showData(message, cardNumber) {
-    if (message.type.toUpperCase() !== "APPLICATION/JSON"
-            && message.type.toUpperCase() !== 'IMAGE/JPEG'
-            && message.type.toUpperCase() !== 'TEXT/PLAIN'
-            ) {
-        console.log("Error. Incorrect payload type. Require application/json");
-        document.getElementById('dashboard').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type. Require application/json.</div>";
-        return;
-    }
-
-    var payload = JSON.parse(message.data);
-
-    if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONCONNECT') {
-        if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
-            document.getElementById('dashboard').innerHTML = payload.hasOwnProperty("data") ? atob(payload.data) : "<div style=\"color:red;\">Error to show dashboard.</div>";
-        } else {
-            console.log("Error. Incorrect payload type. Require text/html;base64");
-        }
-        if (payload.hasOwnProperty("status") && payload.status.toUpperCase() === 'OK') {
-            setConnected(true);
-        }
-        return;
-    }
-
-    var card = cardNumber;  //message.topic.replace("/", "-");
-console.log('number   =  ' + card)
-    if (message.timestamp === 'undefined') {
-        console.log('message.timestamp is undefined');
-        document.getElementById(card + '-timestamp').innerHTML === 'undefined';
-    } else {
-        var date = new Date(parseInt(message.timestamp, 10));
-        console.log(date)
-        var hours = date.getHours();
-        var minutes = '0' + date.getMinutes();
-        var seconds = '0' + date.getSeconds();
-        document.getElementById(card + '-timestamp').innerHTML = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-    }
-
-    if (!payload.hasOwnProperty("data")) {
-        console.log("There is no data property in message payload json.");
-        return;
-    }
+    var el;
     
-    if (payload.hasOwnProperty("name")) {
-        document.getElementById(card + '-text').innerHTML = payload.name;
-    }
-
     if (message.type !== 'undefined') {
         if (message.type.toUpperCase() === 'IMAGE/JPEG') {
+            console.log('message.type is IMAGE/JPEG ' + message.data);
             var image = new Image();
-            image.src = 'data:image/jpeg;base64,' + payload.data;
-            document.getElementById(card + '-payload').innerHTML = '<img src="' + image.src + '" class="img-fluid" alt="...">';
-            var saveButton = document.getElementById(card + '-save');
-            saveButton.setAttribute('href', image.src);
-            saveButton.classList.remove("disabled");
+            image.src = 'data:image/jpeg;base64,' + message.data;
+            
+            el = document.getElementById(cardNumber + '-payload');
+            if (el !== null) { 
+                el.innerHTML = '<img src="' + image.src + '" class="img-fluid" alt="...">';
+            }
+            
+            var saveButton = document.getElementById(cardNumber + '-save');
+            if (saveButton !== null) {
+                saveButton.setAttribute('href', image.src);
+                saveButton.classList.remove("disabled");
+            }
+            
         } else if (message.type.toUpperCase() === 'TEXT/PLAIN') {
-            document.getElementById(card + '-payload').innerHTML = '<p>' + payload.data + '</p>';
+            console.log('message.type is TEXT/PLAIN ' + message.data);
+            el = document.getElementById(cardNumber + '-payload');
+            if (el !== null) {
+                el.innerHTML = '<p>' + message.data + '</p>';
+            }
+            
         } else if (message.type.toUpperCase() === 'APPLICATION/JSON') {
-            console.log('message.type is APPLICATION/JSON ' + payload.data);
-            document.getElementById(card + '-payload').innerHTML = '<p>' + payload.data + '</p>';
+            console.log('message.type is APPLICATION/JSON ' + message.data);
+                        
+            var payload = JSON.parse(message.data);
+
+            if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONCONNECT') {
+                if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
+                    el = document.getElementById('dashboard');
+                    if (el !== null) {
+                        el.innerHTML = payload.hasOwnProperty("data") ? atob(payload.data) : "<div style=\"color:red;\">Error to show dashboard.</div>";
+                    }
+                } else {
+                    console.log("Error. Incorrect payload type. Require text/html;base64 for message 'onconnect'");
+                }
+                if (payload.hasOwnProperty("status") && payload.status.toUpperCase() === 'OK') {
+                    setConnected(true);
+                }
+                return;
+            }
+            
+            if (payload.hasOwnProperty("name")) {
+                el = document.getElementById(cardNumber + '-text');
+                if (el !== null) {
+                    el.innerHTML = payload.name;
+                }
+            }
+    
+            if (!payload.hasOwnProperty("data")) {
+                console.log("There is no data property in message payload json.");
+                return;
+            }
+            
+            el = document.getElementById(cardNumber + '-payload');
+            if (el !== null) {
+                el.innerHTML = '<p>' + payload.data + '</p>';
+            }
+            
         } else {
-            console.log('Error: message type is ' + message.type);
+            console.log("Error. Incorrect payload type for card=." + cardNumber + "Message type is " + message.type);
+            document.getElementById('errors').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type for card=" + cardNumber + ".</div>";
         }
     } else {
         console.log('Error: message type is undefined');
+        document.getElementById('errors').innerHTML = "<div style=\"color:red;\">Error: message type is undefined.</div>";
+    }
+    
+    if (message.timestamp === 'undefined') {
+        console.log('message.timestamp is undefined');
+        el = document.getElementById(cardNumber + '-timestamp');
+        if (el !== null) {
+            el.innerHTML = 'undefined';
+        }
+    } else {
+        var date = new Date(parseInt(message.timestamp, 10));
+        console.log(date);
+        var hours = date.getHours();
+        var minutes = '0' + date.getMinutes();
+        var seconds = '0' + date.getSeconds();
+        el = document.getElementById(cardNumber + '-timestamp');
+        if (el !== null) {
+            el.innerHTML = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+        }
     }
 
 }

@@ -23,8 +23,17 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import io.netty.handler.codec.mqtt.MqttQoS;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.time.Instant;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.scheduling.annotation.Async;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
@@ -37,14 +46,101 @@ public class CommandServiceImpl implements CommandService {
 
     private ServiceMediator mediator;
 
+    @Autowired
+    private Map<String, String> CommandsAndNumbers;
+
+    @Autowired
+    private Environment env;
+
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
     }
 
+    @Async("processExecutor")
     @Override
-    public void execute(Msg command) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void execute(Msg.Builder msgBuilder) {
+        String command = "";
+
+        Msg msg = msgBuilder.build();
+        if (msg.getType().equalsIgnoreCase("text/plain")) {
+            command = msg.getData();
+        } else if (msg.getType().equalsIgnoreCase("application/json")) {
+            //TODO
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        if (command.trim().isEmpty()) {
+            logger.warn("Command is empty.");
+            return;
+        }
+
+        String commandNumber = CommandsAndNumbers.get(command);
+
+        String topic = env.getProperty("command[" + commandNumber + "]." + "publication.topic", "");
+        MqttQoS qos = MqttQoS.valueOf(env.getProperty("command[" + commandNumber + "]." + "publication.qos", "EXACTLY_ONCE"));
+        boolean retain = Boolean.parseBoolean(env.getProperty("command[" + commandNumber + "]." + "publication.retain", "false"));
+
+        if (topic.trim().isEmpty()) {
+            logger.warn("Command {} publication topic is empty.", command);
+            return;
+        }
+
+        String commandPath = env.getProperty("command[" + commandNumber + "]." + "path", "");   //TODO move to app prop class. left here only - getCommandPath(command)/ the rest likewise
+        if (commandPath.trim().isEmpty()) {
+            logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
+            return;
+        }
+
+        String arguments = env.getProperty("command[" + commandNumber + "]." + "arguments", "");
+
+        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
+
+        this.sendReply(this.executeCommand(commandPath, arguments), topic, qos, retain);
+    }
+
+    private void sendReply(String data, String topic, MqttQoS qos, boolean retain) {
+        Msg.Builder builder = new Msg.Builder("onExecuteCommand").type("text/plain");   //TODO create ENUM fot mime types
+        builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        builder.data(data);
+        Msg msg = builder.build();
+        this.mediator.publish(msg, topic, qos, retain);
+
+        logger.info("Reply has been sent. Msg={}, topic={}, qos={}, retain={}.", msg, topic, qos, retain);
+    }
+
+    private String executeCommand(String commandPath, String arguments) {
+        logger.debug("Start command task. commandPath={}, arguments={}.", commandPath, arguments);
+
+        ProcessBuilder pb = new ProcessBuilder(commandPath, arguments);
+        pb.redirectErrorStream(true);
+        Process p;
+        try {
+            p = pb.start();
+        } catch (IOException ex) {
+            logger.warn("ProcessBuilder cannot start. commandPath={}, arguments={}. {}", commandPath, arguments, ex.getMessage());
+            return "";
+        }
+
+        String line;
+        String result = "";
+
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+            while (true) {
+                line = br.readLine();
+                if (line == null) {
+                    break;
+                }
+                result += line;
+            }
+        } catch (IOException ex) {
+            logger.warn("Can not read process output of command. commandPath={}, arguments={}. {}", commandPath, arguments, ex.getMessage());
+            return "";
+        }
+
+        logger.debug("End command task. commandPath={}, arguments={}.", commandPath, arguments);
+
+        return result;
     }
 
 }

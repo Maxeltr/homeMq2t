@@ -99,6 +99,7 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     MqttConnectHandler(MqttAckMediator mqttAckMediator) {
         this.mqttAckMediator = mqttAckMediator;
+        logger.debug("Create {}.", this);
     }
 //    public void setMediator(MqttAckMediator mqttAckMediator) {
 //        this.mqttAckMediator = mqttAckMediator;
@@ -164,28 +165,27 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
         MqttConnectReturnCode returnCode = message.variableHeader().connectReturnCode();
         Promise<MqttConnAckMessage> future = this.mqttAckMediator.getConnectFuture();
         switch (returnCode) {
-            case CONNECTION_ACCEPTED:
+            case CONNECTION_ACCEPTED -> {
                 if (!future.isDone()) {
                     future.setSuccess(message);
                 }
                 logger.info("Received CONNACK message. Connection accepted. Message={}.", message);
 
                 channel.flush();
-                break;
+            }
 
-            case CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD:
-            case CONNECTION_REFUSED_IDENTIFIER_REJECTED:
-            case CONNECTION_REFUSED_NOT_AUTHORIZED:
-            case CONNECTION_REFUSED_SERVER_UNAVAILABLE:
-            case CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION:
+            case CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD, 
+                    CONNECTION_REFUSED_IDENTIFIER_REJECTED, 
+                    CONNECTION_REFUSED_NOT_AUTHORIZED, 
+                    CONNECTION_REFUSED_SERVER_UNAVAILABLE, 
+                    CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION -> {
                 if (!future.isDone()) {
                     future.cancel(true);
                 }
                 logger.info("Received CONNACK message. Connection refused. Message={}.", message);
-
                 channel.close();
                 // Don't start reconnect logic here
-                break;
+            }
         }
 
     }

@@ -53,6 +53,7 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
 
     MqttSubscriptionHandler(MqttAckMediator mqttAckMediator) {
         this.mqttAckMediator = mqttAckMediator;
+        logger.debug("Create {}.", this);
     }
     
 //    public void setMediator(MqttAckMediator mqttAckMediator) {

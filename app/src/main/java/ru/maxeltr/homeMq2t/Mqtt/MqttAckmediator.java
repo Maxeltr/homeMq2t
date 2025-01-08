@@ -31,9 +31,7 @@ import io.netty.util.concurrent.Promise;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface MqttAckMediator {
-
-    //public Promise<? extends MqttMessage> get(String key);
+public interface MqttAckMediator extends Iterable<MqttMessage> {
 
     public void add(int key, Promise<? extends MqttMessage> future, MqttMessage message);
 
@@ -48,4 +46,6 @@ public interface MqttAckMediator {
     public Promise<? extends MqttMessage> getFuture(int key);
 
     public <T extends MqttMessage> T getMessage(int key);
+    
+    public void clear();
 }
