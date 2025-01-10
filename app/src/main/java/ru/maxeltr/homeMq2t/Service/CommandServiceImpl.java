@@ -32,8 +32,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
@@ -47,10 +47,7 @@ public class CommandServiceImpl implements CommandService {
     private ServiceMediator mediator;
 
     @Autowired
-    private Map<String, String> CommandsAndNumbers;
-
-    @Autowired
-    private Environment env;
+    private AppProperties appProperties;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
@@ -75,26 +72,24 @@ public class CommandServiceImpl implements CommandService {
             return;
         }
 
-        String commandNumber = CommandsAndNumbers.get(command);
-
-        String topic = env.getProperty("command[" + commandNumber + "]." + "publication.topic", "");
-        MqttQoS qos = MqttQoS.valueOf(env.getProperty("command[" + commandNumber + "]." + "publication.qos", "EXACTLY_ONCE"));
-        boolean retain = Boolean.parseBoolean(env.getProperty("command[" + commandNumber + "]." + "publication.retain", "false"));
+        String topic = appProperties.getCommandPubTopic(command);
+        MqttQoS qos = MqttQoS.valueOf(appProperties.getCommandPubQos(command));
+        boolean retain = Boolean.parseBoolean(appProperties.getCommandPubRetain(command));
 
         if (topic.trim().isEmpty()) {
             logger.warn("Command {} publication topic is empty.", command);
             return;
         }
 
-        String commandPath = env.getProperty("command[" + commandNumber + "]." + "path", "");   //TODO move to app prop class. left here only - getCommandPath(command)/ the rest likewise
+        String commandPath = this.appProperties.getCommandPath(command);
         if (commandPath.trim().isEmpty()) {
-            logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
+            logger.warn("Command path is empty. Command={}, commandNumber={}", command, command);
             return;
         }
 
-        String arguments = env.getProperty("command[" + commandNumber + "]." + "arguments", "");
+        String arguments = this.appProperties.getCommandArguments(command);
 
-        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
+        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, command, commandPath, arguments);
 
         this.sendReply(this.executeCommand(commandPath, arguments), topic, qos, retain);
     }

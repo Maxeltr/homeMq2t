@@ -62,7 +62,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     private MqttChannelInitializer mqttChannelInitializer;
 
     @Autowired
-    private Map<String, String> topicsAndCardNumbers;
+    private Map<String, String> topicsAndCards;
 
     @Autowired
     private Map<String, String> topicsAndCommands;
@@ -129,8 +129,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
             return; //TODO
         }
 
-        if (this.topicsAndCardNumbers.containsKey(mqttMessage.variableHeader().topicName())) {
-            this.display(payload, this.topicsAndCardNumbers.get(mqttMessage.variableHeader().topicName()));
+        if (this.topicsAndCards.containsKey(mqttMessage.variableHeader().topicName())) {
+            this.display(payload, this.topicsAndCards.get(mqttMessage.variableHeader().topicName()));
             logger.debug("Message id={} has been sent to display. mqttMessage={}.", id, mqttMessage);
 
         } else if (this.topicsAndCommands.containsKey(mqttMessage.variableHeader().topicName())) {

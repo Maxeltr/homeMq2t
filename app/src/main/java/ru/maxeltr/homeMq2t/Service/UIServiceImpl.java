@@ -35,9 +35,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Async;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -53,7 +53,7 @@ public class UIServiceImpl implements UIService {
     private ServiceMediator mediator;
 
     @Autowired
-    private Environment env;
+    private AppProperties appProperties;
 
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
@@ -131,11 +131,11 @@ public class UIServiceImpl implements UIService {
 
     @Override
     public void publish(Msg.Builder msg) {
-        String topic = env.getProperty("card[" + msg.getId() + "].publication.topic", "");
-        MqttQoS qos = MqttQoS.valueOf(env.getProperty("card[" + msg.getId() + "].publication.qos", "AT_MOST_ONCE"));
-        boolean retain = Boolean.getBoolean(env.getProperty("card[" + msg.getId() + "].publication.retain", "false"));
-        msg.data(env.getProperty("card[" + msg.getId() + "].publication.data", ""));
-        msg.type(env.getProperty("card[" + msg.getId() + "].publication.data.type", ""));
+        String topic = this.appProperties.getCardPubTopic(msg.getId());
+        MqttQoS qos = MqttQoS.valueOf(this.appProperties.getCardPubQos(msg.getId()));
+        boolean retain = Boolean.getBoolean(this.appProperties.getCardPubRetain(msg.getId()));
+        msg.data(this.appProperties.getCardPubData(msg.getId()));
+        msg.type(this.appProperties.getCardPubDataType(msg.getId()));
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
         logger.info("Create message {}.", msg);

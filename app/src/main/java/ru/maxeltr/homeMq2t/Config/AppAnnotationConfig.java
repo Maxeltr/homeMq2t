@@ -71,6 +71,11 @@ public class AppAnnotationConfig {
     @Autowired
     private Environment env;
 
+    @Bean
+    public AppProperties appProperty() {
+        return new AppProperties();
+    }
+
     @Bean(name = "processExecutor")
     public TaskExecutor workExecutor() {
         ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
@@ -113,7 +118,7 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public Map<String, String> topicsAndCardNumbers() {
+    public Map<String, String> topicsAndCards() {
         Map<String, String> map = new HashMap();
         int i = 0;
         while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
