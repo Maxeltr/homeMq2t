@@ -79,4 +79,9 @@ public class AppProperties {
         return env.getProperty("card[" + id + "].publication.data.type", "");
     }
 
+    public String getComponentPath() {
+        return env.getProperty("component-path", "");
+    }
+
+
 }

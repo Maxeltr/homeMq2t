@@ -27,11 +27,6 @@ package ru.maxeltr.homeMq2t.Service;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface ObservableComponent extends Component {
+public interface CallbackComponent extends Component {
 
-    public void addObserver();
-
-    public void removeObserver();
-
-    public void notifyObservers();
 }

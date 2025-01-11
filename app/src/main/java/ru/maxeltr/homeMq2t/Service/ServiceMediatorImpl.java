@@ -70,13 +70,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private ObjectMapper mapper;
 
-    public ServiceMediatorImpl() {
-        logger.info("Create service mediator");
-    }
-
     @PostConstruct
     public void postConstruct() {
-        logger.info("post construct service mediator");
         this.setMediator();
     }
 

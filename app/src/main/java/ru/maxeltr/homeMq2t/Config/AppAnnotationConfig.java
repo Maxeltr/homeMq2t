@@ -54,6 +54,8 @@ import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
+import ru.maxeltr.homeMq2t.Service.ComponentService;
+import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
 import ru.maxeltr.homeMq2t.Service.UIService;
@@ -115,6 +117,11 @@ public class AppAnnotationConfig {
     @Bean
     public UIService getUIService() {
         return new UIServiceImpl();
+    }
+
+    @Bean
+    public ComponentService ComponentService() {
+        return new ComponentServiceImpl();
     }
 
     @Bean
