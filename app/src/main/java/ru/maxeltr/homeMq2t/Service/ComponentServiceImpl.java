@@ -45,7 +45,8 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ClassUtils;
+//import org.springframework.util.ClassUtils;
+import org.apache.commons.lang3.ClassUtils;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 
 /**
@@ -73,7 +74,7 @@ public class ComponentServiceImpl implements ComponentService {
         this.components = this.loadComponents();
 
         for (Object component : this.components) {
-            logger.debug("Loads {}", component);
+            logger.debug("Loaded {}", component);
         }
 
         //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
@@ -89,16 +90,16 @@ public class ComponentServiceImpl implements ComponentService {
 
         Set<Path> paths = listFiles(pathJar);
 
-        Set<Object> components = new HashSet<>();
+        Set<Object> componentSet = new HashSet<>();
         for (Path path : paths) {
             try {
-                components = this.loadClassesFromJar(path);
+                componentSet = this.loadClassesFromJar(path);
             } catch (IOException | ClassNotFoundException ex) {
                 logger.warn("Can not load classes", ex.getMessage());
             }
         }
 
-        return components;
+        return componentSet;
     }
 
     private Set listFiles(String dir) {
@@ -125,7 +126,7 @@ public class ComponentServiceImpl implements ComponentService {
         Set<Class> classesToSetCallback = new HashSet<>();
 
         for (Class clazz : classes) {
-            logger.debug("Class to instantiate or to set callback {}", clazz.getSimpleName());
+            logger.debug("There is {} in {}", clazz, path);
             if (clazz.isInterface()) {
                 continue;
             }
@@ -147,13 +148,13 @@ public class ComponentServiceImpl implements ComponentService {
         for (Class i : classesToInstantiate) {
             try {
                 instance = instantiateClass(i);
-                logger.debug("Instantiate class{}", i);
+                logger.debug("{} has been instantiated.", i);
                 if (classesToSetCallback.contains(i)) {
                     Method method = i.getMethod("setCallback", Consumer.class);
                     method.invoke(instance, (Consumer<String>) (String val) -> {
-                        System.out.println("setcallback " + val);   //TODO
+                        System.out.println("callback " + val);   //TODO
                     });
-                    logger.debug("Set callback to {}", i);
+                    logger.debug("Callback has been set to {}", i);
                 }
                 components.add(instance);
             } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
@@ -190,7 +191,7 @@ public class ComponentServiceImpl implements ComponentService {
             for (String name : classNames) {
                 Class clazz = cl.loadClass(name); // Load the class by its name
                 classes.add(clazz);
-                logger.debug("Loads class from jar {}", clazz);
+                logger.debug("Loads class {} from jar {}", name, jarFile);
             }
         }
         return classes;
@@ -199,7 +200,7 @@ public class ComponentServiceImpl implements ComponentService {
     private Object instantiateClass(Class<?> clazz) throws NoSuchMethodException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         Constructor<?> constructor = clazz.getConstructor();
         Object result = constructor.newInstance();
-        logger.info("Instantiate class {}.", clazz);
+
         return result;
     }
 
