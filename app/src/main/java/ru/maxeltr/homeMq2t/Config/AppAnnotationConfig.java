@@ -54,6 +54,7 @@ import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
+import ru.maxeltr.homeMq2t.Service.ComponentLoader;
 import ru.maxeltr.homeMq2t.Service.ComponentService;
 import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -125,6 +126,11 @@ public class AppAnnotationConfig {
     }
 
     @Bean
+    public ComponentLoader getComponentLoader() {
+        return new ComponentLoader();
+    }
+
+    @Bean
     public Map<String, String> topicsAndCards() {
         Map<String, String> map = new HashMap();
         int i = 0;
@@ -161,6 +167,21 @@ public class AppAnnotationConfig {
         while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
             map.put(
                     env.getProperty("command[" + i + "].name", ""),
+                    String.valueOf(i)
+            );
+            ++i;
+        }
+
+        return map;
+    }
+
+    @Bean
+    public Map<String, String> topicsAndComponents() {
+        Map<String, String> map = new HashMap();
+        int i = 0;
+        while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
+            map.put(
+                    env.getProperty("component[" + i + "].subscription.topic", ""),
                     String.valueOf(i)
             );
             ++i;
@@ -216,6 +237,15 @@ public class AppAnnotationConfig {
             ++i;
         }
 
+        i = 0;
+        while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
+            topic = env.getProperty("component[" + i + "].subscription.topic", "");
+            topicQos = MqttQoS.valueOf(env.getProperty("component[" + i + "].subscription.qos", MqttQoS.AT_MOST_ONCE.toString()));
+            subscription = new MqttTopicSubscription(topic, topicQos);
+            subscriptions.add(subscription);
+            ++i;
+        }
+
         return subscriptions;
     }
 
@@ -244,7 +274,6 @@ public class AppAnnotationConfig {
         Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("keep-alive-timer", "20000")));
         PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
         periodicTrigger.setInitialDelay(duration);
-        periodicTrigger.setInitialDelay(duration);
         return periodicTrigger;
     }
 
@@ -253,6 +282,13 @@ public class AppAnnotationConfig {
         Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("retransmit-delay", "60000")));
         PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
         periodicTrigger.setInitialDelay(duration);
+        return periodicTrigger;
+    }
+
+    @Bean(name = "pollingPeriodicTrigger")
+    public PeriodicTrigger pollingPeriodicTrigger() {
+        Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("polling-sensors-delay", "10000")));
+        PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
         periodicTrigger.setInitialDelay(duration);
         return periodicTrigger;
     }

@@ -36,11 +36,13 @@ public class AppProperties {
     @Autowired
     private Environment env;
 
+    private final static String ERROR_TOPIC  = "mq2t/error";
+
     @Autowired
     private Map<String, String> CommandsAndNumbers;
 
     public String getCommandPubTopic(String command) {
-        return env.getProperty("command[" + CommandsAndNumbers.get(command) + "]." + "publication.topic", "");
+        return env.getProperty("command[" + CommandsAndNumbers.get(command) + "]." + "publication.topic", ERROR_TOPIC);
     }
 
     public String getCommandPubQos(String command) {
@@ -60,7 +62,7 @@ public class AppProperties {
     }
 
     public String getCardPubTopic(String id) {
-        return env.getProperty("card[" + id + "].publication.topic", "");
+        return env.getProperty("card[" + id + "].publication.topic", ERROR_TOPIC);
     }
 
     public String getCardPubQos(String id) {
@@ -83,5 +85,20 @@ public class AppProperties {
         return env.getProperty("component-path", "");
     }
 
+    public String getComponentPubTopic(String id) {
+        return env.getProperty("component[" + id + "].publication.topic", ERROR_TOPIC);
+    }
+
+    public String getComponentPubQos(String id) {
+        return env.getProperty("component[" + id + "].publication.qos", "AT_MOST_ONCE");
+    }
+
+    public String getComponentPubRetain(String id) {
+        return env.getProperty("component[" + id + "].publication.retain", "false");
+    }
+
+    public String getComponentPubDataType(String id) {
+        return env.getProperty("component[" + id + "].publication.data.type", "");
+    }
 
 }

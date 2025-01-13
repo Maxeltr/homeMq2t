@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import ru.maxeltr.homeMq2t.Model.Msg;
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -31,25 +32,5 @@ public interface ComponentService {
 
     public void setMediator(ServiceMediator mediator);
 
-    /**
-     * This method is called by Mediator in order to PollService updates sensor
-     * readings and publishes them.
-     */
-    public void update();
-
-    /**
-     * This method is called by Observable component. PollService should publish
-     * new readings.
-     *
-     * @param component Component object
-     */
-    public void update(Component component);
-
-    /**
-     * This method is called by Mediator. PollService should update the
-     * component and publish its readings.
-     *
-     * @param component Name of component
-     */
-    public void update(String component);
+	public void process(Msg.Builder msg);
 }

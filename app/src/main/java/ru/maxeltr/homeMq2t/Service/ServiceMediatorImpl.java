@@ -50,6 +50,9 @@ public class ServiceMediatorImpl implements ServiceMediator {
     private static final Logger logger = LoggerFactory.getLogger(ServiceMediatorImpl.class);
 
     @Autowired
+    private ComponentService componentService;
+
+    @Autowired
     private CommandService commandService;
 
     @Autowired
@@ -68,6 +71,9 @@ public class ServiceMediatorImpl implements ServiceMediator {
     private Map<String, String> topicsAndCommands;
 
     @Autowired
+    private Map<String, String> topicsAndComponents;
+
+    @Autowired
     private ObjectMapper mapper;
 
     @PostConstruct
@@ -76,6 +82,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     public void setMediator() {
+        componentService.setMediator(this);
         commandService.setMediator(this);
         uiService.setMediator(this);
         hmMq2t.setMediator(this);
@@ -84,32 +91,30 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     @Override
     public void publish(Msg msg, String topic, MqttQoS qos, boolean retain) {
-        logger.info("publish message {}. topic={}, qos={}, retain={}", msg, topic, qos, retain);
+        logger.info("Publish message has been passed to mqtt client. topic={}, qos={}, retain={}. {}", topic, qos, retain, msg);
         try {
-            this.hmMq2t.publish(topic, Unpooled.wrappedBuffer(mapper.writeValueAsBytes(msg)), qos, retain);
+            this.hmMq2t.publish(topic, Unpooled.wrappedBuffer(this.mapper.writeValueAsBytes(msg)), qos, retain);
         } catch (JsonProcessingException ex) {
-            logger.warn("can not convert msg to json {}", msg, ex);
+            logger.warn("Cannot convert msg to json {}", msg, ex.getMessage());
         }
     }
 
     @Override
-    public void execute(Msg command) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void execute(Msg.Builder command) {
+        this.commandService.execute(command);
+        logger.info("Data has been passed to the command service. Data={}.", command);
     }
 
     @Override
     public void display(Msg.Builder data, String cardNumber) {
-        uiService.display(data, cardNumber);
+        this.uiService.display(data, cardNumber);
+        logger.info("Data has been passed to the ui service. Card number={}, data={}.", cardNumber, data);
     }
 
     @Override
-    public void update() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
-
-    @Override
-    public void update(Component component) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public void process(Msg.Builder data) {
+        this.componentService.process(data);
+        logger.info("Data has been passed to the component service. Data={}.", data);
     }
 
     @Override
@@ -118,29 +123,34 @@ public class ServiceMediatorImpl implements ServiceMediator {
         logger.debug("Start handle message id={}. mqttMessage={}.", id, mqttMessage);
         Msg.Builder payload;
         try {
-            payload = mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
+            payload = this.mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
         } catch (JsonProcessingException ex) {
-            logger.warn("can not convert json to Msg. {}", mqttMessage.payload().toString(Charset.forName("UTF-8")), ex);
-            return; //TODO
+            logger.warn("Cannot convert json to Msg. id={}. MqttMessage={}", id, mqttMessage.payload().toString(Charset.forName("UTF-8")), ex.getMessage());
+            return;
         }
 
-        if (this.topicsAndCards.containsKey(mqttMessage.variableHeader().topicName())) {
-            this.display(payload, this.topicsAndCards.get(mqttMessage.variableHeader().topicName()));
-            logger.debug("Message id={} has been sent to display. mqttMessage={}.", id, mqttMessage);
+        String topicName = (mqttMessage.variableHeader().topicName());
+        if (this.topicsAndCards.containsKey(topicName)) {
+            this.display(payload, this.topicsAndCards.get(topicName));
+            logger.debug("Message id={} has been passed to ui service. mqttMessage={}.", id, mqttMessage);
 
-        } else if (this.topicsAndCommands.containsKey(mqttMessage.variableHeader().topicName())) {
-            this.commandService.execute(payload);
-            logger.debug("Message id={} has been sent to execute. mqttMessage={}.", id, mqttMessage);
+        } else if (this.topicsAndCommands.containsKey(topicName)) {
+            this.execute(payload);
+            logger.debug("Message id={} has been passed to command service. mqttMessage={}.", id, mqttMessage);
+
+        } else if (this.topicsAndComponents.containsKey(topicName)) {
+            this.process(payload);
+            logger.debug("Message id={} has been passed to component service. mqttMessage={}.", id, mqttMessage);
 
         } else {
-            logger.warn("can not handle message. There are no actions for {}", mqttMessage);
+            logger.warn("can not handle message id={}. There are no actions for {}", id, mqttMessage);
         }
         logger.debug("End handle message id={}. mqttMessage={}.", id, mqttMessage);
     }
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
-        return hmMq2t.connect();
+        return this.hmMq2t.connect();
     }
 
     @Override
@@ -150,7 +160,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     @Override
     public void disconnect(byte reasonCode) {
-        hmMq2t.disconnect(reasonCode);
+        this.hmMq2t.disconnect(reasonCode);
     }
 
     private boolean isJsonValid(String jsonInString) {
