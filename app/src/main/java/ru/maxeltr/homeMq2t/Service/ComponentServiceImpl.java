@@ -82,7 +82,7 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     @Override
-    public void process(Msg.Builder msg) {
+    public void process(Msg.Builder msg, String id) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
@@ -108,20 +108,32 @@ public class ComponentServiceImpl implements ComponentService {
         @Override
         public void run() {
             logger.debug("Start polling task");
-
+			Msg.Builder builder;
+			for (Component component: this.components) {
+				String data = component.getData();
+				logger.info("Component={}. Get data={}.", component, data);
+				
+				builder = new Msg.Builder("onPolling");
+				builder.data(data);
+				builder.type(this.appProperties.getComponentPubDataType(component.getName()));
+				builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+				
+				String topic = this.appProperties.getComponentPubTopic(component.getName());
+				MqttQoS qos = MqttQoS.valueOf(this.appProperties.getComponentPubQos(component.getName()));
+				boolean retain = Boolean.getBoolean(this.appProperties.getComponentPubRetain(component.getName()));
+				this.publish(builder, topic, qos, retain);
+				
+			}
+			
+			
+			
+		
             logger.debug("Stop polling task");
         }
     }
 
-    public void publish(Msg.Builder msg) {
-        String topic = this.appProperties.getComponentPubTopic(msg.getId());
-        MqttQoS qos = MqttQoS.valueOf(this.appProperties.getComponentPubQos(msg.getId()));
-        boolean retain = Boolean.getBoolean(this.appProperties.getComponentPubRetain(msg.getId()));
-        msg.type(this.appProperties.getComponentPubDataType(msg.getId()));
-        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-        msg.data("tetst");	//TODO
-        logger.info("Create message {}.", msg);
-
+    private void publish(Msg.Builder msg, String topic, MqttQoS qos, boolean retain) {
+        logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
         this.mediator.publish(msg.build(), topic, qos, retain);
     }
 

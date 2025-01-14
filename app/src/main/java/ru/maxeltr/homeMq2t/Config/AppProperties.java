@@ -40,6 +40,9 @@ public class AppProperties {
 
     @Autowired
     private Map<String, String> CommandsAndNumbers;
+	
+	@Autowired
+    private Map<String, String> componentsAndNumbers;
 
     public String getCommandPubTopic(String command) {
         return env.getProperty("command[" + CommandsAndNumbers.get(command) + "]." + "publication.topic", ERROR_TOPIC);
@@ -85,20 +88,20 @@ public class AppProperties {
         return env.getProperty("component-path", "");
     }
 
-    public String getComponentPubTopic(String id) {
-        return env.getProperty("component[" + id + "].publication.topic", ERROR_TOPIC);
+    public String getComponentPubTopic(String component) {
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.topic", ERROR_TOPIC);
     }
 
-    public String getComponentPubQos(String id) {
-        return env.getProperty("component[" + id + "].publication.qos", "AT_MOST_ONCE");
+    public String getComponentPubQos(String component) {
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.qos", "AT_MOST_ONCE");
     }
 
-    public String getComponentPubRetain(String id) {
-        return env.getProperty("component[" + id + "].publication.retain", "false");
+    public String getComponentPubRetain(String component) {
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.retain", "false");
     }
 
-    public String getComponentPubDataType(String id) {
-        return env.getProperty("component[" + id + "].publication.data.type", "");
+    public String getComponentPubDataType(String component) {
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.data.type", "");
     }
 
 }

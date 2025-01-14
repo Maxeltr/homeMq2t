@@ -75,7 +75,7 @@ public class AppAnnotationConfig {
     private Environment env;
 
     @Bean
-    public AppProperties appProperty() {
+    public AppProperties getAppProperty() {
         return new AppProperties();
     }
 
@@ -121,7 +121,7 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public ComponentService ComponentService() {
+    public ComponentService getComponentService() {
         return new ComponentServiceImpl();
     }
 
@@ -161,7 +161,7 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public Map<String, String> CommandsAndNumbers() {
+    public Map<String, String> commandsAndNumbers() {
         Map<String, String> map = new HashMap();
         int i = 0;
         while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
@@ -189,6 +189,21 @@ public class AppAnnotationConfig {
 
         return map;
     }
+	
+	@Bean
+    public Map<String, String> componentsAndNumbers() {
+        Map<String, String> map = new HashMap();
+        int i = 0;
+        while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
+            map.put(
+                    env.getProperty("component[" + i + "].name", ""),
+                    String.valueOf(i)
+            );
+            ++i;
+        }
+
+        return map;
+    }
 
     @Bean
     public List<Dashboard> dashboards() {
@@ -209,6 +224,20 @@ public class AppAnnotationConfig {
         }
 
         return dashboards;
+    }
+	
+	@Bean
+    public List<Component> components(ComponentLoader componentLoader) {
+        int i = 0;
+        List<Component> components = new ArrayList<>();
+        while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
+			String path = env.getProperty("component[" + i + "].path", "");
+			List<Component> instances = componentLoader.loadClassesFromJar(path);
+			components.addAll(instances);
+			++i;
+        }
+
+        return components;
     }
 
     @Bean

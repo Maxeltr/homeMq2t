@@ -121,9 +121,9 @@ public class ServiceMediatorImpl implements ServiceMediator {
     public void handleMessage(MqttPublishMessage mqttMessage) {
         int id = mqttMessage.variableHeader().packetId();
         logger.debug("Start handle message id={}. mqttMessage={}.", id, mqttMessage);
-        Msg.Builder payload;
+        Msg.Builder builder;
         try {
-            payload = this.mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
+            builder = this.mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert json to Msg. id={}. MqttMessage={}", id, mqttMessage.payload().toString(Charset.forName("UTF-8")), ex.getMessage());
             return;
@@ -131,15 +131,16 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
         String topicName = (mqttMessage.variableHeader().topicName());
         if (this.topicsAndCards.containsKey(topicName)) {
-            this.display(payload, this.topicsAndCards.get(topicName));
+			builder.data(Jsoup.clean(builder.getData(), Safelist.Basic()));
+            this.display(builder, this.topicsAndCards.get(topicName));
             logger.debug("Message id={} has been passed to ui service. mqttMessage={}.", id, mqttMessage);
 
         } else if (this.topicsAndCommands.containsKey(topicName)) {
-            this.execute(payload);
+            this.execute(builder);
             logger.debug("Message id={} has been passed to command service. mqttMessage={}.", id, mqttMessage);
 
         } else if (this.topicsAndComponents.containsKey(topicName)) {
-            this.process(payload);
+            this.process(builder, this.topicsAndComponents.get(topicName));
             logger.debug("Message id={} has been passed to component service. mqttMessage={}.", id, mqttMessage);
 
         } else {
