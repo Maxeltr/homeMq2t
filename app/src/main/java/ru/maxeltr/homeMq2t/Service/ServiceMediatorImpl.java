@@ -29,14 +29,20 @@ import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
@@ -76,6 +82,12 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private ObjectMapper mapper;
 
+    @Autowired
+    AppShutdownManager appShutdownManager;
+
+    @Value("${wait-disconnect-while-shutdown:1000}")
+    private Integer waitDisconnect;
+
     @PostConstruct
     public void postConstruct() {
         this.setMediator();
@@ -100,20 +112,20 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void execute(Msg.Builder command) {
+    public void execute(Msg command) {
         this.commandService.execute(command);
         logger.info("Data has been passed to the command service. Data={}.", command);
     }
 
     @Override
-    public void display(Msg.Builder data, String cardNumber) {
+    public void display(Msg data, String cardNumber) {
         this.uiService.display(data, cardNumber);
         logger.info("Data has been passed to the ui service. Card number={}, data={}.", cardNumber, data);
     }
 
     @Override
-    public void process(Msg.Builder data) {
-        this.componentService.process(data);
+    public void process(Msg data,String componentNumber) {
+        this.componentService.process(data, componentNumber);
         logger.info("Data has been passed to the component service. Data={}.", data);
     }
 
@@ -131,16 +143,16 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
         String topicName = (mqttMessage.variableHeader().topicName());
         if (this.topicsAndCards.containsKey(topicName)) {
-			builder.data(Jsoup.clean(builder.getData(), Safelist.Basic()));
-            this.display(builder, this.topicsAndCards.get(topicName));
+            builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
+            this.display(builder.build(), this.topicsAndCards.get(topicName));
             logger.debug("Message id={} has been passed to ui service. mqttMessage={}.", id, mqttMessage);
 
         } else if (this.topicsAndCommands.containsKey(topicName)) {
-            this.execute(builder);
+            this.execute(builder.build());
             logger.debug("Message id={} has been passed to command service. mqttMessage={}.", id, mqttMessage);
 
         } else if (this.topicsAndComponents.containsKey(topicName)) {
-            this.process(builder, this.topicsAndComponents.get(topicName));
+            this.process(builder.build(), this.topicsAndComponents.get(topicName));
             logger.debug("Message id={} has been passed to component service. mqttMessage={}.", id, mqttMessage);
 
         } else {
@@ -162,6 +174,19 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Override
     public void disconnect(byte reasonCode) {
         this.hmMq2t.disconnect(reasonCode);
+    }
+
+    @Override
+    public void shutdown() {
+        this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
+        this.componentService.stopPolling();
+        try {
+            TimeUnit.MILLISECONDS.sleep(waitDisconnect);
+        } catch (InterruptedException ex) {
+            logger.info("Shutdown. InterruptedException while disconnect timeout.", ex);
+        }
+
+        this.appShutdownManager.shutdownApp(0);
     }
 
     private boolean isJsonValid(String jsonInString) {

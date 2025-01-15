@@ -32,6 +32,7 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -56,13 +57,12 @@ public class CommandServiceImpl implements CommandService {
 
     @Async("processExecutor")
     @Override
-    public void execute(Msg.Builder msgBuilder) {
+    public void execute(Msg msg) {
         String command = "";
 
-        Msg msg = msgBuilder.build();
-        if (msg.getType().equalsIgnoreCase("text/plain")) {
+        if (msg.getType().equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             command = msg.getData();
-        } else if (msg.getType().equalsIgnoreCase("application/json")) {
+        } else if (msg.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
             //TODO
             throw new UnsupportedOperationException("Not supported yet.");
         }
@@ -95,7 +95,7 @@ public class CommandServiceImpl implements CommandService {
     }
 
     private void sendReply(String data, String topic, MqttQoS qos, boolean retain) {
-        Msg.Builder builder = new Msg.Builder("onExecuteCommand").type("text/plain");   //TODO create ENUM fot mime types
+        Msg.Builder builder = new Msg.Builder("onExecuteCommand").type(MediaType.TEXT_PLAIN_VALUE);
         builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         builder.data(data);
         Msg msg = builder.build();

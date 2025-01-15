@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,6 +55,7 @@ import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
+import ru.maxeltr.homeMq2t.Service.Component;
 import ru.maxeltr.homeMq2t.Service.ComponentLoader;
 import ru.maxeltr.homeMq2t.Service.ComponentService;
 import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
@@ -189,8 +191,8 @@ public class AppAnnotationConfig {
 
         return map;
     }
-	
-	@Bean
+
+    @Bean
     public Map<String, String> componentsAndNumbers() {
         Map<String, String> map = new HashMap();
         int i = 0;
@@ -225,16 +227,16 @@ public class AppAnnotationConfig {
 
         return dashboards;
     }
-	
-	@Bean
+
+    @Bean
     public List<Component> components(ComponentLoader componentLoader) {
         int i = 0;
         List<Component> components = new ArrayList<>();
         while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
-			String path = env.getProperty("component[" + i + "].path", "");
-			List<Component> instances = componentLoader.loadClassesFromJar(path);
-			components.addAll(instances);
-			++i;
+            String path = env.getProperty("component[" + i + "].path", "");
+            List<Component> instances = componentLoader.loadClassesFromJar(path);
+            components.addAll(instances);
+            ++i;
         }
 
         return components;
@@ -318,7 +320,6 @@ public class AppAnnotationConfig {
     public PeriodicTrigger pollingPeriodicTrigger() {
         Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("polling-sensors-delay", "10000")));
         PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
-        periodicTrigger.setInitialDelay(duration);
         return periodicTrigger;
     }
 }

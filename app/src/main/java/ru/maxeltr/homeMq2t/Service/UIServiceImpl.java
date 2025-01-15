@@ -35,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
@@ -58,17 +59,11 @@ public class UIServiceImpl implements UIService {
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
 
-    @Value("${wait-disconnect-while-shutdown:1000}")
-    private Integer waitDisconnect;
-
     @Autowired
     private OutputUIController uiController;
 
     @Autowired
     private List<Dashboard> dashboards;
-
-    @Autowired
-    AppShutdownManager appShutdownManager;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
@@ -78,7 +73,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void connect() {
         logger.info("Do connect.");
-        Msg.Builder msg = new Msg.Builder("onConnect").type("application/json");
+        Msg.Builder msg = new Msg.Builder("onConnect").type(MediaType.APPLICATION_JSON_VALUE);
 
         Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
         authFuture.awaitUninterruptibly(this.connectTimeout);
@@ -102,7 +97,7 @@ public class UIServiceImpl implements UIService {
                     + "\"}");
         }
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-        this.display(msg, "");
+        this.display(msg.build(), "");
     }
 
     @Override
@@ -114,15 +109,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void shutdownApp() {
         logger.info("Do shutdown aplication.");
-        this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
-
-        try {
-            TimeUnit.MILLISECONDS.sleep(waitDisconnect);
-        } catch (InterruptedException ex) {
-            logger.info("Shutdown. InterruptedException while disconnect timeout.", ex);
-        }
-
-        this.appShutdownManager.shutdownApp(0);
+        this.mediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
     }
 
     private String getStartDashboard() {
@@ -145,9 +132,7 @@ public class UIServiceImpl implements UIService {
 
     @Async("processExecutor")
     @Override
-    public void display(Msg.Builder msg, String cardNumber) {
-
-        //TODO sanitize name, payload, timestamp...
-        this.uiController.display(msg.build(), cardNumber);
+    public void display(Msg msg, String cardNumber) {
+        this.uiController.display(msg, cardNumber);
     }
 }

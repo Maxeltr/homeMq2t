@@ -30,4 +30,6 @@ package ru.maxeltr.homeMq2t.Service;
 public interface Component {
 
     public String getName();
+	
+	public String getData();
 }

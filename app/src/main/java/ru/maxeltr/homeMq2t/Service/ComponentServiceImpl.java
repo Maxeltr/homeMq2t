@@ -26,11 +26,14 @@ package ru.maxeltr.homeMq2t.Service;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import jakarta.annotation.PostConstruct;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -52,7 +55,8 @@ public class ComponentServiceImpl implements ComponentService {
     @Autowired
     private ComponentLoader loader;
 
-    private Set<Object> components;
+    @Autowired
+    private List<Component> components;
 
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
@@ -69,7 +73,7 @@ public class ComponentServiceImpl implements ComponentService {
 
     @PostConstruct
     public void postConstruct() {
-        this.components = this.loader.loadComponents(this.appProperties.getComponentPath());
+        //this.components = this.loader.loadComponents(this.appProperties.getComponentPath());
 
         for (Object component : this.components) {
             logger.debug("Loaded {}", component);
@@ -78,12 +82,21 @@ public class ComponentServiceImpl implements ComponentService {
             }
         }
 
+        this.startPolling();
+
         //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
     }
 
     @Override
-    public void process(Msg.Builder msg, String id) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void process(Msg msg, String componentNumber) {
+        logger.debug("Process message. Component number={}, msg={} ", componentNumber, msg);
+        if (msg.getType() == MediaType.TEXT_PLAIN_VALUE) {
+            if (msg.getData().equalsIgnoreCase("updateAll")) {
+                logger.debug("Update readings of all components");
+                this.stopPolling();
+                this.startPolling();
+            }
+        }
     }
 
     public void startPolling() {
@@ -107,31 +120,29 @@ public class ComponentServiceImpl implements ComponentService {
 
         @Override
         public void run() {
-            logger.debug("Start polling task");
-			Msg.Builder builder;
-			for (Component component: this.components) {
-				String data = component.getData();
-				logger.info("Component={}. Get data={}.", component, data);
-				
-				builder = new Msg.Builder("onPolling");
-				builder.data(data);
-				builder.type(this.appProperties.getComponentPubDataType(component.getName()));
-				builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-				
-				String topic = this.appProperties.getComponentPubTopic(component.getName());
-				MqttQoS qos = MqttQoS.valueOf(this.appProperties.getComponentPubQos(component.getName()));
-				boolean retain = Boolean.getBoolean(this.appProperties.getComponentPubRetain(component.getName()));
-				this.publish(builder, topic, qos, retain);
-				
-			}
-			
-			
-			
-		
-            logger.debug("Stop polling task");
+            logger.debug("Start/resume polling");
+            Msg.Builder builder;
+            for (Component component : components) {
+                String data = component.getData();
+                logger.info("Component={}. Get data={}.", component.getName(), data);
+
+                builder = new Msg.Builder("onPolling");
+                builder.data(data);
+                builder.type(appProperties.getComponentPubDataType(component.getName()));
+                builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+
+                String topic = appProperties.getComponentPubTopic(component.getName());
+                MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(component.getName()));
+                boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(component.getName()));
+                publish(builder, topic, qos, retain);
+
+            }
+
+            logger.debug("Pause polling");
         }
     }
 
+    @Async("processExecutor")
     private void publish(Msg.Builder msg, String topic, MqttQoS qos, boolean retain) {
         logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
         this.mediator.publish(msg.build(), topic, qos, retain);

@@ -38,11 +38,11 @@ public interface ServiceMediator {
 
     public void publish(Msg msg, String topic, MqttQoS qos, boolean retain);
 
-    public void execute(Msg.Builder command);
+    public void execute(Msg command);
 
-    public void process(Msg.Builder data);
+    public void process(Msg data,String componentNumber);
 
-    public void display(Msg.Builder data, String cardNumber);
+    public void display(Msg data, String cardNumber);
 
     public void handleMessage(MqttPublishMessage message);
 
@@ -51,4 +51,6 @@ public interface ServiceMediator {
     public void reconnect();
 
     public void disconnect(byte reasonCode);
+
+    public void shutdown();
 }

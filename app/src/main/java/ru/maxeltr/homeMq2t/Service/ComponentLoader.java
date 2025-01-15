@@ -32,8 +32,10 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarEntry;
@@ -60,11 +62,11 @@ public class ComponentLoader {
         }
 
         for (Path path : listFiles(pathJar)) {
-            componentSet.addAll(this.loadClassesFromJar(path));
+            //componentSet.addAll(this.loadClassesFromJar(path));
         }
 
-        for (var e: componentSet) {
-            logger.info("component ",e.toString());
+        for (var e : componentSet) {
+            logger.info("component ", e.toString());
         }
 
         return componentSet;
@@ -87,9 +89,14 @@ public class ComponentLoader {
         return pathSet;
     }
 
-    private Set<Object> loadClassesFromJar(Path path) {
-        Set<Class> classes = getClassesFromJarFile(path.toFile());
-        Set<Object> components = new HashSet<>();
+    public List<Component> loadClassesFromJar(String path) {
+        List<Component> components = new ArrayList<>();
+        if (path.trim().isEmpty()) {
+            logger.warn("Component path is empty.");
+            return components;
+        }
+        Set<Class> classes = getClassesFromJarFile(new File(path));
+
         for (Class clazz : classes) {
             logger.debug("There is {} in {}", clazz, path);
             if (clazz.isInterface()) {
@@ -98,7 +105,7 @@ public class ComponentLoader {
 
             for (Class i : ClassUtils.getAllInterfaces(clazz)) {
                 if (i.getSimpleName().equals(Component.class.getSimpleName())) {
-                    logger.debug("Class to instantiate {}", clazz);
+                    logger.debug("Class to instantiate={}", clazz);
                     this.instantiateClass(i).ifPresent(instance -> components.add(instance));
                 }
             }
@@ -141,11 +148,11 @@ public class ComponentLoader {
         return classes;
     }
 
-    private Optional<?> instantiateClass(Class<?> clazz) {
-        Object result = null;
+    private Optional<Component> instantiateClass(Class<?> clazz) {
+        Component result = null;
         try {
             Constructor<?> constructor = clazz.getConstructor();
-            result = constructor.newInstance();
+            result = (Component) constructor.newInstance();
             logger.debug("{} has been instantiated.", clazz);
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
             logger.warn("Can not instantiate class={}.", clazz, ex.getMessage());

@@ -36,32 +36,32 @@ public class AppProperties {
     @Autowired
     private Environment env;
 
-    private final static String ERROR_TOPIC  = "mq2t/error";
+    private final static String ERROR_TOPIC = "mq2t/error";
 
     @Autowired
-    private Map<String, String> CommandsAndNumbers;
-	
-	@Autowired
+    private Map<String, String> commandsAndNumbers;
+
+    @Autowired
     private Map<String, String> componentsAndNumbers;
 
     public String getCommandPubTopic(String command) {
-        return env.getProperty("command[" + CommandsAndNumbers.get(command) + "]." + "publication.topic", ERROR_TOPIC);
+        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.topic", ERROR_TOPIC);
     }
 
     public String getCommandPubQos(String command) {
-        return env.getProperty("command[" + CommandsAndNumbers.get(command) + "]." + "publication.qos", "EXACTLY_ONCE");
+        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.qos", "EXACTLY_ONCE");
     }
 
     public String getCommandPubRetain(String command) {
-        return env.getProperty("command[" + CommandsAndNumbers.get(command) + "]." + "publication.retain", "false");
+        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.retain", "false");
     }
 
     public String getCommandPath(String command) {
-        return env.getProperty("command[" + CommandsAndNumbers.get(command) + "]." + "path", "");
+        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "path", "");
     }
 
     public String getCommandArguments(String command) {
-        return env.getProperty("command[" + CommandsAndNumbers.get(command) + "]." + "arguments", "");
+        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "arguments", "");
     }
 
     public String getCardPubTopic(String id) {

@@ -24,6 +24,7 @@
 package ru.maxeltr.homeMq2t.Service;
 
 import ru.maxeltr.homeMq2t.Model.Msg;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -32,5 +33,9 @@ public interface ComponentService {
 
     public void setMediator(ServiceMediator mediator);
 
-	public void process(Msg.Builder msg);
+    public void process(Msg msg, String componentNumber);
+
+    public void startPolling();
+
+    public void stopPolling();
 }
