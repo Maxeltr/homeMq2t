@@ -32,6 +32,7 @@ import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -56,7 +57,8 @@ public class ComponentServiceImpl implements ComponentService {
     private ComponentLoader loader;
 
     @Autowired
-    private List<Component> components;
+    @Qualifier("plugins")
+    private List<Object> components;
 
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
@@ -75,13 +77,15 @@ public class ComponentServiceImpl implements ComponentService {
     public void postConstruct() {
         //this.components = this.loader.loadComponents(this.appProperties.getComponentPath());
 
+         logger.debug("Postconstruc ComponentService = {}", this.components);
+
         for (Object component : this.components) {
             logger.debug("Loaded {}", component);
             if (component instanceof CallbackComponent) {
                 logger.debug("Callback {} ", component);
             }
         }
-
+System.out.println(components);
         this.startPolling();
 
         //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
@@ -122,20 +126,24 @@ public class ComponentServiceImpl implements ComponentService {
         public void run() {
             logger.debug("Start/resume polling");
             Msg.Builder builder;
-            for (Component component : components) {
-                String data = component.getData();
-                logger.info("Component={}. Get data={}.", component.getName(), data);
-
-                builder = new Msg.Builder("onPolling");
-                builder.data(data);
-                builder.type(appProperties.getComponentPubDataType(component.getName()));
-                builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-
-                String topic = appProperties.getComponentPubTopic(component.getName());
-                MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(component.getName()));
-                boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(component.getName()));
-                publish(builder, topic, qos, retain);
-
+            for (Object ob : components) {
+                if (ob instanceof Component component) {
+                    logger.debug("Component in polling task {}", component);
+//                    String data = component.getData();
+//                    logger.info("Component={}. Get data={}.", component.getName(), data);
+//
+//                    builder = new Msg.Builder("onPolling");
+//                    builder.data(data);
+//                    builder.type(appProperties.getComponentPubDataType(component.getName()));
+//                    builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+//
+//                    String topic = appProperties.getComponentPubTopic(component.getName());
+//                    MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(component.getName()));
+//                    boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(component.getName()));
+//                    publish(builder, topic, qos, retain);
+                } else {
+                     logger.warn("There is unknown object in components collection. {}.", ob.getClass());
+                }
             }
 
             logger.debug("Pause polling");

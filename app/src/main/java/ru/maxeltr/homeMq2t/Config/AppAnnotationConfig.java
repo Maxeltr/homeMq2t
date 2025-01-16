@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -229,16 +231,21 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public List<Component> components(ComponentLoader componentLoader) {
+    public List<Object> components(ComponentLoader componentLoader) {
         int i = 0;
-        List<Component> components = new ArrayList<>();
+        List<Object> components = new ArrayList<>();
         while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
             String path = env.getProperty("component[" + i + "].path", "");
-            List<Component> instances = componentLoader.loadClassesFromJar(path);
-            components.addAll(instances);
+            List<Object> instances = componentLoader.loadClassesFromJar(path);
+            //components.addAll(instances);
+            for (Object inst: instances) {
+                System.out.print("inst=");
+                System.out.println(inst);
+                components.add(inst);
+            }
             ++i;
         }
-
+System.out.println(components);
         return components;
     }
 
