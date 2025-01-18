@@ -27,14 +27,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -57,7 +56,6 @@ import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
-import ru.maxeltr.homeMq2t.Service.Component;
 import ru.maxeltr.homeMq2t.Service.ComponentLoader;
 import ru.maxeltr.homeMq2t.Service.ComponentService;
 import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
@@ -74,6 +72,8 @@ import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
 @EnableAsync
 @EnableScheduling
 public class AppAnnotationConfig {
+
+    private static final Logger logger = LoggerFactory.getLogger(AppAnnotationConfig.class);
 
     @Autowired
     private Environment env;
@@ -126,12 +126,16 @@ public class AppAnnotationConfig {
 
     @Bean
     public ComponentService getComponentService() {
-        return new ComponentServiceImpl();
-    }
+        int i = 0;
+        List<Object> components = new ArrayList<>();
+        while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
+            String path = env.getProperty("component[" + i + "].path", "");
+            List<Object> instances = new ComponentLoader().loadClassesFromJar(path);
+            components.addAll(instances);
+            ++i;
+        }
 
-    @Bean
-    public ComponentLoader getComponentLoader() {
-        return new ComponentLoader();
+        return new ComponentServiceImpl(components);
     }
 
     @Bean
@@ -228,25 +232,6 @@ public class AppAnnotationConfig {
         }
 
         return dashboards;
-    }
-
-    @Bean
-    public List<Object> pluginComponents(ComponentLoader componentLoader) {
-        int i = 0;
-        List<Object> components = new ArrayList<>();
-        while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
-            String path = env.getProperty("component[" + i + "].path", "");
-            List<Object> instances = componentLoader.loadClassesFromJar(path);
-            //components.addAll(instances);
-            for (Object inst: instances) {
-                System.out.print("inst=");
-                System.out.println(inst);
-                components.add(inst);
-            }
-            ++i;
-        }
-System.out.println(components);
-        return components;
     }
 
     @Bean
