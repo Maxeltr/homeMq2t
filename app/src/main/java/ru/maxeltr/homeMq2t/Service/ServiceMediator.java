@@ -36,21 +36,21 @@ import ru.maxeltr.homeMq2t.Model.Msg;
  */
 public interface ServiceMediator {
 
-    public void publish(Msg msg, String topic, MqttQoS qos, boolean retain);
+    void publish(Msg msg, String topic, MqttQoS qos, boolean retain);
 
-    public void execute(Msg command);
+    void execute(Msg command);
 
-    public void process(Msg data,String componentNumber);
+    void process(Msg data,String componentNumber);
 
-    public void display(Msg data, String cardNumber);
+    void display(Msg data, String cardNumber);
 
-    public void handleMessage(MqttPublishMessage message);
+    void handleMessage(MqttPublishMessage message);
 
-    public Promise<MqttConnAckMessage> connect();
+    Promise<MqttConnAckMessage> connect();
 
-    public void reconnect();
+    void reconnect();
 
-    public void disconnect(byte reasonCode);
+    void disconnect(byte reasonCode);
 
-    public void shutdown();
+    void shutdown();
 }

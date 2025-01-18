@@ -105,7 +105,7 @@ public class ComponentLoader {
 
             for (Class clazzInterface : ClassUtils.getAllInterfaces(clazz)) {
                 logger.debug("Class={} implements interface={}", clazz, clazzInterface);
-                if (clazzInterface.getSimpleName().equals(Component.class.getSimpleName())) {
+                if (clazzInterface.getSimpleName().equals(Mq2tComponent.class.getSimpleName())) {
                     logger.debug("Class to instantiate={}", clazz);
                     this.instantiateClass(clazz).ifPresent(instance -> components.add(instance));
                 }

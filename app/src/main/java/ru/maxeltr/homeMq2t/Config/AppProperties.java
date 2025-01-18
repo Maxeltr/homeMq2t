@@ -84,9 +84,9 @@ public class AppProperties {
         return env.getProperty("card[" + id + "].publication.data.type", "");
     }
 
-    public String getComponentPath() {
-        return env.getProperty("component-path", "");
-    }
+//    public String getComponentPath() {
+//        return env.getProperty("component-path", "");
+//    }
 
     public String getComponentPubTopic(String component) {
         return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.topic", ERROR_TOPIC);
@@ -101,7 +101,7 @@ public class AppProperties {
     }
 
     public String getComponentPubDataType(String component) {
-        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.data.type", "");
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.data.type", "text/plain");
     }
 
 }

@@ -23,11 +23,13 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import java.util.function.Consumer;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface PollableComponent extends Component {
+public interface Mq2tCallbackComponent extends Mq2tComponent {
 
-    public String getCurrentSensorRead();
+    void setCallback(Consumer T);
 }

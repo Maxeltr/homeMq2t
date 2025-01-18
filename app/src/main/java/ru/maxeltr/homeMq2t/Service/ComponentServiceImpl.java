@@ -23,13 +23,20 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import jakarta.annotation.PostConstruct;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
@@ -40,6 +47,7 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
@@ -52,7 +60,13 @@ public class ComponentServiceImpl implements ComponentService {
 
     private ServiceMediator mediator;
 
-    private List<Object> pluginComponents;
+    private final List<Object> pluginComponents;
+
+    @Autowired
+    private ObjectMapper mapper;
+
+    @Autowired
+    private AppProperties appProperties;
 
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
@@ -73,29 +87,13 @@ public class ComponentServiceImpl implements ComponentService {
 
     @PostConstruct
     public void postConstruct() {
-        //this.components = this.loader.loadComponents(this.appProperties.getComponentPath());
-
         logger.debug("Postconstruc ComponentService = {}", this.pluginComponents);
 
         for (Object component : this.pluginComponents) {
-            for (Class componentInterface : component.getClass().getInterfaces()) {
-                if (componentInterface.getSimpleName().equals(CallbackComponent.class.getSimpleName())) {
-
-                    try {
-                        //((CallbackComponent) component).setCallback((Consumer<String>) (String data) -> callback(data));
-                        Method method = component.getClass().getMethod("setCallback", Consumer.class);
-                        method.invoke(component, (Consumer<String>) (String data) -> {
-                            callback(data);
-                        });
-                    } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
-                        logger.warn("Couid not set callback to component={}", component, ex);
-                    }
-
-                }
+            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
+                this.invokeMethod(component, "setCallback", (String data) -> callback(data));
             }
-
-            logger.debug("Loaded {}", component);
-
+            logger.debug("Loaded component={}", this.invokeMethod(component, "getName"));   //TODO how to unload components?
         }
 
         this.startPolling();
@@ -103,8 +101,69 @@ public class ComponentServiceImpl implements ComponentService {
         //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
     }
 
+    private boolean isImplements(Object component, Class testedInterface) {
+        for (Class componentInterface : component.getClass().getInterfaces()) {
+            if (componentInterface.getSimpleName().equals(testedInterface.getSimpleName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+//    private boolean isImplements(Object component, Class testedInterface) { //TODO check in componentloader
+//        return testedInterface.isAssignableFrom(component.getClass());
+//    }
+    private void invokeMethod(Object component, String methodName, Consumer<String> param) {
+        try {
+            Method method = component.getClass().getMethod(methodName, Consumer.class);
+            method.invoke(component, param);
+            logger.debug("Method={} has been  invoked in component={}", methodName, component);
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
+            logger.warn("Could not invoke method={} to component={}. {}", methodName, component, ex.getMessage());
+        }
+    }
+
+    private String invokeMethod(Object component, String methodName) {
+        String data = "";
+        try {
+            Method method = component.getClass().getMethod(methodName);
+            data = method.invoke(component).toString();
+            logger.debug("Method={} has been  invoked in component={}", methodName, component);
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
+            logger.warn("Could not invoke method={} to component={}. ", methodName, component, ex);
+        }
+
+        return data;
+    }
+
     public void callback(String data) {
-        logger.debug("Callback data={}", data);
+        logger.debug("Callback has been called. Data={}", data);
+
+        HashMap<String, String> dataMap;
+        TypeReference<HashMap<String, String>> typeRef = new TypeReference<HashMap<String, String>>() {};
+        try {
+            dataMap = mapper.readValue(data, typeRef);
+        } catch (JsonProcessingException ex) {
+            logger.warn("Could not convert json data={} to map. {}", data, ex.getMessage());
+            return;
+        }
+
+        String componentName = dataMap.get("name");
+        if (componentName == null) {
+            logger.warn("Invalid data was passed to callback. Name of component is absent.");
+        }
+
+        Msg.Builder builder = new Msg.Builder("onCallback");
+        builder.data(data);
+        builder.type(appProperties.getComponentPubDataType(componentName));
+        builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+
+        String topic = appProperties.getComponentPubTopic(componentName);
+        MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));
+        boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(componentName));
+
+        this.publish(builder, topic, qos, retain);
+
     }
 
     @Override
@@ -168,7 +227,7 @@ public class ComponentServiceImpl implements ComponentService {
     @Async("processExecutor")
     private void publish(Msg.Builder msg, String topic, MqttQoS qos, boolean retain) {
         logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
-        this.mediator.publish(msg.build(), topic, qos, retain);
+        this.mediator.publish(msg.build(), topic, qos, retain);      //TODO check if connect
     }
 
 }

@@ -27,9 +27,7 @@ package ru.maxeltr.homeMq2t.Service;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface Component {
+public interface Mq2tPollableComponent extends Mq2tComponent {
 
-    public String getName();
-	
-	public String getData();
+    String getData();
 }
