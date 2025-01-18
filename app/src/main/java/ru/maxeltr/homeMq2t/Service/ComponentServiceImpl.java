@@ -57,8 +57,8 @@ public class ComponentServiceImpl implements ComponentService {
     private ComponentLoader loader;
 
     @Autowired
-    @Qualifier("plugins")
-    private List<Object> components;
+    //@Qualifier("plugins")
+    private List<Object> pluginComponents;
 
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
@@ -77,15 +77,15 @@ public class ComponentServiceImpl implements ComponentService {
     public void postConstruct() {
         //this.components = this.loader.loadComponents(this.appProperties.getComponentPath());
 
-         logger.debug("Postconstruc ComponentService = {}", this.components);
+         logger.debug("Postconstruc ComponentService = {}", this.pluginComponents);
 
-        for (Object component : this.components) {
-            logger.debug("Loaded {}", component);
-            if (component instanceof CallbackComponent) {
-                logger.debug("Callback {} ", component);
-            }
-        }
-System.out.println(components);
+//        for (Object component : this.components) {
+//            logger.debug("Loaded {}", component);
+//            if (component instanceof CallbackComponent) {
+//                logger.debug("Callback {} ", component);
+//            }
+//        }
+
         this.startPolling();
 
         //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
@@ -126,7 +126,7 @@ System.out.println(components);
         public void run() {
             logger.debug("Start/resume polling");
             Msg.Builder builder;
-            for (Object ob : components) {
+            for (Object ob : pluginComponents) {
                 if (ob instanceof Component component) {
                     logger.debug("Component in polling task {}", component);
 //                    String data = component.getData();

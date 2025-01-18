@@ -231,7 +231,7 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public List<Object> components(ComponentLoader componentLoader) {
+    public List<Object> pluginComponents(ComponentLoader componentLoader) {
         int i = 0;
         List<Object> components = new ArrayList<>();
         while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
