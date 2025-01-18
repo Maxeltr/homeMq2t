@@ -25,10 +25,13 @@ package ru.maxeltr.homeMq2t.Service;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import jakarta.annotation.PostConstruct;
-import java.time.Instant;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.Consumer;
+import java.util.logging.Level;
+import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +41,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Config.AppProperties;
 
 /**
  *
@@ -50,14 +52,6 @@ public class ComponentServiceImpl implements ComponentService {
 
     private ServiceMediator mediator;
 
-    @Autowired
-    private AppProperties appProperties;
-
-    @Autowired
-    private ComponentLoader loader;
-
-    @Autowired
-    //@Qualifier("plugins")
     private List<Object> pluginComponents;
 
     @Autowired
@@ -68,6 +62,10 @@ public class ComponentServiceImpl implements ComponentService {
 
     private ScheduledFuture<?> pollingScheduledFuture;
 
+    public ComponentServiceImpl(List<Object> pluginComponents) {
+        this.pluginComponents = pluginComponents;
+    }
+
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
@@ -77,24 +75,42 @@ public class ComponentServiceImpl implements ComponentService {
     public void postConstruct() {
         //this.components = this.loader.loadComponents(this.appProperties.getComponentPath());
 
-         logger.debug("Postconstruc ComponentService = {}", this.pluginComponents);
+        logger.debug("Postconstruc ComponentService = {}", this.pluginComponents);
 
-//        for (Object component : this.components) {
-//            logger.debug("Loaded {}", component);
-//            if (component instanceof CallbackComponent) {
-//                logger.debug("Callback {} ", component);
-//            }
-//        }
+        for (Object component : this.pluginComponents) {
+            for (Class componentInterface : component.getClass().getInterfaces()) {
+                if (componentInterface.getSimpleName().equals(CallbackComponent.class.getSimpleName())) {
+
+                    try {
+                        //((CallbackComponent) component).setCallback((Consumer<String>) (String data) -> callback(data));
+                        Method method = component.getClass().getMethod("setCallback", Consumer.class);
+                        method.invoke(component, (Consumer<String>) (String data) -> {
+                            callback(data);
+                        });
+                    } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
+                        logger.warn("Couid not set callback to component={}", component, ex);
+                    }
+
+                }
+            }
+
+            logger.debug("Loaded {}", component);
+
+        }
 
         this.startPolling();
 
         //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
     }
 
+    public void callback(String data) {
+        logger.debug("Callback data={}", data);
+    }
+
     @Override
     public void process(Msg msg, String componentNumber) {
         logger.debug("Process message. Component number={}, msg={} ", componentNumber, msg);
-        if (msg.getType() == MediaType.TEXT_PLAIN_VALUE) {
+        if (msg.getType().equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             if (msg.getData().equalsIgnoreCase("updateAll")) {
                 logger.debug("Update readings of all components");
                 this.stopPolling();
@@ -103,6 +119,7 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    @Override
     public void startPolling() {
         if (this.pollingScheduledFuture == null) {
             logger.info("Start polling components task.");
@@ -112,6 +129,7 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    @Override
     public void stopPolling() {
         if (this.pollingScheduledFuture != null && !this.pollingScheduledFuture.isCancelled()) {
             this.pollingScheduledFuture.cancel(false);
@@ -127,8 +145,7 @@ public class ComponentServiceImpl implements ComponentService {
             logger.debug("Start/resume polling");
             Msg.Builder builder;
             for (Object ob : pluginComponents) {
-                if (ob instanceof Component component) {
-                    logger.debug("Component in polling task {}", component);
+                logger.debug("Component in polling task {}", ob);
 //                    String data = component.getData();
 //                    logger.info("Component={}. Get data={}.", component.getName(), data);
 //
@@ -141,9 +158,7 @@ public class ComponentServiceImpl implements ComponentService {
 //                    MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(component.getName()));
 //                    boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(component.getName()));
 //                    publish(builder, topic, qos, retain);
-                } else {
-                     logger.warn("There is unknown object in components collection. {}.", ob.getClass());
-                }
+
             }
 
             logger.debug("Pause polling");
@@ -156,108 +171,4 @@ public class ComponentServiceImpl implements ComponentService {
         this.mediator.publish(msg.build(), topic, qos, retain);
     }
 
-    /* private Set<Object> loadComponents(String pathJar) {
-        if (pathJar.trim().isEmpty()) {
-            logger.warn("Component path is empty.");
-            return new HashSet<>();
-        }
-
-        Set<Path> paths = listFiles(pathJar);
-
-        Set<Object> componentSet = new HashSet<>();
-        for (Path path : paths) {
-            try {
-                componentSet = this.loadClassesFromJar(path);
-            } catch (IOException | ClassNotFoundException ex) {
-                logger.warn("Can not load classes", ex.getMessage());
-            }
-        }
-
-        return componentSet;
-    }
-
-    private Set listFiles(String dir) {
-        Set<Path> pathSet = new HashSet();
-
-        try (Stream<Path> paths = Files.walk(Paths.get(dir))) {
-            pathSet = paths
-                    .filter(Files::isRegularFile)
-                    .peek((file) -> {
-                        logger.info("There is {} in component directory {}.", file.getFileName(), dir);
-                    })
-                    .collect(Collectors.toSet());
-        } catch (IOException e) {
-            logger.info("Error to list files in component directory {}. {}", dir, e.getMessage());
-        }
-
-        return pathSet;
-    }
-
-    private Set<Object> loadClassesFromJar(Path path) {
-        Set<Class> classes = getClassesFromJarFile(path.toFile());
-		Set<Object> components = new HashSet<>();
-        for (Class clazz : classes) {
-            logger.debug("There is {} in {}", clazz, path);
-            if (clazz.isInterface()) {
-                continue;
-            }
-
-            for (Class i : ClassUtils.getAllInterfaces(clazz)) {
-				if (i.getSimpleName().equals(Component.class.getSimpleName())) {
-					logger.debug("Class to instantiate {}", clazz);
-					this.instantiateClass(i).ifPresent(instance -> components.add(instance));
-				}
-            }
-        }
-
-        return components;
-    }
-
-    private Set<String> getClassNamesFromJarFile(File givenFile) {
-        Set<String> classNames = new HashSet<>();
-        try (JarFile jarFile = new JarFile(givenFile)) {
-            Enumeration<JarEntry> e = jarFile.entries();
-            while (e.hasMoreElements()) {
-                JarEntry jarEntry = e.nextElement();
-                if (jarEntry.getName().endsWith(".class")) {
-                    String className = jarEntry.getName().replace("/", ".").replace(".class", "");
-                    classNames.add(className);
-                }
-            }
-        } catch (IOException ex) {
-			logger.warn("Cannot get classes from jar={}.", givenFile, ex.getMessage());
-		}
-
-		return classNames;
-    }
-
-    private Set<Class> getClassesFromJarFile(File jarFile) {
-        Set<String> classNames = getClassNamesFromJarFile(jarFile);
-        Set<Class> classes = new HashSet<>(classNames.size());
-        try (URLClassLoader cl = URLClassLoader.newInstance(
-                new URL[]{new URL("jar:file:" + jarFile + "!/")})
-		) {
-            for (String name : classNames) {
-                classes.add(cl.loadClass(name));
-                logger.debug("Loads class {} from jar {}", name, jarFile);
-            }
-        } catch (IOException | ClassNotFoundException ex) {
-			logger.warn("Cannot load class={} from jar={}.", name, jarFile, ex.getMessage());
-		}
-
-        return classes;
-    }
-
-    private Optional<?> instantiateClass(Class<?> clazz) {
-        Object result;
-		try {
-			Constructor<?> constructor = clazz.getConstructor();
-			result = constructor.newInstance();
-			logger.debug("{} has been instantiated.", clazz);
-		} catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
-			logger.warn("Can not instantiate class={}.", clazz, ex.getMessage());
-		}
-
-		return Optional.ofNullable(result);
-    } */
 }

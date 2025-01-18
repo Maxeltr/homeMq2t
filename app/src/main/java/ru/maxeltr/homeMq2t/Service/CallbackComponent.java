@@ -23,10 +23,13 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import java.util.function.Consumer;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public interface CallbackComponent extends Component {
 
+    public void setCallback(Consumer T);
 }
