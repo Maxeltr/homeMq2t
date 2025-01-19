@@ -140,7 +140,8 @@ public class ComponentServiceImpl implements ComponentService {
         logger.debug("Callback has been called. Data={}", data);
 
         HashMap<String, String> dataMap;
-        TypeReference<HashMap<String, String>> typeRef = new TypeReference<HashMap<String, String>>() {};
+        TypeReference<HashMap<String, String>> typeRef = new TypeReference<HashMap<String, String>>() {
+        };
         try {
             dataMap = mapper.readValue(data, typeRef);
         } catch (JsonProcessingException ex) {
@@ -203,31 +204,36 @@ public class ComponentServiceImpl implements ComponentService {
         public void run() {
             logger.debug("Start/resume polling");
             Msg.Builder builder;
-            for (Object ob : pluginComponents) {
-                logger.debug("Component in polling task {}", ob);
-//                    String data = component.getData();
-//                    logger.info("Component={}. Get data={}.", component.getName(), data);
-//
-//                    builder = new Msg.Builder("onPolling");
-//                    builder.data(data);
-//                    builder.type(appProperties.getComponentPubDataType(component.getName()));
-//                    builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-//
-//                    String topic = appProperties.getComponentPubTopic(component.getName());
-//                    MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(component.getName()));
-//                    boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(component.getName()));
-//                    publish(builder, topic, qos, retain);
+            for (Object component : pluginComponents) {
+                String componentName = invokeMethod(component, "getName");
+                if (!isImplements(component, Mq2tPollableComponent.class)) {
+                    logger.debug("Component={} does not implement Mq2tPollingComponent. Skipped.", componentName);
+                    continue;
+                }
+                logger.info("Get data from component={} in polling task.", component);
+                builder = new Msg.Builder("onPolling");
+                builder.data(invokeMethod(component, "getData"));
+                builder.type(appProperties.getComponentPubDataType(componentName));
+                builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
+                String topic = appProperties.getComponentPubTopic(componentName);
+                MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));
+                boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(componentName));
+
+                publish(builder, topic, qos, retain);
             }
-
             logger.debug("Pause polling");
         }
     }
 
     @Async("processExecutor")
     private void publish(Msg.Builder msg, String topic, MqttQoS qos, boolean retain) {
-        logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
-        this.mediator.publish(msg.build(), topic, qos, retain);      //TODO check if connect
+        if (this.mediator.isConnected()) {
+            logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
+            this.mediator.publish(msg.build(), topic, qos, retain);
+        } else {
+            logger.info("Message could not pass to publish, because mq2t is disconnectd. Message has been rejected. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
+        }
     }
 
 }

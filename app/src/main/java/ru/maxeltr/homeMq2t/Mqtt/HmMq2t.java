@@ -16,17 +16,19 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediator;
  */
 public interface HmMq2t {
 
-    public Promise<MqttConnAckMessage> connect();
-    
-    public void reconnect();
+    Promise<MqttConnAckMessage> connect();
 
-    public void disconnect(byte reasonCode);
+    void reconnect();
 
-    public Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions);
+    void disconnect(byte reasonCode);
 
-    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics);
+    Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions);
 
-    public void publish(String topic, ByteBuf payload, MqttQoS qos, boolean retain);
+    Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics);
 
-    public void setMediator(ServiceMediator serviceMediator);
+    void publish(String topic, ByteBuf payload, MqttQoS qos, boolean retain);
+
+    void setMediator(ServiceMediator serviceMediator);
+
+    boolean isConnected();
 }

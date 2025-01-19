@@ -242,6 +242,10 @@ public class HmMq2tImpl implements HmMq2t {
         return Optional.ofNullable(((MqttPingScheduleHandler) channel.pipeline().get("mqttPingHandler")));
     }
 
+    public boolean isConnected() {
+        return connected.get();
+    }
+
     @Override
     public void disconnect(byte reasonCode) {
         this.getPingHandler().ifPresent(pingHandler -> pingHandler.stopPing());

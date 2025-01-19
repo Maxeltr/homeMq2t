@@ -53,4 +53,6 @@ public interface ServiceMediator {
     void disconnect(byte reasonCode);
 
     void shutdown();
+
+    boolean isConnected();
 }
