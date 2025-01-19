@@ -189,13 +189,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
         this.appShutdownManager.shutdownApp(0);
     }
 
-    private boolean isJsonValid(String jsonInString) {
-        try {
-
-            mapper.readTree(jsonInString);
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
+    @Override
+    public boolean isConnected() {
+        return this.hmMq2t.isConnected();
     }
 }
