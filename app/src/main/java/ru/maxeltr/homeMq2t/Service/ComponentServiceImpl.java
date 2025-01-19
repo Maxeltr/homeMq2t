@@ -210,9 +210,11 @@ public class ComponentServiceImpl implements ComponentService {
                     logger.debug("Component={} does not implement Mq2tPollingComponent. Skipped.", componentName);
                     continue;
                 }
-                logger.info("Get data from component={} in polling task.", component);
+
                 builder = new Msg.Builder("onPolling");
-                builder.data(invokeMethod(component, "getData"));
+                String data = invokeMethod(component, "getData");
+                builder.data(data);
+                logger.info("Get data from component={} in polling task. Data={}", component, data);
                 builder.type(appProperties.getComponentPubDataType(componentName));
                 builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
@@ -228,11 +230,11 @@ public class ComponentServiceImpl implements ComponentService {
 
     @Async("processExecutor")
     private void publish(Msg.Builder msg, String topic, MqttQoS qos, boolean retain) {
-        if (this.mediator.isConnected()) {
+        if (this.mediator != null && this.mediator.isConnected()) {
             logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
             this.mediator.publish(msg.build(), topic, qos, retain);
         } else {
-            logger.info("Message could not pass to publish, because mq2t is disconnectd. Message has been rejected. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
+            logger.info("Message could not pass to publish, because mq2t is disconnected. Message has been rejected. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
         }
     }
 
