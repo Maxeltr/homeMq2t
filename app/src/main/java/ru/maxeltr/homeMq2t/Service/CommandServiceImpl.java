@@ -57,9 +57,9 @@ public class CommandServiceImpl implements CommandService {
 
     @Async("processExecutor")
     @Override
-    public void execute(Msg msg) {
+    public void execute(Msg.Builder builder, String commandNumber) {
         String command = "";
-
+        Msg msg = builder.build();
         if (msg.getType().equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             command = msg.getData();
         } else if (msg.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
@@ -83,25 +83,25 @@ public class CommandServiceImpl implements CommandService {
 
         String commandPath = this.appProperties.getCommandPath(command);
         if (commandPath.trim().isEmpty()) {
-            logger.warn("Command path is empty. Command={}, commandNumber={}", command, command);
+            logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
             return;
         }
 
         String arguments = this.appProperties.getCommandArguments(command);
 
-        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, command, commandPath, arguments);
+        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
 
-        this.sendReply(this.executeCommand(commandPath, arguments), topic, qos, retain);
+        this.sendReply(this.executeCommand(commandPath, arguments), command, topic, qos, retain);
     }
 
-    private void sendReply(String data, String topic, MqttQoS qos, boolean retain) {
-        Msg.Builder builder = new Msg.Builder("onExecuteCommand").type(MediaType.TEXT_PLAIN_VALUE);
+    private void sendReply(String data, String commandName, String topic, MqttQoS qos, boolean retain) {
+        Msg.Builder builder = new Msg.Builder("onExecuteCommand").type(this.appProperties.getCommandPubDataType(commandName));
         builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         builder.data(data);
         Msg msg = builder.build();
         this.mediator.publish(msg, topic, qos, retain);
 
-        logger.info("Reply has been sent. Msg={}, topic={}, qos={}, retain={}.", msg, topic, qos, retain);
+        logger.info("Reply on command={} has been sent. Msg={}, topic={}, qos={}, retain={}.", commandName, msg, topic, qos, retain);
     }
 
     private String executeCommand(String commandPath, String arguments) {

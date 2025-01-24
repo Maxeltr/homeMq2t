@@ -31,6 +31,8 @@ import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,7 @@ import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
+import com.jayway.jsonpath.JsonPath;
 
 /**
  *
@@ -97,7 +100,7 @@ public class UIServiceImpl implements UIService {
                     + "\"}");
         }
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-        this.display(msg.build(), "");
+        this.display(msg, "");
     }
 
     @Override
@@ -109,7 +112,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void shutdownApp() {
         logger.info("Do shutdown aplication.");
-        this.mediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
+        this.mediator.shutdown();   //disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
     }
 
     private String getStartDashboard() {
@@ -132,7 +135,19 @@ public class UIServiceImpl implements UIService {
 
     @Async("processExecutor")
     @Override
-    public void display(Msg msg, String cardNumber) {
-        this.uiController.display(msg, cardNumber);
+    public void display(Msg.Builder builder, String cardNumber) {
+        builder.type(this.appProperties.getCardSubDataType(cardNumber));
+        if (builder.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
+            String dataName = this.appProperties.getCardSubDataName(cardNumber);
+            String jsonPathExpression = this.appProperties.getCardSubJsonPathExpression(cardNumber);
+            if (!jsonPathExpression.isEmpty()) {
+                String parsedValue = JsonPath.parse(builder.getData()).read(jsonPathExpression, String.class);
+                builder.data("{\"name\": \"" + dataName + "\", \"data\": \"" + parsedValue);
+            } else {
+                builder.data("{\"name\": \"" + dataName + "\", \"data\": \"" + builder.getData());
+            }
+        }
+        builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
+        this.uiController.display(builder.build(), cardNumber);
     }
 }
