@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import com.jayway.jsonpath.InvalidPathException;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
@@ -141,7 +142,7 @@ public class UIServiceImpl implements UIService {
             String dataName = this.appProperties.getCardSubDataName(cardNumber);
             String jsonPathExpression = this.appProperties.getCardSubJsonPathExpression(cardNumber);
             if (!jsonPathExpression.isEmpty()) {
-                String parsedValue = JsonPath.parse(builder.getData()).read(jsonPathExpression, String.class);
+                String parsedValue = this.parseJson(builder.getData(), jsonPathExpression);
                 logger.debug("Parse data. Parsed value={}.", parsedValue);
                 builder.data("{\"name\": \"" + dataName + "\", \"type\": \"" + MediaType.TEXT_PLAIN_VALUE + "\", \"data\": \"" + parsedValue + "\"}");
             } else {
@@ -151,5 +152,16 @@ public class UIServiceImpl implements UIService {
         builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
         logger.debug("Display data={}.", builder);
         this.uiController.display(builder.build(), cardNumber);
+    }
+
+    private String parseJson(String json, String jsonPathExpression) {
+        String parsedValue = "";
+        try {
+            parsedValue = JsonPath.parse(json).read(jsonPathExpression, String.class);
+        } catch (InvalidPathException ex) {
+            logger.warn("Could not parse json. {}", ex.getMessage());
+        }
+
+        return parsedValue;
     }
 }

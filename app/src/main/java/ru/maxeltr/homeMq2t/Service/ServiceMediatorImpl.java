@@ -134,7 +134,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         try {
             builder = this.mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
         } catch (JsonProcessingException ex) {
-            logger.warn("Cannot convert json to Msg. id={}. MqttMessage={}", id, mqttMessage.payload().toString(Charset.forName("UTF-8")), ex.getMessage());
+            logger.warn("Cannot convert json to Msg. {} id={}. MqttMessage={}", ex.getMessage(), id, mqttMessage.payload().toString(Charset.forName("UTF-8")));
             builder = new Msg.Builder();
             builder.data(mqttMessage.payload().toString(Charset.forName("UTF-8")));
             builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));

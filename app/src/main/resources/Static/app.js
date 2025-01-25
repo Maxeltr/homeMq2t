@@ -105,6 +105,7 @@ function showData(message, cardNumber) {
                 var payload = JSON.parse(message.data);
             } catch (SyntaxError) {
                 console.log('Not valid Json. Shows as plain text.');
+                document.getElementById('errors').innerHTML = "<div style=\"color:red;\">Error. Invalid json. Card=" + cardNumber + ".</div>";
                 showPlainText(message, cardNumber);
                 return;
             }
