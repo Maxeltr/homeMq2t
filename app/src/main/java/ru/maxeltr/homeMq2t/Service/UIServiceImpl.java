@@ -142,12 +142,14 @@ public class UIServiceImpl implements UIService {
             String jsonPathExpression = this.appProperties.getCardSubJsonPathExpression(cardNumber);
             if (!jsonPathExpression.isEmpty()) {
                 String parsedValue = JsonPath.parse(builder.getData()).read(jsonPathExpression, String.class);
-                builder.data("{\"name\": \"" + dataName + "\", \"data\": \"" + parsedValue);
+                logger.debug("Parse data. Parsed value={}.", parsedValue);
+                builder.data("{\"name\": \"" + dataName + "\", \"type\": \"" + MediaType.TEXT_PLAIN_VALUE + "\", \"data\": \"" + parsedValue + "\"}");
             } else {
-                builder.data("{\"name\": \"" + dataName + "\", \"data\": \"" + builder.getData());
+                logger.debug("JsonPath expression is empty.");
             }
         }
         builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
+        logger.debug("Display data={}.", builder);
         this.uiController.display(builder.build(), cardNumber);
     }
 }

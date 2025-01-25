@@ -88,12 +88,16 @@ public class AppProperties {
         return number == null ? "" : number;
     }
 
+    public String getCardName(String id) {
+        return env.getProperty("card[" + id + "].name", "");
+    }
+
     public String getCardSubDataName(String id) {
         return env.getProperty("card[" + id + "].subscription.data.name", "");
     }
 
     public String getCardSubDataType(String id) {
-        return env.getProperty("card[" + id + "].subscription.data.type", "");
+        return env.getProperty("card[" + id + "].subscription.data.type", MediaType.APPLICATION_JSON_VALUE);
     }
 
     public String getCardSubJsonPathExpression(String id) {
