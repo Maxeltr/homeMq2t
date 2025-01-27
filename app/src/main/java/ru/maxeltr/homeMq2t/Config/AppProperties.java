@@ -26,6 +26,7 @@ package ru.maxeltr.homeMq2t.Config;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import org.springframework.http.MediaType;
 
 /**
  *
@@ -39,10 +40,24 @@ public class AppProperties {
     private final static String ERROR_TOPIC = "mq2t/error";
 
     @Autowired
+    private Map<String, String> topicsAndCards;
+
+    @Autowired
+    private Map<String, String> topicsAndCommands;
+
+    @Autowired
+    private Map<String, String> topicsAndComponents;
+
+    @Autowired
     private Map<String, String> commandsAndNumbers;
 
     @Autowired
     private Map<String, String> componentsAndNumbers;
+
+    public String getCommandNumberByTopic(String topic) {
+        String number = topicsAndCommands.get(topic);
+        return number == null ? "" : number;
+    }
 
     public String getCommandPubTopic(String command) {
         return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.topic", ERROR_TOPIC);
@@ -56,12 +71,37 @@ public class AppProperties {
         return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.retain", "false");
     }
 
+    public String getCommandPubDataType(String command) {
+        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.data.type", MediaType.TEXT_PLAIN_VALUE);
+    }
+
     public String getCommandPath(String command) {
         return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "path", "");
     }
 
     public String getCommandArguments(String command) {
         return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "arguments", "");
+    }
+
+    public String getCardNumberByTopic(String topic) {
+        String number = topicsAndCards.get(topic);
+        return number == null ? "" : number;
+    }
+
+    public String getCardName(String id) {
+        return env.getProperty("card[" + id + "].name", "");
+    }
+
+    public String getCardSubDataName(String id) {
+        return env.getProperty("card[" + id + "].subscription.data.name", "");
+    }
+
+    public String getCardSubDataType(String id) {
+        return env.getProperty("card[" + id + "].subscription.data.type", MediaType.APPLICATION_JSON_VALUE);
+    }
+
+    public String getCardSubJsonPathExpression(String id) {
+        return env.getProperty("card[" + id + "].subscription.data.jsonpath", "");
     }
 
     public String getCardPubTopic(String id) {
@@ -84,9 +124,10 @@ public class AppProperties {
         return env.getProperty("card[" + id + "].publication.data.type", "");
     }
 
-//    public String getComponentPath() {
-//        return env.getProperty("component-path", "");
-//    }
+    public String getComponentNumberByTopic(String topic) {
+        String number = topicsAndComponents.get(topic);
+        return number == null ? "" : number;
+    }
 
     public String getComponentPubTopic(String component) {
         return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.topic", ERROR_TOPIC);
@@ -101,7 +142,7 @@ public class AppProperties {
     }
 
     public String getComponentPubDataType(String component) {
-        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.data.type", "text/plain");
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.data.type", MediaType.TEXT_PLAIN_VALUE);
     }
 
 }

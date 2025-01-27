@@ -33,7 +33,7 @@ public interface ComponentService {
 
     public void setMediator(ServiceMediator mediator);
 
-    public void process(Msg msg, String componentNumber);
+    public void process(Msg.Builder msg, String componentNumber);
 
     public void startPolling();
 

@@ -36,6 +36,10 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 
 /**
  *
@@ -50,6 +54,9 @@ public class CommandServiceImpl implements CommandService {
     @Autowired
     private AppProperties appProperties;
 
+    @Autowired
+    private ObjectMapper mapper;
+
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
@@ -57,14 +64,24 @@ public class CommandServiceImpl implements CommandService {
 
     @Async("processExecutor")
     @Override
-    public void execute(Msg msg) {
+    public void execute(Msg.Builder builder, String commandNumber) {
         String command = "";
-
-        if (msg.getType().equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
+        Msg msg = builder.build();
+        String msgType = msg.getType();
+        if (msgType.equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             command = msg.getData();
-        } else if (msg.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
-            //TODO
-            throw new UnsupportedOperationException("Not supported yet.");
+        } else if (msgType.equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
+            HashMap<String, String> dataMap;
+            try {
+                dataMap = mapper.readValue(msg.getData(), new TypeReference<HashMap<String, String>>() {
+                });
+            } catch (JsonProcessingException ex) {
+                logger.warn("Could not convert json data={} to map. {}", msg.getData(), ex.getMessage());
+                return;
+            }
+            command = dataMap.get("name");
+        } else {
+            logger.warn("Unsupported type={}", msgType);
         }
 
         if (command.trim().isEmpty()) {
@@ -83,25 +100,25 @@ public class CommandServiceImpl implements CommandService {
 
         String commandPath = this.appProperties.getCommandPath(command);
         if (commandPath.trim().isEmpty()) {
-            logger.warn("Command path is empty. Command={}, commandNumber={}", command, command);
+            logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
             return;
         }
 
         String arguments = this.appProperties.getCommandArguments(command);
 
-        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, command, commandPath, arguments);
+        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
 
-        this.sendReply(this.executeCommand(commandPath, arguments), topic, qos, retain);
+        this.sendReply(this.executeCommand(commandPath, arguments), command, topic, qos, retain);
     }
 
-    private void sendReply(String data, String topic, MqttQoS qos, boolean retain) {
-        Msg.Builder builder = new Msg.Builder("onExecuteCommand").type(MediaType.TEXT_PLAIN_VALUE);
+    private void sendReply(String data, String commandName, String topic, MqttQoS qos, boolean retain) {
+        Msg.Builder builder = new Msg.Builder("onExecuteCommand").type(this.appProperties.getCommandPubDataType(commandName));
         builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         builder.data(data);
         Msg msg = builder.build();
         this.mediator.publish(msg, topic, qos, retain);
 
-        logger.info("Reply has been sent. Msg={}, topic={}, qos={}, retain={}.", msg, topic, qos, retain);
+        logger.info("Reply on command={} has been sent. Msg={}, topic={}, qos={}, retain={}.", commandName, msg, topic, qos, retain);
     }
 
     private String executeCommand(String commandPath, String arguments) {

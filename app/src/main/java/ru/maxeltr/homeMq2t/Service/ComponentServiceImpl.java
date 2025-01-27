@@ -167,8 +167,10 @@ public class ComponentServiceImpl implements ComponentService {
 
     }
 
+    @Async("processExecutor")
     @Override
-    public void process(Msg msg, String componentNumber) {
+    public void process(Msg.Builder builder, String componentNumber) {
+        Msg msg = builder.build();
         logger.debug("Process message. Component number={}, msg={} ", componentNumber, msg);
         if (msg.getType().equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             if (msg.getData().equalsIgnoreCase("updateAll")) {

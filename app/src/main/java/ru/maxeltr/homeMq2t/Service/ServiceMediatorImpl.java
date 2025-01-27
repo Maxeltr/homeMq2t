@@ -34,6 +34,7 @@ import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.jsoup.Jsoup;
@@ -43,6 +44,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
@@ -71,19 +73,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
     private MqttChannelInitializer mqttChannelInitializer;
 
     @Autowired
-    private Map<String, String> topicsAndCards;
-
-    @Autowired
-    private Map<String, String> topicsAndCommands;
-
-    @Autowired
-    private Map<String, String> topicsAndComponents;
-
-    @Autowired
     private ObjectMapper mapper;
 
     @Autowired
     AppShutdownManager appShutdownManager;
+
+    @Autowired
+    private AppProperties appProperties;
 
     @Value("${wait-disconnect-while-shutdown:1000}")
     private Integer waitDisconnect;
@@ -112,19 +108,19 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void execute(Msg command) {
-        this.commandService.execute(command);
+    public void execute(Msg.Builder command, String commandNumber) {
+        this.commandService.execute(command, commandNumber);
         logger.info("Data has been passed to the command service. Data={}.", command);
     }
 
     @Override
-    public void display(Msg data, String cardNumber) {
+    public void display(Msg.Builder data, String cardNumber) {
         this.uiService.display(data, cardNumber);
         logger.info("Data has been passed to the ui service. Card number={}, data={}.", cardNumber, data);
     }
 
     @Override
-    public void process(Msg data,String componentNumber) {
+    public void process(Msg.Builder data, String componentNumber) {
         this.componentService.process(data, componentNumber);
         logger.info("Data has been passed to the component service. Data={}.", data);
     }
@@ -133,31 +129,39 @@ public class ServiceMediatorImpl implements ServiceMediator {
     public void handleMessage(MqttPublishMessage mqttMessage) {
         int id = mqttMessage.variableHeader().packetId();
         logger.debug("Start handle message id={}. mqttMessage={}.", id, mqttMessage);
+
         Msg.Builder builder;
         try {
             builder = this.mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
         } catch (JsonProcessingException ex) {
-            logger.warn("Cannot convert json to Msg. id={}. MqttMessage={}", id, mqttMessage.payload().toString(Charset.forName("UTF-8")), ex.getMessage());
-            return;
+            logger.warn("Cannot convert json to Msg. {} id={}. MqttMessage={}", ex.getMessage(), id, mqttMessage.payload().toString(Charset.forName("UTF-8")));
+            builder = new Msg.Builder();
+            builder.data(mqttMessage.payload().toString(Charset.forName("UTF-8")));
+            builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         }
 
         String topicName = (mqttMessage.variableHeader().topicName());
-        if (this.topicsAndCards.containsKey(topicName)) {
-            builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
-            this.display(builder.build(), this.topicsAndCards.get(topicName));
+        String cardNumber = this.appProperties.getCardNumberByTopic(topicName);
+        if (!cardNumber.isEmpty()) {
+            this.display(builder, cardNumber);
             logger.debug("Message id={} has been passed to ui service. mqttMessage={}.", id, mqttMessage);
 
-        } else if (this.topicsAndCommands.containsKey(topicName)) {
-            this.execute(builder.build());
+        }
+
+        String commandNumber = this.appProperties.getCommandNumberByTopic(topicName);
+        if (!commandNumber.isEmpty()) {
+            this.execute(builder, commandNumber);
             logger.debug("Message id={} has been passed to command service. mqttMessage={}.", id, mqttMessage);
 
-        } else if (this.topicsAndComponents.containsKey(topicName)) {
-            this.process(builder.build(), this.topicsAndComponents.get(topicName));
+        }
+
+        String componentNumber = this.appProperties.getComponentNumberByTopic(topicName);
+        if (!componentNumber.isEmpty()) {
+            this.process(builder, componentNumber);
             logger.debug("Message id={} has been passed to component service. mqttMessage={}.", id, mqttMessage);
 
-        } else {
-            logger.warn("can not handle message id={}. There are no actions for {}", id, mqttMessage);
         }
+
         logger.debug("End handle message id={}. mqttMessage={}.", id, mqttMessage);
     }
 
