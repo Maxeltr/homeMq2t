@@ -55,6 +55,7 @@ import io.netty.handler.codec.mqtt.MqttUnsubscribePayload;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -72,12 +73,13 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
+import org.springframework.boot.CommandLineRunner;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class HmMq2tImpl implements HmMq2t {
+public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(HmMq2tImpl.class);
 
@@ -123,6 +125,9 @@ public class HmMq2tImpl implements HmMq2t {
     @Value("${reconnect-delay-max:1800000}")
     private int reconnectDelayMax;
 
+    @Value("${auto-connect:false}")
+    private boolean autoConnect;
+
     @Autowired
     List<MqttTopicSubscription> subscriptions;
 
@@ -139,6 +144,15 @@ public class HmMq2tImpl implements HmMq2t {
     private static int reconnectAttempts = 0;
 
     private ScheduledFuture<?> retransmitScheduledFuture;
+
+    @Override
+    public void run(String... args) {
+        logger.info("Start app with args={}.", Arrays.toString(args));
+        if (this.autoConnect) {
+            logger.info("Start auto connect.");
+            this.connect();
+        }
+    }
 
     @Override
     public Promise<MqttConnAckMessage> connect() {
@@ -622,28 +636,28 @@ public class HmMq2tImpl implements HmMq2t {
                         writeAndFlush(message);
                         MqttSubscribeMessage initialMessage = (MqttSubscribeMessage) message;
                         logger.info("Subscribe message has been retransmited. id={}, q={}, r={}",
-                            initialMessage.variableHeader().messageId(),
-                            initialMessage.fixedHeader().qosLevel(),
-                            initialMessage.fixedHeader().isRetain()
+                                initialMessage.variableHeader().messageId(),
+                                initialMessage.fixedHeader().qosLevel(),
+                                initialMessage.fixedHeader().isRetain()
                         );
                     }
                     case MqttMessageType.UNSUBSCRIBE -> {
                         writeAndFlush(message);
                         MqttUnsubscribeMessage initialMessage = (MqttUnsubscribeMessage) message;
                         logger.info("Unsubscribe message has been retransmited. id={}, q={}, r={}",
-                            initialMessage.variableHeader().messageId(),
-                            initialMessage.fixedHeader().qosLevel(),
-                            initialMessage.fixedHeader().isRetain()
+                                initialMessage.variableHeader().messageId(),
+                                initialMessage.fixedHeader().qosLevel(),
+                                initialMessage.fixedHeader().isRetain()
                         );
                     }
                     case MqttMessageType.PUBREL -> {
                         writeAndFlush(message);
                         MqttMessageIdVariableHeader idVariableHeader = (MqttMessageIdVariableHeader) message.variableHeader();
                         logger.info("PubRel message has been retransmited. id={}, d={}, q={}, r={}",
-                            idVariableHeader.messageId(),
-                            message.fixedHeader().isDup(),
-                            message.fixedHeader().qosLevel(),
-                            message.fixedHeader().isRetain()
+                                idVariableHeader.messageId(),
+                                message.fixedHeader().isDup(),
+                                message.fixedHeader().qosLevel(),
+                                message.fixedHeader().isRetain()
                         );
                     }
 

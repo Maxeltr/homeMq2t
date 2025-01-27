@@ -36,6 +36,10 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 
 /**
  *
@@ -50,6 +54,9 @@ public class CommandServiceImpl implements CommandService {
     @Autowired
     private AppProperties appProperties;
 
+    @Autowired
+    private ObjectMapper mapper;
+
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
@@ -60,11 +67,21 @@ public class CommandServiceImpl implements CommandService {
     public void execute(Msg.Builder builder, String commandNumber) {
         String command = "";
         Msg msg = builder.build();
-        if (msg.getType().equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
+        String msgType = msg.getType();
+        if (msgType.equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             command = msg.getData();
-        } else if (msg.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
-            //TODO
-            throw new UnsupportedOperationException("Not supported yet.");
+        } else if (msgType.equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
+            HashMap<String, String> dataMap;
+            try {
+                dataMap = mapper.readValue(msg.getData(), new TypeReference<HashMap<String, String>>() {
+                });
+            } catch (JsonProcessingException ex) {
+                logger.warn("Could not convert json data={} to map. {}", msg.getData(), ex.getMessage());
+                return;
+            }
+            command = dataMap.get("name");
+        } else {
+            logger.warn("Unsupported type={}", msgType);
         }
 
         if (command.trim().isEmpty()) {

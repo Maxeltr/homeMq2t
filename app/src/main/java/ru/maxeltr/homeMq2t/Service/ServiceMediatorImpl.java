@@ -155,7 +155,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
         }
 
-        String componentNumber = this.appProperties.getCommandNumberByTopic(topicName);
+        String componentNumber = this.appProperties.getComponentNumberByTopic(topicName);
         if (!componentNumber.isEmpty()) {
             this.process(builder, componentNumber);
             logger.debug("Message id={} has been passed to component service. mqttMessage={}.", id, mqttMessage);
