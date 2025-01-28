@@ -128,9 +128,14 @@ public class AppAnnotationConfig {
     public ComponentService getComponentService() {
         int i = 0;
         List<Object> components = new ArrayList<>();
+        ComponentLoader componentLoader = new ComponentLoader();
         while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
             String path = env.getProperty("component[" + i + "].path", "");
-            List<Object> instances = new ComponentLoader().loadClassesFromJar(path);
+            List<Object> instances = componentLoader.loadClassesFromJar(path);
+            if (instances == null || instances.isEmpty()) {
+                logger.warn("Failed to load classes from path={}", path);
+                continue;
+            }
             components.addAll(instances);
             ++i;
         }
@@ -140,11 +145,15 @@ public class AppAnnotationConfig {
 
     @Bean
     public Map<String, String> topicsAndCards() {
-        Map<String, String> map = new HashMap();
+        Map<String, String> map = new HashMap<>();
         int i = 0;
         while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
+            String cardTopic = env.getProperty("card[" + i + "].subscription.topic", "");
+            if (cardTopic.isEmpty()) {
+                throw new IllegalArgumentException("No topic defined for subscription of card=" + i);
+            }
             map.put(
-                    env.getProperty("card[" + i + "].subscription.topic", ""),
+                    cardTopic,
                     String.valueOf(i)
             );
             ++i;
@@ -155,11 +164,15 @@ public class AppAnnotationConfig {
 
     @Bean
     public Map<String, String> topicsAndCommands() {
-        Map<String, String> map = new HashMap();
+        Map<String, String> map = new HashMap<>();
         int i = 0;
         while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
+            String commandTopic = env.getProperty("command[" + i + "].subscription.topic", "");
+            if (commandTopic.isEmpty()) {
+                throw new IllegalArgumentException("No topic defined for subscription of command=" + i);
+            }
             map.put(
-                    env.getProperty("command[" + i + "].subscription.topic", ""),
+                    commandTopic,
                     String.valueOf(i)
             );
             ++i;
@@ -170,11 +183,15 @@ public class AppAnnotationConfig {
 
     @Bean
     public Map<String, String> commandsAndNumbers() {
-        Map<String, String> map = new HashMap();
+        Map<String, String> map = new HashMap<>();
         int i = 0;
         while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
+            String commandName = env.getProperty("command[" + i + "].name", "");
+            if (commandName.isEmpty()) {
+                throw new IllegalArgumentException("No name defined for command=" + i);
+            }
             map.put(
-                    env.getProperty("command[" + i + "].name", ""),
+                    commandName,
                     String.valueOf(i)
             );
             ++i;
@@ -185,11 +202,15 @@ public class AppAnnotationConfig {
 
     @Bean
     public Map<String, String> topicsAndComponents() {
-        Map<String, String> map = new HashMap();
+        Map<String, String> map = new HashMap<>();
         int i = 0;
         while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
+            String componentTopic = env.getProperty("component[" + i + "].subscription.topic", "");
+            if (componentTopic.isEmpty()) {
+                throw new IllegalArgumentException("No topic defined for subscription of component=" + i);
+            }
             map.put(
-                    env.getProperty("component[" + i + "].subscription.topic", ""),
+                    componentTopic,
                     String.valueOf(i)
             );
             ++i;
@@ -200,11 +221,15 @@ public class AppAnnotationConfig {
 
     @Bean
     public Map<String, String> componentsAndNumbers() {
-        Map<String, String> map = new HashMap();
+        Map<String, String> map = new HashMap<>();
         int i = 0;
         while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
+            String componentName = env.getProperty("component[" + i + "].name", "");
+            if (componentName.isEmpty()) {
+                throw new IllegalArgumentException("No name defined for component=" + i);
+            }
             map.put(
-                    env.getProperty("component[" + i + "].name", ""),
+                    componentName,
                     String.valueOf(i)
             );
             ++i;
@@ -218,14 +243,26 @@ public class AppAnnotationConfig {
         int i = 0;
         List<Card> cards = new ArrayList<>();
         List<Dashboard> dashboards = new ArrayList<>();
+
         while (!env.getProperty("dashboard[" + i + "].name", "").isEmpty()) {
             List<String> listOfCards = (List<String>) env.getProperty("dashboard[" + i + "].cards", List.class);
+            if (listOfCards == null || listOfCards.isEmpty()) {
+                throw new IllegalArgumentException("No cards defined for dashboard=" + i);
+            }
+
             for (String cardNumber : listOfCards) {
                 String cardName = env.getProperty("card[" + cardNumber + "].name", "");
-                Card card = new CardImpl(String.valueOf(cardNumber), cardName);
+                if (cardName.isEmpty()) {
+                    throw new IllegalArgumentException("No name defined for card=" + cardNumber);
+                }
+                Card card = new CardImpl(cardNumber, cardName);
                 cards.add(card);
             }
+
             String dashboardName = env.getProperty("dashboard[" + i + "].name", "");
+            if (dashboardName.isEmpty()) {
+                throw new IllegalArgumentException("No name defined for dashboard=" + i);
+            }
             Dashboard dashboard = new DashboardImpl(dashboardName, cards);
             dashboards.add(dashboard);
             ++i;
@@ -245,6 +282,10 @@ public class AppAnnotationConfig {
         i = 0;
         while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
             topic = env.getProperty("card[" + i + "].subscription.topic", "");
+            if (topic == null || topic.isEmpty()) {
+                logger.warn("Topic for card subscrition={} is not defined", i);
+                continue;
+            }
             topicQos = MqttQoS.valueOf(env.getProperty("card[" + i + "].subscription.qos", MqttQoS.AT_MOST_ONCE.toString()));
             subscription = new MqttTopicSubscription(topic, topicQos);
             subscriptions.add(subscription);
@@ -254,6 +295,10 @@ public class AppAnnotationConfig {
         i = 0;
         while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
             topic = env.getProperty("command[" + i + "].subscription.topic", "");
+            if (topic == null || topic.isEmpty()) {
+                logger.warn("Topic for command subscrition={} is not defined", i);
+                continue;
+            }
             topicQos = MqttQoS.valueOf(env.getProperty("command[" + i + "].subscription.qos", MqttQoS.AT_MOST_ONCE.toString()));
             subscription = new MqttTopicSubscription(topic, topicQos);
             subscriptions.add(subscription);
@@ -263,6 +308,10 @@ public class AppAnnotationConfig {
         i = 0;
         while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
             topic = env.getProperty("component[" + i + "].subscription.topic", "");
+            if (topic == null || topic.isEmpty()) {
+                logger.warn("Topic for component subscrition={} is not defined", i);
+                continue;
+            }
             topicQos = MqttQoS.valueOf(env.getProperty("component[" + i + "].subscription.qos", MqttQoS.AT_MOST_ONCE.toString()));
             subscription = new MqttTopicSubscription(topic, topicQos);
             subscriptions.add(subscription);

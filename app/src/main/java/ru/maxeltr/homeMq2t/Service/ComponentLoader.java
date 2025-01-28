@@ -98,19 +98,26 @@ public class ComponentLoader {
         Set<Class> classes = getClassesFromJarFile(new File(path));
 
         for (Class clazz : classes) {
-            logger.debug("There is {} in {}", clazz, path);
             if (clazz.isInterface()) {
+				logger.info("Found interface={} in jar={}", clazz, path);
                 continue;
             }
-
+			
+			logger.info("Found class={} in jar={}", clazz, path);
             for (Class clazzInterface : ClassUtils.getAllInterfaces(clazz)) {
-                logger.debug("Class={} implements interface={}", clazz, clazzInterface);
+                logger.info("Class={} implements interface={}", clazz, clazzInterface);
                 if (clazzInterface.getSimpleName().equals(Mq2tComponent.class.getSimpleName())) {
-                    logger.debug("Class to instantiate={}", clazz);
+                    logger.info("Class to instantiate={}", clazz);
                     this.instantiateClass(clazz).ifPresent(instance -> components.add(instance));
                 }
             }
         }
+		
+		if (components.isEmpty()) {
+			logger.warn("No valid classes found in jar={}", path);
+		} else {
+			logger.info("Successfully instantiated {} classes from jar={}", components.size(), path);
+		}
 
         return components;
     }

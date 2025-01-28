@@ -40,6 +40,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 /**
  *
@@ -126,6 +128,7 @@ public class CommandServiceImpl implements CommandService {
 
         ProcessBuilder pb = new ProcessBuilder(commandPath, arguments);
         pb.redirectErrorStream(true);
+
         Process p;
         try {
             p = pb.start();
@@ -135,7 +138,7 @@ public class CommandServiceImpl implements CommandService {
         }
 
         String line;
-        String result = "";
+        StringBuilder result = new StringBuilder();
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
             while (true) {
@@ -143,16 +146,26 @@ public class CommandServiceImpl implements CommandService {
                 if (line == null) {
                     break;
                 }
-                result += line;
+                result.append(line);
             }
         } catch (IOException ex) {
             logger.warn("Can not read process output of command. commandPath={}, arguments={}. {}", commandPath, arguments, ex.getMessage());
             return "";
         }
 
+        int exitCode = 0;
+        try {
+            exitCode = p.waitFor();
+        } catch (InterruptedException ex) {
+            logger.warn("Waiting for process was interrupted.", ex.getMessage());
+        }
+        if (exitCode != 0) {
+            logger.warn("Command executed with error. commandPath={}, arguments={}. exitCode={}", commandPath, arguments, exitCode);
+        }
+
         logger.debug("End command task. commandPath={}, arguments={}.", commandPath, arguments);
 
-        return result;
+        return result.toString();
     }
 
 }

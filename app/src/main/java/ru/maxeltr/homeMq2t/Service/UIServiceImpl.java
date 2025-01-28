@@ -117,7 +117,12 @@ public class UIServiceImpl implements UIService {
     }
 
     private String getStartDashboard() {
-        return this.dashboards.get(0).getHtml();
+        if (this.dashboards != null && !this.dashboards.isEmpty()) {
+            return this.dashboards.get(0).getHtml();
+        } else {
+            logger.warn("Dashboard list is empty or null.");
+            return "<div>No dashboards available.</div>";
+        }
     }
 
     @Override

@@ -82,7 +82,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     private AppProperties appProperties;
 
     @Value("${wait-disconnect-while-shutdown:1000}")
-    private Integer waitDisconnect;
+    private int waitDisconnect;
 
     @PostConstruct
     public void postConstruct() {
@@ -100,11 +100,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Override
     public void publish(Msg msg, String topic, MqttQoS qos, boolean retain) {
         logger.info("Publish message has been passed to mqtt client. topic={}, qos={}, retain={}. {}", topic, qos, retain, msg);
+        byte[] jsonMsg = {};
         try {
-            this.hmMq2t.publish(topic, Unpooled.wrappedBuffer(this.mapper.writeValueAsBytes(msg)), qos, retain);
+            jsonMsg = this.mapper.writeValueAsBytes(msg);
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert msg to json {}", msg, ex.getMessage());
         }
+        this.hmMq2t.publish(topic, Unpooled.wrappedBuffer(jsonMsg), qos, retain);
     }
 
     @Override

@@ -130,7 +130,7 @@ public class ComponentServiceImpl implements ComponentService {
             data = method.invoke(component).toString();
             logger.debug("Method={} has been  invoked in component={}", methodName, component);
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
-            logger.warn("Could not invoke method={} to component={}. ", methodName, component, ex);
+            logger.warn("Could not invoke method={} in component={}. ", methodName, component, ex);
         }
 
         return data;
@@ -140,10 +140,8 @@ public class ComponentServiceImpl implements ComponentService {
         logger.debug("Callback has been called. Data={}", data);
 
         HashMap<String, String> dataMap;
-        TypeReference<HashMap<String, String>> typeRef = new TypeReference<HashMap<String, String>>() {
-        };
         try {
-            dataMap = mapper.readValue(data, typeRef);
+            dataMap = mapper.readValue(data, new TypeReference<HashMap<String, String>>(){});
         } catch (JsonProcessingException ex) {
             logger.warn("Could not convert json data={} to map. {}", data, ex.getMessage());
             return;
@@ -151,13 +149,13 @@ public class ComponentServiceImpl implements ComponentService {
 
         String componentName = dataMap.get("name");
         if (componentName == null) {
-            logger.warn("Invalid data was passed to callback. Name of component is absent.");
+            logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data);
         }
 
-        Msg.Builder builder = new Msg.Builder("onCallback");
-        builder.data(data);
-        builder.type(appProperties.getComponentPubDataType(componentName));
-        builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        Msg.Builder builder = new Msg.Builder("onCallback")
+        .data(data)
+        .type(appProperties.getComponentPubDataType(componentName))
+        .timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
         String topic = appProperties.getComponentPubTopic(componentName);
         MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));

@@ -26,6 +26,7 @@ package ru.maxeltr.homeMq2t.Mqtt;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.util.concurrent.Promise;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -74,7 +75,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
             int messagesSize = messages.size();
             if (futuresSize >= 65535 || messagesSize >= 65535) {
                 logger.error("Error. Overflow. Amount futures={}. Amount messages={}", futuresSize, messagesSize);
-                //TODO 
+                //TODO
             }
             this.futures.put(key, future);
             logger.debug("Future was added key={} future={}. Amount futures={}", key, future, futuresSize);
@@ -111,10 +112,10 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     @Override
     public Iterator<MqttMessage> iterator() {
         synchronized (this) {
-            return this.messages.values().iterator();
+            return new ArrayList<>(this.messages.values()).iterator();
         }
     }
-    
+
     @Override
     public void clear() {
         synchronized (this) {

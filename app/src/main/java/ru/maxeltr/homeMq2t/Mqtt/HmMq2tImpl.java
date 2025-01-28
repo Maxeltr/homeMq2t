@@ -133,7 +133,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
 
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
-    private final Map<String, MqttTopicSubscription> subscribedTopics = Collections.synchronizedMap(new LinkedHashMap());
+    private final Map<String, MqttTopicSubscription> subscribedTopics = Collections.synchronizedMap(new LinkedHashMap<>());
 
     private final static AtomicBoolean connecting = new AtomicBoolean();
 
