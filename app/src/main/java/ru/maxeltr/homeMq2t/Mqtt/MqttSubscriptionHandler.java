@@ -80,20 +80,22 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void handleSubAck(Channel channel, MqttSubAckMessage message) {
-        logger.info("Received SUBACK for subscription with id {}. Message=[{}].", message.variableHeader().messageId(), message);
-        Promise<MqttSubAckMessage> future = (Promise<MqttSubAckMessage>) this.mqttAckMediator.getFuture(message.variableHeader().messageId());
+		int id = message.variableHeader().messageId();
+        logger.info("Received SUBACK for subscription with id={}.", id);
+        Promise<MqttSubAckMessage> future = (Promise<MqttSubAckMessage>) this.mqttAckMediator.getFuture(id);
         if (future == null) {
-            logger.warn("There is no stored future of SUBSCRIBE message for SUBACK message - [{}]. May be it was acknowledged already", message);
+            logger.warn("There is no stored future of SUBSCRIBE message for SUBACK message id={}. May be it was acknowledged already.", id);
             return;
         }
         future.setSuccess(message);
     }
 
     private void handleUnsuback(MqttUnsubAckMessage message) {
-        logger.info("Received UNSUBACK for subscription with id {}. Message=[{}].", message.variableHeader().messageId(), message);
-        Promise<MqttUnsubAckMessage> future = (Promise<MqttUnsubAckMessage>) this.mqttAckMediator.getFuture(message.variableHeader().messageId());
+		int id = message.variableHeader().messageId();
+        logger.info("Received UNSUBACK for subscription with id={}.", id);
+        Promise<MqttUnsubAckMessage> future = (Promise<MqttUnsubAckMessage>) this.mqttAckMediator.getFuture(id);
         if (future == null) {
-            logger.warn("There is no stored future of UNSUBSCRIBE message for UNSUBACK message - [{}]. May be it was acknowledged already", message);
+            logger.warn("There is no stored future of UNSUBSCRIBE message for UNSUBACK message id={}. May be it was acknowledged already.", id);
             return;
         }
         future.setSuccess(message);

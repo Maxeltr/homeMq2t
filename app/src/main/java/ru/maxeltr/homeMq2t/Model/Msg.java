@@ -32,92 +32,28 @@ import java.util.Objects;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-@JsonDeserialize(as = Msg.Builder.class)
+@JsonDeserialize(as = Msg.MsgBuilder.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface Msg {
 
-    static final int MAX_CHAR_TO_PRINT = 256;
+    int MAX_CHAR_TO_PRINT = 256;
 
-    public String getType();
+    String getType();
 
-    public String getData();
+    String getData();
 
-    public String getTimestamp();
+    String getTimestamp();
 
-    public static class Builder {
-
-        @JsonProperty("id")
-        protected String id = "";
-
-        @JsonProperty("data")
-        protected String data = "";
-
-        @JsonProperty("type")
-        protected String type = "";
-
-        @JsonProperty("timestamp")
-        protected String timestamp = "";
-
-        public Builder() {
+    interface Builder {
             
-        }
+        String getId();
         
-        public Builder(String id) {
-            this.id = id;
-        }
-        
-        public String getId() {
-            return id;
-        }
+        Builder data(String data);
 
-        public String getData() {
-            return data;
-        }
+        Builder type(String type);
 
-        public String getType() {
-            return type;
-        }
+        Builder timestamp(String timestamp);
 
-        public String getTimestamp() {
-            return timestamp;
-        }
-
-        public Builder data(String data) {
-            this.data = Objects.requireNonNullElse(data, "");
-            return this;
-        }
-
-        public Builder type(String type) {
-            this.type = Objects.requireNonNullElse(type, "");
-            return this;
-        }
-
-        public Builder timestamp(String timestamp) {
-            this.timestamp = Objects.requireNonNullElse(timestamp, "");
-            return this;
-        }
-
-        public MsgImpl build() {
-            return new MsgImpl(this.data, this.type, this.timestamp);
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("Msg.Builder{")
-                    .append("id=").append(this.id)
-                    .append(", type=").append(this.type)
-                    .append(", timestamp=").append(this.timestamp)
-                    .append(", data=");
-            if (this.data.length() > MAX_CHAR_TO_PRINT) {
-                sb.append(this.data.substring(0, MAX_CHAR_TO_PRINT));
-                sb.append("...");
-            } else {
-                sb.append(this.data);
-            }
-            sb.append("}");
-
-            return sb.toString();
-        }
+        MsgImpl build();
     }
 }

@@ -114,7 +114,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
         AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
         autowireCapableBeanFactory.autowireBean(mqttSubscriptionHandler);
-        autowireCapableBeanFactory.initializeBean(mqttSubscriptionHandler, "mqttConnectHandler");
+        autowireCapableBeanFactory.initializeBean(mqttSubscriptionHandler, "mqttSubscriptionHandler");
 
         return mqttSubscriptionHandler;
     }

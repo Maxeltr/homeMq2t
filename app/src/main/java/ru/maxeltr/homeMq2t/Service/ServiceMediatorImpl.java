@@ -100,13 +100,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Override
     public void publish(Msg msg, String topic, MqttQoS qos, boolean retain) {
         logger.info("Publish message has been passed to mqtt client. topic={}, qos={}, retain={}. {}", topic, qos, retain, msg);
-        byte[] jsonMsg = {};
         try {
-            jsonMsg = this.mapper.writeValueAsBytes(msg);
+            byte[] jsonMsg = this.mapper.writeValueAsBytes(msg);
+			this.hmMq2t.publish(topic, Unpooled.wrappedBuffer(jsonMsg), qos, retain);
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert msg to json {}", msg, ex.getMessage());
         }
-        this.hmMq2t.publish(topic, Unpooled.wrappedBuffer(jsonMsg), qos, retain);
+        
     }
 
     @Override
@@ -130,13 +130,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Override
     public void handleMessage(MqttPublishMessage mqttMessage) {
         int id = mqttMessage.variableHeader().packetId();
-        logger.debug("Start handle message id={}. mqttMessage={}.", id, mqttMessage);
+        logger.debug("Start handle message id={}.", id);
 
         Msg.Builder builder;
         try {
             builder = this.mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
         } catch (JsonProcessingException ex) {
-            logger.warn("Cannot convert json to Msg. {} id={}. MqttMessage={}", ex.getMessage(), id, mqttMessage.payload().toString(Charset.forName("UTF-8")));
+            logger.warn("Cannot convert json to Msg. {} id={}.", ex.getMessage(), id);
             builder = new Msg.Builder();
             builder.data(mqttMessage.payload().toString(Charset.forName("UTF-8")));
             builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
@@ -146,25 +146,25 @@ public class ServiceMediatorImpl implements ServiceMediator {
         String cardNumber = this.appProperties.getCardNumberByTopic(topicName);
         if (!cardNumber.isEmpty()) {
             this.display(builder, cardNumber);
-            logger.debug("Message id={} has been passed to ui service. mqttMessage={}.", id, mqttMessage);
+            logger.debug("Message id={} has been passed to ui service.", id);
 
         }
 
         String commandNumber = this.appProperties.getCommandNumberByTopic(topicName);
         if (!commandNumber.isEmpty()) {
             this.execute(builder, commandNumber);
-            logger.debug("Message id={} has been passed to command service. mqttMessage={}.", id, mqttMessage);
+            logger.debug("Message id={} has been passed to command service.", id);
 
         }
 
         String componentNumber = this.appProperties.getComponentNumberByTopic(topicName);
         if (!componentNumber.isEmpty()) {
             this.process(builder, componentNumber);
-            logger.debug("Message id={} has been passed to component service. mqttMessage={}.", id, mqttMessage);
+            logger.debug("Message id={} has been passed to component service.", id);
 
         }
 
-        logger.debug("End handle message id={}. mqttMessage={}.", id, mqttMessage);
+        logger.debug("End handle message id={}.", id);
     }
 
     @Override
@@ -189,6 +189,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         try {
             TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
             logger.info("Shutdown. InterruptedException while disconnect timeout.", ex);
         }
 

@@ -108,7 +108,7 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof MqttMessage)) {
-            logger.debug("Received non Mqtt message=[{}]", msg);
+            logger.debug("Received non Mqtt message={}", msg.getClass());
             ctx.fireChannelRead(msg);
             return;
         }
@@ -118,7 +118,7 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
             handleConnackMessage(ctx.channel(), (MqttConnAckMessage) message);
             ReferenceCountUtil.release(msg);
         } else if (message.fixedHeader().messageType() == MqttMessageType.DISCONNECT) {
-            logger.info("Received disconnect message={}. Close channel.", msg);
+            logger.info("Received disconnect message={}. Close channel.", msg.variableHeader());
             ctx.close();
         } else {
             ctx.fireChannelRead(msg);   //ctx.fireChannelRead(ReferenceCountUtil.retain(msg));
@@ -169,7 +169,7 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
                 if (!future.isDone()) {
                     future.setSuccess(message);
                 }
-                logger.info("Received CONNACK message. Connection accepted. Message={}.", message);
+                logger.info("Received CONNACK message. Connection accepted.");
 
                 channel.flush();
             }
@@ -182,7 +182,7 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
                 if (!future.isDone()) {
                     future.cancel(true);
                 }
-                logger.info("Received CONNACK message. Connection refused. Message={}.", message);
+                logger.info("Received CONNACK message. Connection refused.");
                 channel.close();
                 // Don't start reconnect logic here
             }

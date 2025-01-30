@@ -67,7 +67,7 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
     
     private final MqttMessage pingRespMsg;
     
-    private boolean pingRespTimeout;
+	private final AtomicBoolean pingRespTimeout = new AtomicBoolean();
 
     public MqttPingScheduleHandler(ServiceMediator serviceMediator) {
         this.serviceMediator = serviceMediator;
@@ -93,8 +93,13 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
     }
     
     public void stopPing() {
-        this.future.cancel(false);
-        logger.info("The ping was canceled. {}", this);
+		if (this.future != null && !this.future.isDone()) {
+			this.future.cancel(false);
+			logger.info("The ping was canceled. {}", this);
+			this.future = null;
+		} else {
+			logger.warn("Attempted to cancel ping, but it was not started or already canceled.");
+		}
     }
     
     @Override
@@ -107,11 +112,11 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
         MqttMessage message = (MqttMessage) msg;
         if (message.fixedHeader().messageType() == MqttMessageType.PINGREQ) {
             ctx.channel().writeAndFlush(pingRespMsg);
-            logger.info("Received ping request={}. Sent ping response={}.", msg, pingRespMsg);
+            logger.info("Received ping request={}. Sent ping response.", msg);
 //            ReferenceCountUtil.release(msg);
         } else if (message.fixedHeader().messageType() == MqttMessageType.PINGRESP) {
             logger.info("Received ping response={}.", msg);
-            this.pingRespTimeout = false;
+            this.pingRespTimeout.set(false);
 //            ReferenceCountUtil.release(msg);
         } else {
             ctx.fireChannelRead(msg);   //ctx.fireChannelRead(ReferenceCountUtil.retain(msg));
@@ -122,25 +127,28 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
 
         @Override
         public void run() {
-            if (pingRespTimeout) {
-                logger.info("Ping response was not received for keep-alive time. {}", this);
-                MqttPingScheduleHandler.this.future.cancel(false);
-                //publishPingTimeoutEvent();
+			if (ctx == null) {
+				logger.warn("ChannelHandlerContext is not initialized. Skipping ping request.");
+				return;
+			}
+			
+            if (pingRespTimeout.get()) {
+                logger.info("Ping response was not received within the keep-alive period. {}", this);
+                stopPing();
                 if (reconnect) {
-                    logger.debug("Start reconnection attempt.");
+                    logger.info("Start the reconnection attempt.");
                     serviceMediator.reconnect();
                 } else {
-                    future.cancel(false);
+					logger.info("Disconnect without the reconnection.");
                     serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
-                    logger.debug("Disconnection.");
                 }
                 
                 return;
             }
 
             ctx.writeAndFlush(pingReqMsg);
-            pingRespTimeout = true;
-            logger.info("Sent ping request. {}. Message {}.", this, pingReqMsg);
+            pingRespTimeout.set(true);
+            logger.info("Sent ping request. {}.", this);
 
         }
     }

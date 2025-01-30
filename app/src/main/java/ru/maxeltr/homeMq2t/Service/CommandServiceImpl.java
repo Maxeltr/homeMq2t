@@ -50,7 +50,9 @@ import java.util.logging.Level;
 public class CommandServiceImpl implements CommandService {
 
     private static final Logger logger = LoggerFactory.getLogger(CommandServiceImpl.class);
-
+	
+	private int waitForProcess = 60_000;
+	
     private ServiceMediator mediator;
 
     @Autowired
@@ -81,13 +83,13 @@ public class CommandServiceImpl implements CommandService {
                 logger.warn("Could not convert json data={} to map. {}", msg.getData(), ex.getMessage());
                 return;
             }
-            command = dataMap.get("name");
+            command = Optional.ofNullable(dataMap.get("name")).orElse("");
         } else {
-            logger.warn("Unsupported type={}", msgType);
+            logger.warn("Unsupported type={}. Command number={}. Data={}", msgType, commandNumber, msg.getData());
         }
 
         if (command.trim().isEmpty()) {
-            logger.warn("Command is empty.");
+            logger.warn("Command is empty. Command number={}", commandNumber);
             return;
         }
 
@@ -110,7 +112,9 @@ public class CommandServiceImpl implements CommandService {
 
         logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
 
-        this.sendReply(this.executeCommand(commandPath, arguments), command, topic, qos, retain);
+		String result = this.executeCommand(commandPath, arguments);
+		
+        this.sendReply(result, command, topic, qos, retain);
     }
 
     private void sendReply(String data, String commandName, String topic, MqttQoS qos, boolean retain) {
@@ -134,7 +138,7 @@ public class CommandServiceImpl implements CommandService {
             p = pb.start();
         } catch (IOException ex) {
             logger.warn("ProcessBuilder cannot start. commandPath={}, arguments={}. {}", commandPath, arguments, ex.getMessage());
-            return "";
+            return "Error. Could not start.";
         }
 
         String line;
@@ -150,15 +154,23 @@ public class CommandServiceImpl implements CommandService {
             }
         } catch (IOException ex) {
             logger.warn("Can not read process output of command. commandPath={}, arguments={}. {}", commandPath, arguments, ex.getMessage());
-            return "";
+            return "Error. Could not read output.";
         }
 
         int exitCode = 0;
         try {
-            exitCode = p.waitFor();
+            boolean finished = p.waitFor(this.waitForProcess, TimeUnit.MILLISECONDS);
+			if (!finished) {
+				logger.warn("Process did not finish in time={}. commandPath={}, arguments={}.", this.waitForProcess, commandPath, arguments);
+				p.destroy();
+				return "Error. Process timed out.";
+			}
+			exitCode = p.exitValue();
         } catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
             logger.warn("Waiting for process was interrupted.", ex.getMessage());
         }
+		
         if (exitCode != 0) {
             logger.warn("Command executed with error. commandPath={}, arguments={}. exitCode={}", commandPath, arguments, exitCode);
         }

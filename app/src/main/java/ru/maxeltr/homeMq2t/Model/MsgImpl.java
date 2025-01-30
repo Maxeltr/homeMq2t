@@ -37,10 +37,10 @@ public class MsgImpl implements Msg {
 
     private final String timestamp;
 
-    MsgImpl(String data, String type, String timestamp) {
-        this.data = Objects.requireNonNullElse(data, "");
-        this.type = Objects.requireNonNullElse(type, "");
-        this.timestamp = Objects.requireNonNullElse(timestamp, "");
+    private MsgImpl(Builder builder) {
+        this.data = Objects.requireNonNullElse(builder.data, "");
+        this.type = Objects.requireNonNullElse(builder.type, "");
+        this.timestamp = Objects.requireNonNullElse(builder.timestamp, "");
     }
 
     @Override
@@ -100,5 +100,70 @@ public class MsgImpl implements Msg {
         result = 31 * result + this.data.hashCode();
 
         return result;
+    }
+	
+	public static class MsgBuilder implements Builder {
+
+        @JsonProperty("id")
+        protected String id = "";
+
+        @JsonProperty("data")
+        protected String data = "";
+
+        @JsonProperty("type")
+        protected String type = "";
+
+        @JsonProperty("timestamp")
+        protected String timestamp = "";
+
+        public MsgBuilder() {
+            
+        }
+        
+        public MsgBuilder(String id) {
+            this.id = id;
+        }
+        
+        public String getId() {
+            return id;
+        }
+
+        public MsgBuilder data(String data) {
+            this.data = Objects.requireNonNullElse(data, "");
+            return this;
+        }
+
+        public MsgBuilder type(String type) {
+            this.type = Objects.requireNonNullElse(type, "");
+            return this;
+        }
+
+        public MsgBuilder timestamp(String timestamp) {
+            this.timestamp = Objects.requireNonNullElse(timestamp, "");
+            return this;
+        }
+
+        public MsgImpl build() {
+            return new MsgImpl(this);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("MsgBuilder{")
+                    .append("id=").append(this.id)
+                    .append(", type=").append(this.type)
+                    .append(", timestamp=").append(this.timestamp)
+                    .append(", data=");
+            if (this.data.length() > MAX_CHAR_TO_PRINT) {
+                sb.append(this.data.substring(0, MAX_CHAR_TO_PRINT));
+                sb.append("...");
+            } else {
+                sb.append(this.data);
+            }
+            sb.append("}");
+
+            return sb.toString();
+        }
     }
 }

@@ -80,7 +80,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
             this.futures.put(key, future);
             logger.debug("Future was added key={} future={}. Amount futures={}", key, future, futuresSize);
             this.messages.put(key, message);
-            logger.debug("Message was added key={} message={}. Amount messages={}", key, message, messagesSize);
+            logger.debug("Message was added key={} message={}. Amount messages={}", key, message.variableHeader(), messagesSize);
         }
     }
 
@@ -90,7 +90,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
             Promise<? extends MqttMessage> future = this.futures.remove(key);
             logger.debug("Future was removed key={}. Amount futures={}. Future={}", key, futures.size(), future);
             MqttMessage message = this.messages.remove(key);
-            logger.debug("Message was removed key={}. Amount messages={}. Message={}", key, messages.size(), message);
+            logger.debug("Message was removed key={}. Amount messages={}. Message={}", key, messages.size(), message.variableHeader());
         }
     }
 
@@ -121,7 +121,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
         synchronized (this) {
             this.messages.clear();
             this.futures.clear();
-            logger.debug("AckMediator clear");
+            logger.debug("AckMediator clear.");
         }
     }
 }

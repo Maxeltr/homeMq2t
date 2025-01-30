@@ -175,7 +175,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
                 connected.set(true);
                 logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
                 //perform post-connection operations here
-                this.subscribeOnTopicsFromConfig();
+                HmMq2tImpl.this.subscribe(this.subscriptions);
                 reconnectAttempts = 0;
                 this.startRetransmitTask();
             }
@@ -237,6 +237,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         try {
             TimeUnit.MILLISECONDS.sleep(timeout);
         } catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
             logger.info("InterruptedException while reconnect delay.", ex);
         }
 
@@ -295,6 +296,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         try {
             TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {
+			Thread.currentThread().interrupt();
             logger.info("Disconnect message has been send. InterruptedException while timeout.", ex);
         }
 
@@ -311,10 +313,6 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
 
         this.workerGroup.shutdownGracefully().awaitUninterruptibly();
         logger.info("Shutdown gracefully");
-    }
-
-    public void subscribeOnTopicsFromConfig() {
-        HmMq2tImpl.this.subscribe(this.subscriptions);
     }
 
     @Override
@@ -334,7 +332,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         ReferenceCountUtil.retain(message); //TODO is it nessesary?
 
         this.writeAndFlush(message);
-        logger.info("Sent SUBSCRIBE message id={}, d={}, q={}, r={}. Message=[{}]", message.variableHeader().messageId(), message.fixedHeader().isDup(), message.fixedHeader().qosLevel(), message.fixedHeader().isRetain(), message);
+        logger.info("Sent SUBSCRIBE message id={}, d={}, q={}, r={}.", message.variableHeader().messageId(), message.fixedHeader().isDup(), message.fixedHeader().qosLevel(), message.fixedHeader().isRetain());
 
         return subscribeFuture;
     }
@@ -343,17 +341,17 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         int id = subAckMessage.variableHeader().messageId();
         MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(id);
         /* if (subscribeMessage == null) {
-            logger.warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already. [{}].", subAckMessage);
+            logger.warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already.");
             //TODO resub?
             return;
         } */
         this.mqttAckMediator.remove(id);
-        logger.info("Subscribe message id={} has been acknowledged. SUBSCRIBE message=[{}]. SUBACK message=[{}].", id, subscribeMessage, subAckMessage);
+        logger.info("Subscribe message id={} has been acknowledged.", id);
 
         List<MqttTopicSubscription> topics = subscribeMessage.payload().topicSubscriptions();
         List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
         if (subAckQos.size() != topics.size()) {
-            logger.warn("Number of topics to subscribe is not match number of returned granted QOS. QoS {}. Topics {}", subAckQos.size(), topics.size());
+            logger.warn("Number of topics to subscribe is not match number of returned granted QOS. QoS size={}. Topics size={}", subAckQos.size(), topics.size());
             //TODO resub?
         } else {
             for (int i = 0; i < subAckQos.size(); i++) {
@@ -361,7 +359,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
                     this.subscribedTopics.put(topics.get(i).topicName(), topics.get(i));
                     logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicName(), topics.get(i).qualityOfService());
                 } else {
-                    logger.warn("Subscription on topic: {} with Qos: {} failed. Granted Qos: {}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
+                    logger.warn("Subscription on topic={} with Qos={} failed. Granted Qos={}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
                     //TODO resub with lower QoS?
                 }
             }
@@ -426,11 +424,11 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         int id = pubAckMessage.variableHeader().messageId();
         MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
         /* if (publishMessage == null) {
-            logger.warn("There is no stored PUBLISH message for PUBACK message. May be it was acknowledged already. [{}].", pubAckMessage);
+            logger.warn("There is no stored PUBLISH message for PUBACK message. May be it was acknowledged already.");
              return;
         }*/
         this.mqttAckMediator.remove(id);
-        logger.info("PublishMessage id={} has been acknowledged. PUBLISH message={}. PUBACK message={}.", id, publishMessage, pubAckMessage);
+        logger.info("PublishMessage id={} has been acknowledged.", id);
         ReferenceCountUtil.release(publishMessage);
     }
 
@@ -462,11 +460,11 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         int id = ((MqttMessageIdVariableHeader) pubRecMessage.variableHeader()).messageId();
         MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
         /* if (publishMessage == null ) {
-            logger.warn("There is no stored PUBLISH message for PUBREC message. May be it was acknowledged already. [{}].", pubRecMessage);
+            logger.warn("There is no stored PUBLISH message for PUBREC message. May be it was acknowledged already.");
             return;
         } */
         this.mqttAckMediator.remove(id);
-        logger.info("Publish message id={} has been acknowledged. PUBLISH message={}. PUBREC message={}.", id, publishMessage, pubRecMessage);
+        logger.info("Publish message id={} has been acknowledged.", id);
         ReferenceCountUtil.release(publishMessage);
         this.sendPubRelMessage(id);
     }
@@ -497,11 +495,11 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();
         MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
         /* if (pubrelMessage == null ) {
-            logger.warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already. {}.", pubCompMessage);
+            logger.warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already.");
             return;
         } */
         this.mqttAckMediator.remove(id);
-        logger.info("PubRelMessage id={} has been acknowledged. PUBREL message={}. PUBCOMP message={}.", id, pubrelMessage, pubCompMessage);
+        logger.info("PubRelMessage id={} has been acknowledged.", id);
         ReferenceCountUtil.release(pubrelMessage);
 
     }
@@ -569,8 +567,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         MqttUnsubscribeMessage unSubscribeMessage = this.mqttAckMediator.getMessage(id);
         this.mqttAckMediator.remove(id);
         this.subscribedTopics.keySet().removeAll(unSubscribeMessage.payload().topics());
-        logger.info("Unsubscribe message id={} has been acknowledged. Unsubscribe message=[{}]. UnsubAckMessage message=[{}].", id, unSubscribeMessage, unSubAckMessage);
-        logger.info("Clear active topics. List=[{}].", unSubscribeMessage.payload().topics());
+        logger.info("Unsubscribe message id={} has been acknowledged.", id);
+        logger.info("Clear active topics. List={}.", unSubscribeMessage.payload().topics());
         ReferenceCountUtil.release(unSubscribeMessage);
     }
 
@@ -584,7 +582,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
     }
 
     private void startRetransmitTask() {
-        if (this.retransmitScheduledFuture == null) {
+        if (this.retransmitScheduledFuture == null || this.retransmitScheduledFuture.isDone()}) {
             logger.info("Start retransmit task.");
             this.retransmitScheduledFuture = this.threadPoolTaskScheduler.schedule(new RetransmitTask(), this.retransmitPeriodicTrigger);
         } else {
@@ -606,7 +604,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         public void run() {     //TODO syncronized?
             logger.info("Start retransmission");
             for (MqttMessage message : mqttAckMediator) {
-                logger.info("message={}", message.toString());
+                logger.info("message={}", message.variableHeader());
                 MqttMessageType messageType = message.fixedHeader().messageType();
                 switch (messageType) {
                     case MqttMessageType.PUBLISH -> {
