@@ -24,6 +24,7 @@
 package ru.maxeltr.homeMq2t.Model;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
@@ -31,6 +32,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
@@ -42,30 +44,34 @@ public class CardImpl implements Card {
 
     static final int MAX_CHAR_TO_PRINT = 256;
 
-    private final String pathname = File.separator + "Static" + File.separator + "card.html";
-    
+    //private final String pathname = File.separator + "Static" + File.separator + "card.html";
+    private String pathname;
+
     private String cardNumber = "";
 
     private String name = "";
 
     private final Document view;
 
-    public CardImpl(String name) {
-        this.name = Objects.requireNonNullElse(name, "");
-        this.view = this.getViewTemplate();
-    }
+//    public CardImpl(String name, String pathname) {
+//        this.name = Objects.requireNonNullElse(name, "");
+//        this.view = this.getViewTemplate();
+//        this.pathname = pathname;
+//    }
 
-    public CardImpl(String cardNumber, String name) {
+    public CardImpl(String cardNumber, String name, String pathname) {
         this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
         this.name = Objects.requireNonNullElse(name, "");
+        this.pathname = pathname;
         this.view = this.getViewTemplate();
+
     }
 
     @Override
     public String getCardNumber() {
         return this.cardNumber;
     }
-    
+
     @Override
     public String getName() {
         return this.name;
@@ -79,12 +85,12 @@ public class CardImpl implements Card {
     private Document getViewTemplate() {
         Document document;
         try {
-            document = this.getTemplateFromResource();
+            document = this.getTemplateFromFile();
+            this.configureTemplate(document);
         } catch (IOException ex) {
             logger.error("Cannot get card template from resource.", ex);
-            return Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>");
+            document = Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>");
         }
-        this.configureTemplate(document);
 
         return document;
     }
@@ -122,7 +128,7 @@ public class CardImpl implements Card {
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-save");
         }
-        
+
         el = document.getElementById("card1-text");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-text");
@@ -134,10 +140,20 @@ public class CardImpl implements Card {
         }
     }
 
-    private Document getTemplateFromResource() throws IOException {
-        InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
-        return Jsoup.parse(is, "utf-8", "");
+    private Document getTemplateFromFile() throws IOException {
+        String path = System.getProperty("user.dir") + pathname;
+        logger.info("Load template from={}", path);
+        File initialFile = new File(path);
+        InputStream is = new FileInputStream(initialFile);
+        Document doc = Jsoup.parse(is, "utf-8", "");
+        return doc;
     }
+
+//    private Document getTemplateFromResource() throws IOException {
+//        //InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
+//        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathname);
+//        return Jsoup.parse(is, "utf-8", "");
+//    }
 
     @Override
     public String toString() {

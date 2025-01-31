@@ -80,6 +80,8 @@ public class AppAnnotationConfig {
 
     @Bean
     public AppProperties getAppProperty() {
+        logger.info("Current user dir={}", System.getProperty("user.dir"));
+
         return new AppProperties();
     }
 
@@ -131,13 +133,14 @@ public class AppAnnotationConfig {
         ComponentLoader componentLoader = new ComponentLoader();
         while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
             String path = env.getProperty("component[" + i + "].path", "");
+            ++i;
+
             List<Object> instances = componentLoader.loadClassesFromJar(path);
             if (instances == null || instances.isEmpty()) {
                 logger.warn("Failed to load classes from path={}", path);
                 continue;
             }
             components.addAll(instances);
-            ++i;
         }
 
         return new ComponentServiceImpl(components);
@@ -152,10 +155,7 @@ public class AppAnnotationConfig {
             if (cardTopic.isEmpty()) {
                 throw new IllegalArgumentException("No topic defined for subscription of card=" + i);
             }
-            map.put(
-                    cardTopic,
-                    String.valueOf(i)
-            );
+            map.put(cardTopic, String.valueOf(i));
             ++i;
         }
 
@@ -171,10 +171,7 @@ public class AppAnnotationConfig {
             if (commandTopic.isEmpty()) {
                 throw new IllegalArgumentException("No topic defined for subscription of command=" + i);
             }
-            map.put(
-                    commandTopic,
-                    String.valueOf(i)
-            );
+            map.put(commandTopic, String.valueOf(i));
             ++i;
         }
 
@@ -190,10 +187,7 @@ public class AppAnnotationConfig {
             if (commandName.isEmpty()) {
                 throw new IllegalArgumentException("No name defined for command=" + i);
             }
-            map.put(
-                    commandName,
-                    String.valueOf(i)
-            );
+            map.put(commandName, String.valueOf(i));
             ++i;
         }
 
@@ -209,10 +203,7 @@ public class AppAnnotationConfig {
             if (componentTopic.isEmpty()) {
                 throw new IllegalArgumentException("No topic defined for subscription of component=" + i);
             }
-            map.put(
-                    componentTopic,
-                    String.valueOf(i)
-            );
+            map.put(componentTopic, String.valueOf(i));
             ++i;
         }
 
@@ -228,10 +219,7 @@ public class AppAnnotationConfig {
             if (componentName.isEmpty()) {
                 throw new IllegalArgumentException("No name defined for component=" + i);
             }
-            map.put(
-                    componentName,
-                    String.valueOf(i)
-            );
+            map.put(componentName, String.valueOf(i));
             ++i;
         }
 
@@ -244,8 +232,19 @@ public class AppAnnotationConfig {
         List<Card> cards = new ArrayList<>();
         List<Dashboard> dashboards = new ArrayList<>();
 
+        String dashboardPathname = env.getProperty("dashboard-template-path", "");
+        if (dashboardPathname.isEmpty()) {
+            throw new IllegalArgumentException("No name defined for dashboard template pathname.");
+        }
+
+        String cardPathname = env.getProperty("card-template-path", "");
+        if (cardPathname.isEmpty()) {
+            throw new IllegalArgumentException("No name defined for card template pathname.");
+        }
+
         while (!env.getProperty("dashboard[" + i + "].name", "").isEmpty()) {
             List<String> listOfCards = (List<String>) env.getProperty("dashboard[" + i + "].cards", List.class);
+            logger.info("Dashboard={} has cards={}", i, listOfCards);
             if (listOfCards == null || listOfCards.isEmpty()) {
                 throw new IllegalArgumentException("No cards defined for dashboard=" + i);
             }
@@ -255,18 +254,28 @@ public class AppAnnotationConfig {
                 if (cardName.isEmpty()) {
                     throw new IllegalArgumentException("No name defined for card=" + cardNumber);
                 }
-                Card card = new CardImpl(cardNumber, cardName);
+                Card card = new CardImpl(cardNumber, cardName, cardPathname);
                 cards.add(card);
+                logger.info("Card={} has been created and added to card list.", card.getName());
             }
 
             String dashboardName = env.getProperty("dashboard[" + i + "].name", "");
             if (dashboardName.isEmpty()) {
                 throw new IllegalArgumentException("No name defined for dashboard=" + i);
             }
-            Dashboard dashboard = new DashboardImpl(dashboardName, cards);
+
+            Dashboard dashboard = new DashboardImpl(dashboardName, cards, dashboardPathname);
             dashboards.add(dashboard);
+
+            logger.info("Dashboard={} has been created and added to dashboard list.", dashboard.getName());
             ++i;
         }
+
+        if (dashboards.isEmpty()) {
+            throw new IllegalArgumentException("Dashboard list is empty.");
+        }
+
+        logger.info("Create dashbord list with size={}.", dashboards.size());
 
         return dashboards;
     }

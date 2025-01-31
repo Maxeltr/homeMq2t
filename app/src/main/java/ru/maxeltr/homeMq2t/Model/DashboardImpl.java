@@ -24,6 +24,8 @@
 package ru.maxeltr.homeMq2t.Model;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -32,6 +34,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
@@ -43,7 +46,8 @@ public class DashboardImpl implements Dashboard {
 
     static final int MAX_CHAR_TO_PRINT = 256;
 
-    private final String pathname = File.separator + "Static" + File.separator + "dashboard.html";
+    //private final String pathname = File.separator + "Static" + File.separator + "dashboard.html";
+    private String pathname;
 
     static final String CARD_ELEMENT_ID = "cards";
 
@@ -53,10 +57,12 @@ public class DashboardImpl implements Dashboard {
 
     private final Document view;
 
-    public DashboardImpl(String name, List<Card> dashboardCards) {
+    public DashboardImpl(String name, List<Card> dashboardCards, String pathname) {
         this.name = Objects.requireNonNullElse(name, "");
         this.dashboardCards = dashboardCards;
+        this.pathname = pathname;
         this.view = this.getViewTemplate();
+
     }
 
     @Override
@@ -77,12 +83,12 @@ public class DashboardImpl implements Dashboard {
     private Document getViewTemplate() {
         Document document;
         try {
-            document = this.getTemplateFromResource();
+            document = this.getTemplateFromFile();
+            this.configureTemplate(document);
         } catch (IOException ex) {
             logger.error("Cannot get dashboard template from resource.", ex);
-            return Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get dashboard view template.</h5></div>");
+            document = Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get dashboard view template.</h5></div>");
         }
-        this.configureTemplate(document);
 
         return document;
     }
@@ -96,9 +102,24 @@ public class DashboardImpl implements Dashboard {
         }
     }
 
-    private Document getTemplateFromResource() throws IOException {
-        InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
-        return Jsoup.parse(is, "utf-8", "");
+//    private Document getTemplateFromResource() throws IOException {
+//        //InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
+//        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathname);
+//
+//        if (is == null) {
+//            logger.error("Can not get dashboard from resource. InputStream is null.");
+//        }
+//        Document doc = Jsoup.parse(is, "utf-8", "");
+//        return doc;
+//    }
+
+    private Document getTemplateFromFile() throws IOException {
+        String path = System.getProperty("user.dir") + pathname;
+        logger.info("Load template from={}", path);
+        File initialFile = new File(path);
+        InputStream is = new FileInputStream(initialFile);
+        Document doc = Jsoup.parse(is, "utf-8", "");
+        return doc;
     }
 
     @Override
