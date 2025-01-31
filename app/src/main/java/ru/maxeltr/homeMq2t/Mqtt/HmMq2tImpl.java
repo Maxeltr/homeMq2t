@@ -79,6 +79,7 @@ import org.springframework.boot.CommandLineRunner;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
+
 public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(HmMq2tImpl.class);
@@ -582,7 +583,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
     }
 
     private void startRetransmitTask() {
-        if (this.retransmitScheduledFuture == null || this.retransmitScheduledFuture.isDone()}) {
+        if (this.retransmitScheduledFuture == null || this.retransmitScheduledFuture.isDone()) {
             logger.info("Start retransmit task.");
             this.retransmitScheduledFuture = this.threadPoolTaskScheduler.schedule(new RetransmitTask(), this.retransmitPeriodicTrigger);
         } else {

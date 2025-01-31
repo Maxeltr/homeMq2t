@@ -40,8 +40,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
  *
@@ -50,9 +52,9 @@ import java.util.logging.Level;
 public class CommandServiceImpl implements CommandService {
 
     private static final Logger logger = LoggerFactory.getLogger(CommandServiceImpl.class);
-	
-	private int waitForProcess = 60_000;
-	
+
+    private int waitForProcess = 60_000;
+
     private ServiceMediator mediator;
 
     @Autowired
@@ -112,13 +114,13 @@ public class CommandServiceImpl implements CommandService {
 
         logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
 
-		String result = this.executeCommand(commandPath, arguments);
-		
+        String result = this.executeCommand(commandPath, arguments);
+
         this.sendReply(result, command, topic, qos, retain);
     }
 
     private void sendReply(String data, String commandName, String topic, MqttQoS qos, boolean retain) {
-        Msg.Builder builder = new Msg.Builder("onExecuteCommand").type(this.appProperties.getCommandPubDataType(commandName));
+        Msg.Builder builder = new MsgImpl.MsgBuilder("onExecuteCommand").type(this.appProperties.getCommandPubDataType(commandName));
         builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         builder.data(data);
         Msg msg = builder.build();
@@ -160,17 +162,17 @@ public class CommandServiceImpl implements CommandService {
         int exitCode = 0;
         try {
             boolean finished = p.waitFor(this.waitForProcess, TimeUnit.MILLISECONDS);
-			if (!finished) {
-				logger.warn("Process did not finish in time={}. commandPath={}, arguments={}.", this.waitForProcess, commandPath, arguments);
-				p.destroy();
-				return "Error. Process timed out.";
-			}
-			exitCode = p.exitValue();
+            if (!finished) {
+                logger.warn("Process did not finish in time={}. commandPath={}, arguments={}.", this.waitForProcess, commandPath, arguments);
+                p.destroy();
+                return "Error. Process timed out.";
+            }
+            exitCode = p.exitValue();
         } catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
+            Thread.currentThread().interrupt();
             logger.warn("Waiting for process was interrupted.", ex.getMessage());
         }
-		
+
         if (exitCode != 0) {
             logger.warn("Command executed with error. commandPath={}, arguments={}. exitCode={}", commandPath, arguments, exitCode);
         }

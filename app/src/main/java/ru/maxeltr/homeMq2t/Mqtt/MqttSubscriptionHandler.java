@@ -53,13 +53,13 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
 
     MqttSubscriptionHandler(MqttAckMediator mqttAckMediator) {
         this.mqttAckMediator = mqttAckMediator;
-        logger.debug("Create {}.", this);
+        logger.debug("Create {}.", this.getClass());
     }
-    
+
 //    public void setMediator(MqttAckMediator mqttAckMediator) {
 //        this.mqttAckMediator = mqttAckMediator;
 //    }
-    
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof MqttMessage)) {

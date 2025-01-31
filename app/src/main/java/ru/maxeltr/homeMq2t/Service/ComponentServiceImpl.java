@@ -49,6 +49,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
+import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
  *
@@ -152,7 +153,7 @@ public class ComponentServiceImpl implements ComponentService {
             logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data);
         }
 
-        Msg.Builder builder = new Msg.Builder("onCallback")
+        Msg.Builder builder = new MsgImpl.MsgBuilder("onCallback")
         .data(data)
         .type(appProperties.getComponentPubDataType(componentName))
         .timestamp(String.valueOf(Instant.now().toEpochMilli()));
@@ -211,7 +212,7 @@ public class ComponentServiceImpl implements ComponentService {
                     continue;
                 }
 
-                builder = new Msg.Builder("onPolling");
+                builder = new MsgImpl.MsgBuilder("onPolling");
                 String data = invokeMethod(component, "getData");
                 builder.data(data);
                 logger.info("Get data from component={} in polling task. Data={}", component, data);

@@ -26,12 +26,10 @@ package ru.maxeltr.homeMq2t.Service;
 import com.jayway.jsonpath.InvalidPathException;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
-import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 import io.netty.util.concurrent.Promise;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
@@ -40,12 +38,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
-import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import com.jayway.jsonpath.JsonPath;
+import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
  *
@@ -77,7 +75,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void connect() {
         logger.info("Do connect.");
-        Msg.Builder msg = new Msg.Builder("onConnect").type(MediaType.APPLICATION_JSON_VALUE);
+        Msg.Builder msg = new MsgImpl.MsgBuilder("onConnect").type(MediaType.APPLICATION_JSON_VALUE);
 
         Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
         authFuture.awaitUninterruptibly(this.connectTimeout);

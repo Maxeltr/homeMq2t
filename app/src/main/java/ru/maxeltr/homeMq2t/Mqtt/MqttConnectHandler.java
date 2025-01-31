@@ -99,7 +99,7 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     MqttConnectHandler(MqttAckMediator mqttAckMediator) {
         this.mqttAckMediator = mqttAckMediator;
-        logger.debug("Create {}.", this);
+        logger.debug("Create {}.", this.getClass());
     }
 //    public void setMediator(MqttAckMediator mqttAckMediator) {
 //        this.mqttAckMediator = mqttAckMediator;
@@ -118,7 +118,7 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
             handleConnackMessage(ctx.channel(), (MqttConnAckMessage) message);
             ReferenceCountUtil.release(msg);
         } else if (message.fixedHeader().messageType() == MqttMessageType.DISCONNECT) {
-            logger.info("Received disconnect message={}. Close channel.", msg.variableHeader());
+            logger.info("Received disconnect message={}. Close channel.", message.variableHeader());
             ctx.close();
         } else {
             ctx.fireChannelRead(msg);   //ctx.fireChannelRead(ReferenceCountUtil.retain(msg));
@@ -174,10 +174,10 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
                 channel.flush();
             }
 
-            case CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD, 
-                    CONNECTION_REFUSED_IDENTIFIER_REJECTED, 
-                    CONNECTION_REFUSED_NOT_AUTHORIZED, 
-                    CONNECTION_REFUSED_SERVER_UNAVAILABLE, 
+            case CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD,
+                    CONNECTION_REFUSED_IDENTIFIER_REJECTED,
+                    CONNECTION_REFUSED_NOT_AUTHORIZED,
+                    CONNECTION_REFUSED_SERVER_UNAVAILABLE,
                     CONNECTION_REFUSED_UNACCEPTABLE_PROTOCOL_VERSION -> {
                 if (!future.isDone()) {
                     future.cancel(true);

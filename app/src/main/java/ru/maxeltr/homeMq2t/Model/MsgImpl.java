@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 /**
@@ -37,7 +38,7 @@ public class MsgImpl implements Msg {
 
     private final String timestamp;
 
-    private MsgImpl(Builder builder) {
+    private MsgImpl(MsgBuilder builder) {
         this.data = Objects.requireNonNullElse(builder.data, "");
         this.type = Objects.requireNonNullElse(builder.type, "");
         this.timestamp = Objects.requireNonNullElse(builder.timestamp, "");
@@ -101,8 +102,8 @@ public class MsgImpl implements Msg {
 
         return result;
     }
-	
-	public static class MsgBuilder implements Builder {
+
+    public static class MsgBuilder implements Msg.Builder {
 
         @JsonProperty("id")
         protected String id = "";
@@ -117,32 +118,52 @@ public class MsgImpl implements Msg {
         protected String timestamp = "";
 
         public MsgBuilder() {
-            
+
         }
-        
+
         public MsgBuilder(String id) {
             this.id = id;
         }
-        
+
+        @Override
         public String getId() {
             return id;
         }
 
+        @Override
+        public String getData() {
+            return data;
+        }
+
+        @Override
+        public String getType() {
+            return type;
+        }
+
+        @Override
+        public String getTimestamp() {
+            return timestamp;
+        }
+
+        @Override
         public MsgBuilder data(String data) {
             this.data = Objects.requireNonNullElse(data, "");
             return this;
         }
 
+        @Override
         public MsgBuilder type(String type) {
             this.type = Objects.requireNonNullElse(type, "");
             return this;
         }
 
+        @Override
         public MsgBuilder timestamp(String timestamp) {
             this.timestamp = Objects.requireNonNullElse(timestamp, "");
             return this;
         }
 
+        @Override
         public MsgImpl build() {
             return new MsgImpl(this);
         }

@@ -24,19 +24,15 @@
 package ru.maxeltr.homeMq2t.Model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import java.util.Objects;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-@JsonDeserialize(as = Msg.MsgBuilder.class)
-@JsonIgnoreProperties(ignoreUnknown = true)
 public interface Msg {
 
-    int MAX_CHAR_TO_PRINT = 256;
+    int MAX_CHAR_TO_PRINT = 128;
 
     String getType();
 
@@ -44,16 +40,24 @@ public interface Msg {
 
     String getTimestamp();
 
+    @JsonDeserialize(as = MsgImpl.MsgBuilder.class)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     interface Builder {
-            
+
         String getId();
-        
+
+        String getData();
+
+        String getType();
+
+        String getTimestamp();
+
         Builder data(String data);
 
         Builder type(String type);
 
         Builder timestamp(String timestamp);
 
-        MsgImpl build();
+        Msg build();
     }
 }

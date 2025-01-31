@@ -58,7 +58,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
     public MqttPublishHandlerImpl(MqttAckMediator mqttAckMediator, ServiceMediator serviceMediator) {
         this.mqttAckMediator = mqttAckMediator;
         this.serviceMediator = serviceMediator;
-        logger.debug("Create {}.", this);
+        logger.debug("Create {}.", this.getClass());
     }
 
     @Override

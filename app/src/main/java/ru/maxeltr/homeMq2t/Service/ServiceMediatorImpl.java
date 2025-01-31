@@ -46,6 +46,7 @@ import org.springframework.beans.factory.annotation.Value;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
+import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
 
@@ -106,7 +107,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert msg to json {}", msg, ex.getMessage());
         }
-        
+
     }
 
     @Override
@@ -137,7 +138,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
             builder = this.mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert json to Msg. {} id={}.", ex.getMessage(), id);
-            builder = new Msg.Builder();
+            builder = new MsgImpl.MsgBuilder();
             builder.data(mqttMessage.payload().toString(Charset.forName("UTF-8")));
             builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         }

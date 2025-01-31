@@ -38,49 +38,50 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.beans.factory.annotation.Value;
 
 /**
  *
  * @author Dev
  */
-public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
-    
+public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter {
+
     private static final Logger logger = LoggerFactory.getLogger(MqttPingScheduleHandler.class);
-    
+
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
-    
+
     @Autowired
     private PeriodicTrigger pingPeriodicTrigger;
-    
+
     @Value("${reconnect:true}")
     private boolean reconnect;
-    
+
     private ChannelHandlerContext ctx;
-    
+
     private final ServiceMediator serviceMediator;
-    
+
     private ScheduledFuture<?> future;
 
     private final MqttMessage pingReqMsg;
-    
+
     private final MqttMessage pingRespMsg;
-    
-	private final AtomicBoolean pingRespTimeout = new AtomicBoolean();
+
+    private final AtomicBoolean pingRespTimeout = new AtomicBoolean();
 
     public MqttPingScheduleHandler(ServiceMediator serviceMediator) {
         this.serviceMediator = serviceMediator;
 
         MqttFixedHeader fixedHeaderReqMsg = new MqttFixedHeader(MqttMessageType.PINGREQ, false, MqttQoS.AT_MOST_ONCE, false, 0);
         pingReqMsg = new MqttMessage(fixedHeaderReqMsg);
-        
+
         MqttFixedHeader fixedHeaderRespMsg = new MqttFixedHeader(MqttMessageType.PINGRESP, false, MqttQoS.AT_MOST_ONCE, false, 0);
         pingRespMsg = new MqttMessage(fixedHeaderRespMsg);
-        
-        logger.debug("Create {}.", this);
+
+        logger.debug("Create {}.", this.getClass());
     }
-    
+
     @PostConstruct
     public void startPing() {
         logger.info("Start ping. {}", this);
@@ -91,17 +92,17 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
     public void handlerAdded(ChannelHandlerContext ctx) {
         this.ctx = ctx;
     }
-    
+
     public void stopPing() {
-		if (this.future != null && !this.future.isDone()) {
-			this.future.cancel(false);
-			logger.info("The ping was canceled. {}", this);
-			this.future = null;
-		} else {
-			logger.warn("Attempted to cancel ping, but it was not started or already canceled.");
-		}
+        if (this.future != null && !this.future.isDone()) {
+            this.future.cancel(false);
+            logger.info("The ping was canceled. {}", this);
+            this.future = null;
+        } else {
+            logger.warn("Attempted to cancel ping, but it was not started or already canceled.");
+        }
     }
-    
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (!(msg instanceof MqttMessage)) {
@@ -122,16 +123,16 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
             ctx.fireChannelRead(msg);   //ctx.fireChannelRead(ReferenceCountUtil.retain(msg));
         }
     }
-    
+
     class RunnableTask implements Runnable {
 
         @Override
         public void run() {
-			if (ctx == null) {
-				logger.warn("ChannelHandlerContext is not initialized. Skipping ping request.");
-				return;
-			}
-			
+            if (ctx == null) {
+                logger.warn("ChannelHandlerContext is not initialized. Skipping ping request.");
+                return;
+            }
+
             if (pingRespTimeout.get()) {
                 logger.info("Ping response was not received within the keep-alive period. {}", this);
                 stopPing();
@@ -139,10 +140,10 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter  {
                     logger.info("Start the reconnection attempt.");
                     serviceMediator.reconnect();
                 } else {
-					logger.info("Disconnect without the reconnection.");
+                    logger.info("Disconnect without the reconnection.");
                     serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
                 }
-                
+
                 return;
             }
 
