@@ -83,19 +83,23 @@ public class UIServiceImpl implements UIService {
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
+            logger.debug("Send data={}.", startDashboardWithError);
             msg.data("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                     + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
                     + "\"}");
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed.");
             String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
+            logger.debug("Send data={}.", startDashboardWithError);
             msg.data("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
                     + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
                     + "\"}");
         } else {
             logger.info("Connection established successfully.");
+            String data = this.getStartDashboard();
+            logger.debug("Send data={}.", data);
             msg.data("{\"name\": \"onConnect\", \"status\": \"ok\", \"type\": \"text/html;base64\", \"data\": \""
-                    + Base64.getEncoder().encodeToString(this.getStartDashboard().getBytes())
+                    + Base64.getEncoder().encodeToString(data.getBytes())
                     + "\"}");
         }
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
