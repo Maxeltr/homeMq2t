@@ -88,7 +88,6 @@ public class ComponentLoader {
 //
 //        return pathSet;
 //    }
-
     public List<Object> loadClassesFromJar(String path) {
         List<Object> components = new ArrayList<>();
         if (path.trim().isEmpty()) {
@@ -99,11 +98,11 @@ public class ComponentLoader {
 
         for (Class clazz : classes) {
             if (clazz.isInterface()) {
-				logger.info("Found interface={} in jar={}", clazz, path);
+                logger.info("Found interface={} in jar={}", clazz, path);
                 continue;
             }
-			
-			logger.info("Found class={} in jar={}", clazz, path);
+
+            logger.info("Found class={} in jar={}", clazz, path);
             for (Class clazzInterface : ClassUtils.getAllInterfaces(clazz)) {
                 logger.info("Class={} implements interface={}", clazz, clazzInterface);
                 if (clazzInterface.getSimpleName().equals(Mq2tComponent.class.getSimpleName())) {
@@ -112,12 +111,12 @@ public class ComponentLoader {
                 }
             }
         }
-		
-		if (components.isEmpty()) {
-			logger.warn("No valid classes found in jar={}", path);
-		} else {
-			logger.info("Successfully instantiated {} classes from jar={}", components.size(), path);
-		}
+
+        if (components.isEmpty()) {
+            logger.warn("No valid classes found in jar={}", path);
+        } else {
+            logger.info("Successfully instantiated {} classes from jar={}", components.size(), path);
+        }
 
         return components;
     }

@@ -30,6 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -82,13 +85,9 @@ public class DashboardImpl implements Dashboard {
 
     private Document getViewTemplate() {
         Document document;
-        try {
-            document = this.getTemplateFromFile();
-            this.configureTemplate(document);
-        } catch (IOException ex) {
-            logger.error("Cannot get dashboard template from resource.", ex);
-            document = Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get dashboard view template.</h5></div>");
-        }
+        document = this.getTemplateFromFile()
+                .orElse(Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get dashboard view template.</h5></div>"));
+        this.configureTemplate(document);
 
         return document;
     }
@@ -99,6 +98,8 @@ public class DashboardImpl implements Dashboard {
             for (Card card : this.getCards()) {
                 el.append(card.getHtml());
             }
+        } else {
+            logger.warn("Element with id={} not found in the document.", CARD_ELEMENT_ID);
         }
     }
 
@@ -112,14 +113,24 @@ public class DashboardImpl implements Dashboard {
 //        Document doc = Jsoup.parse(is, "utf-8", "");
 //        return doc;
 //    }
-
-    private Document getTemplateFromFile() throws IOException {
+    private Optional<Document> getTemplateFromFile() {
         String path = System.getProperty("user.dir") + pathname;
         logger.info("Load template from={}", path);
+        Document doc = null;
         File initialFile = new File(path);
-        InputStream is = new FileInputStream(initialFile);
-        Document doc = Jsoup.parse(is, "utf-8", "");
-        return doc;
+
+        if (!initialFile.exists()) {
+            logger.error("Dashboard template file not found: {}", path);
+            return Optional.empty();
+        }
+
+        try (InputStream is = new FileInputStream(initialFile)) {
+            doc = Jsoup.parse(is, "utf-8", "");
+        } catch (IOException ex) {
+            logger.error("Error reading or parsing dashboard template.", ex);
+        }
+
+        return Optional.ofNullable(doc);
     }
 
     @Override

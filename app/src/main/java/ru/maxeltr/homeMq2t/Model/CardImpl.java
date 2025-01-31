@@ -25,9 +25,11 @@ package ru.maxeltr.homeMq2t.Model;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
+import java.util.Optional;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -58,7 +60,6 @@ public class CardImpl implements Card {
 //        this.view = this.getViewTemplate();
 //        this.pathname = pathname;
 //    }
-
     public CardImpl(String cardNumber, String name, String pathname) {
         this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
         this.name = Objects.requireNonNullElse(name, "");
@@ -84,13 +85,10 @@ public class CardImpl implements Card {
 
     private Document getViewTemplate() {
         Document document;
-        try {
-            document = this.getTemplateFromFile();
-            this.configureTemplate(document);
-        } catch (IOException ex) {
-            logger.error("Cannot get card template from resource.", ex);
-            document = Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>");
-        }
+
+        document = this.getTemplateFromFile()
+                .orElse(Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>"));
+        this.configureTemplate(document);
 
         return document;
     }
@@ -140,13 +138,24 @@ public class CardImpl implements Card {
         }
     }
 
-    private Document getTemplateFromFile() throws IOException {
+    private Optional<Document> getTemplateFromFile() {
         String path = System.getProperty("user.dir") + pathname;
         logger.info("Load template from={}", path);
+        Document doc = null;
         File initialFile = new File(path);
-        InputStream is = new FileInputStream(initialFile);
-        Document doc = Jsoup.parse(is, "utf-8", "");
-        return doc;
+
+        if (!initialFile.exists()) {
+            logger.error("Card template file not found: {}", path);
+            return Optional.empty();
+        }
+
+        try (InputStream is = new FileInputStream(initialFile)) {
+            doc = Jsoup.parse(is, "utf-8", "");
+        } catch (IOException ex) {
+            logger.error("Error reading or parsing card template.", ex);
+        }
+
+        return Optional.ofNullable(doc);
     }
 
 //    private Document getTemplateFromResource() throws IOException {
@@ -154,7 +163,6 @@ public class CardImpl implements Card {
 //        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathname);
 //        return Jsoup.parse(is, "utf-8", "");
 //    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
