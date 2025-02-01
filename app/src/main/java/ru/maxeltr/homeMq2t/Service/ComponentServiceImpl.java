@@ -150,8 +150,9 @@ public class ComponentServiceImpl implements ComponentService {
         }
 
         String componentName = dataMap.get("name").toLowerCase();
-        if (componentName == null) {
+        if (componentName == null || componentName.isEmpty()) {
             logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data);
+            return;
         }
 
         Msg.Builder builder = new MsgImpl.MsgBuilder("onCallback")
@@ -160,8 +161,20 @@ public class ComponentServiceImpl implements ComponentService {
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
         String topic = appProperties.getComponentPubTopic(componentName);
-        MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));
-        boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(componentName));
+        if (topic == null || topic.isEmpty()) {
+            logger.info("Could not publish. There is no topic for component={}", componentName);
+            return;
+        }
+
+        MqttQoS qos;
+        try {
+            qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));
+        } catch (IllegalArgumentException ex) {
+            logger.error("Invalid QoS value for component={}: {}. Set QoS=0.", componentName, ex.getMessage());
+            qos = MqttQoS.valueOf(0);
+        }
+
+        boolean retain = Boolean.parseBoolean(appProperties.getComponentPubRetain(componentName));
 
         this.publish(builder, topic, qos, retain);
 
@@ -205,7 +218,7 @@ public class ComponentServiceImpl implements ComponentService {
 
     @Override
     public void stopPolling() {
-        if (this.pollingScheduledFuture != null && !this.pollingScheduledFuture.isCancelled()) {
+        if (this.pollingScheduledFuture != null && !this.pollingScheduledFuture.isDone()) {
             this.pollingScheduledFuture.cancel(false);
             this.pollingScheduledFuture = null;
             logger.info("Polling components task has been stopped");
@@ -236,7 +249,7 @@ public class ComponentServiceImpl implements ComponentService {
             qos = MqttQoS.valueOf(0);
         }
 
-        boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(componentName));
+        boolean retain = Boolean.parseBoolean(appProperties.getComponentPubRetain(componentName));
 
         publish(builder, topic, qos, retain);
     }
