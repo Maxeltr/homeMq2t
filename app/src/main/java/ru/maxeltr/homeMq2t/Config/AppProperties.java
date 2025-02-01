@@ -124,6 +124,10 @@ public class AppProperties {
         return env.getProperty("card[" + id + "].publication.data.type", "");
     }
 
+    public String getComponentName(String id) {
+        return env.getProperty("component[" + id + "].name", "");
+    }
+
     public String getComponentNumberByTopic(String topic) {
         String number = topicsAndComponents.get(topic);
         return number == null ? "" : number;

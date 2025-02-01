@@ -142,21 +142,22 @@ public class ComponentServiceImpl implements ComponentService {
 
         HashMap<String, String> dataMap;
         try {
-            dataMap = mapper.readValue(data, new TypeReference<HashMap<String, String>>(){});
+            dataMap = mapper.readValue(data, new TypeReference<HashMap<String, String>>() {
+            });
         } catch (JsonProcessingException ex) {
             logger.warn("Could not convert json data={} to map. {}", data, ex.getMessage());
             return;
         }
 
-        String componentName = dataMap.get("name");
+        String componentName = dataMap.get("name").toLowerCase();
         if (componentName == null) {
             logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data);
         }
 
         Msg.Builder builder = new MsgImpl.MsgBuilder("onCallback")
-        .data(data)
-        .type(appProperties.getComponentPubDataType(componentName))
-        .timestamp(String.valueOf(Instant.now().toEpochMilli()));
+                .data(data)
+                .type(appProperties.getComponentPubDataType(componentName))
+                .timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
         String topic = appProperties.getComponentPubTopic(componentName);
         MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));
@@ -170,12 +171,24 @@ public class ComponentServiceImpl implements ComponentService {
     @Override
     public void process(Msg.Builder builder, String componentNumber) {
         Msg msg = builder.build();
-        logger.debug("Process message. Component number={}, msg={} ", componentNumber, msg);
+        logger.info("Process message. Component number={}, msg={}", componentNumber, msg);
+
+        String componentName = appProperties.getComponentName(componentNumber);
+        if (componentName == null || componentName.isEmpty()) {
+            logger.info("Could not process for component={}. Component name is empty.", componentNumber);
+            return;
+        }
+
         if (msg.getType().equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
-            if (msg.getData().equalsIgnoreCase("updateAll")) {
-                logger.debug("Update readings of all components");
-                this.stopPolling();
-                this.startPolling();
+            if (msg.getData().equalsIgnoreCase("update")) {
+
+                logger.info("Update readings of component={}, number={}", componentName, componentNumber);
+                for (Object component : this.pluginComponents) {
+                    if (componentName.equalsIgnoreCase(this.invokeMethod(component, "getName"))) {
+                        this.readAndPublish(component);
+                    }
+                }
+
             }
         }
     }
@@ -199,34 +212,33 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
-    class PollingTask implements Runnable {
+    private void readAndPublish(Object component) {
+        Msg.Builder builder;
+        String componentName = invokeMethod(component, "getName").toLowerCase();
+        builder = new MsgImpl.MsgBuilder("onPolling");
+        String data = invokeMethod(component, "getData");
+        builder.data(data);
+        logger.info("Get data from component={} in polling task. Data={}", componentName, data);
+        builder.type(appProperties.getComponentPubDataType(componentName));
+        builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
-        @Override
-        public void run() {
-            logger.debug("Start/resume polling");
-            Msg.Builder builder;
-            for (Object component : pluginComponents) {
-                String componentName = invokeMethod(component, "getName");
-                if (!isImplements(component, Mq2tPollableComponent.class)) {
-                    logger.debug("Component={} does not implement Mq2tPollingComponent. Skipped.", componentName);
-                    continue;
-                }
-
-                builder = new MsgImpl.MsgBuilder("onPolling");
-                String data = invokeMethod(component, "getData");
-                builder.data(data);
-                logger.info("Get data from component={} in polling task. Data={}", component, data);
-                builder.type(appProperties.getComponentPubDataType(componentName));
-                builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-
-                String topic = appProperties.getComponentPubTopic(componentName);
-                MqttQoS qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));
-                boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(componentName));
-
-                publish(builder, topic, qos, retain);
-            }
-            logger.debug("Pause polling");
+        String topic = appProperties.getComponentPubTopic(componentName);
+        if (topic == null || topic.isEmpty()) {
+            logger.info("Could not publish. There is no topic for component={}", componentName);
+            return;
         }
+
+        MqttQoS qos;
+        try {
+            qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));
+        } catch (IllegalArgumentException ex) {
+            logger.error("Invalid QoS value for component={}: {}. Set QoS=0.", componentName, ex.getMessage());
+            qos = MqttQoS.valueOf(0);
+        }
+
+        boolean retain = Boolean.getBoolean(appProperties.getComponentPubRetain(componentName));
+
+        publish(builder, topic, qos, retain);
     }
 
     @Async("processExecutor")
@@ -239,4 +251,21 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    class PollingTask implements Runnable {
+
+        @Override
+        public void run() {
+            logger.debug("Start/resume polling");
+
+            for (Object component : pluginComponents) {
+                String componentName = invokeMethod(component, "getName");
+                if (!isImplements(component, Mq2tPollableComponent.class)) {
+                    logger.debug("Component={} does not implement Mq2tPollingComponent. Skipped.", componentName);
+                    continue;
+                }
+                readAndPublish(component);
+            }
+            logger.debug("Pause polling");
+        }
+    }
 }

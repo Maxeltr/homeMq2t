@@ -130,13 +130,25 @@ public class UIServiceImpl implements UIService {
     @Override
     public void publish(Msg.Builder msg) {
         String topic = this.appProperties.getCardPubTopic(msg.getId());
-        MqttQoS qos = MqttQoS.valueOf(this.appProperties.getCardPubQos(msg.getId()));
-        boolean retain = Boolean.getBoolean(this.appProperties.getCardPubRetain(msg.getId()));
+        if (topic == null || topic.isEmpty()) {
+            logger.info("Could not publish. There is no topic for card={}", msg.getId());
+            return;
+        }
+
+        MqttQoS qos;
+        try {
+            qos = MqttQoS.valueOf(this.appProperties.getCardPubQos(msg.getId()));
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid QoS value for card={}: {}. Set QoS=0.", msg.getId(), e.getMessage());
+            qos = MqttQoS.valueOf(0);
+        }
+
+        boolean retain = Boolean.parseBoolean(this.appProperties.getCardPubRetain(msg.getId()));
         msg.data(this.appProperties.getCardPubData(msg.getId()));
         msg.type(this.appProperties.getCardPubDataType(msg.getId()));
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
-        logger.info("Create message {}.", msg);
+        logger.info("Creating message for card={}, topic={}, QoS={}, retain={}.", msg.getId(), topic, qos, retain);
 
         this.mediator.publish(msg.build(), topic, qos, retain);
     }

@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -81,6 +82,12 @@ public class AppAnnotationConfig {
     @Bean
     public AppProperties getAppProperty() {
         logger.info("Current user dir={}", System.getProperty("user.dir"));
+        String[] classpathes = System.getProperty("java.class.path").split(File.pathSeparator);
+        for (String classpath : classpathes) {
+            logger.info("Classpath={}", classpath);
+        }
+        logger.info("Java home={}", System.getenv("JAVA_HOME"));
+        logger.info("OS name={}", System.getProperty("os.name"));
 
         return new AppProperties();
     }
