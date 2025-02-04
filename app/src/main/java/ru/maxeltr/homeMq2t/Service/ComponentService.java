@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import java.util.Optional;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
@@ -31,11 +32,13 @@ import ru.maxeltr.homeMq2t.Model.Msg;
  */
 public interface ComponentService {
 
-    public void setMediator(ServiceMediator mediator);
+    void setMediator(ServiceMediator mediator);
 
-    public void process(Msg.Builder msg, String componentNumber);
+    void process(Msg.Builder msg, String componentNumber);
 
-    public void startPolling();
+    void startPolling();
 
-    public void stopPolling();
+    void stopPolling();
+
+    Optional getComponentByName(String name);
 }

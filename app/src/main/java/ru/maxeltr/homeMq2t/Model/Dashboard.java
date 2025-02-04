@@ -31,9 +31,11 @@ import java.util.List;
  */
 public interface Dashboard {
 
-    public String getName();
+	String getDashboardNumber();
+	
+    String getName();
 
-    public String getHtml();
+    String getHtml();
 
-    public List<Card> getCards();
+    List<Card> getCards();
 }

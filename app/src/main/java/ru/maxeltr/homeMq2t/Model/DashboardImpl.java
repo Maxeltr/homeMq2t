@@ -51,6 +51,8 @@ public class DashboardImpl implements Dashboard {
 
     //private final String pathname = File.separator + "Static" + File.separator + "dashboard.html";
     private String pathname;
+	
+	private String dashboardNumber = "";
 
     static final String CARD_ELEMENT_ID = "cards";
 
@@ -60,7 +62,8 @@ public class DashboardImpl implements Dashboard {
 
     private final Document view;
 
-    public DashboardImpl(String name, List<Card> dashboardCards, String pathname) {
+    public DashboardImpl(String dashboardNumber, String name, List<Card> dashboardCards, String pathname) {
+		this.dashboardNumber = Objects.requireNonNullElse(dashboardNumber, "");
         this.name = Objects.requireNonNullElse(name, "");
         this.dashboardCards = dashboardCards;
         this.pathname = pathname;
@@ -68,6 +71,11 @@ public class DashboardImpl implements Dashboard {
 
     }
 
+	@Override
+    public String getDashboardNumber() {
+        return this.dashboardNumber;
+    }
+	
     @Override
     public String getName() {
         return this.name;
@@ -114,7 +122,7 @@ public class DashboardImpl implements Dashboard {
 //        return doc;
 //    }
     private Optional<Document> getTemplateFromFile() {
-        String path = System.getProperty("user.dir") + pathname;
+        String path = System.getProperty("user.dir") + this.pathname;
         logger.info("Load template from={}", path);
         Document doc = null;
         File initialFile = new File(path);
