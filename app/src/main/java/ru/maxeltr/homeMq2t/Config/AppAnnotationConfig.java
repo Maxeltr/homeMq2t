@@ -271,7 +271,7 @@ public class AppAnnotationConfig {
                 throw new IllegalArgumentException("No name defined for dashboard=" + i);
             }
 
-            Dashboard dashboard = new DashboardImpl(dashboardName, cards, dashboardPathname);
+            Dashboard dashboard = new DashboardImpl(String.valueOf(i), dashboardName, cards, dashboardPathname);
             dashboards.add(dashboard);
 
             logger.info("Dashboard={} has been created and added to dashboard list.", dashboard.getName());

@@ -34,6 +34,7 @@ import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -137,46 +138,33 @@ public class ComponentServiceImpl implements ComponentService {
         return data;
     }
 
-    public void callback(String data) {
-        logger.debug("Callback has been called. Data={}", data);
-
+    private Optional<String> getComponentNameFromJson(String data) {
         HashMap<String, String> dataMap;
         try {
             dataMap = mapper.readValue(data, new TypeReference<HashMap<String, String>>() {
             });
         } catch (JsonProcessingException ex) {
             logger.warn("Could not convert json data={} to map. {}", data, ex.getMessage());
-            return;
+            return Optional.empty();
         }
 
-        String componentName = dataMap.get("name").toLowerCase();
-        if (componentName == null || componentName.isEmpty()) {
+        return Optional.ofNullable(dataMap.get("name"));
+
+    }
+
+    public void callback(String data) {
+        logger.debug("Callback has been called. Data={}", data);
+
+        Optional<String> componentNameOpt = this.getComponentNameFromJson(data);
+        if (componentNameOpt.isEmpty()) {
             logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data);
             return;
         }
+        String componentName = componentNameOpt.get().toLowerCase();
 
-        Msg.Builder builder = new MsgImpl.MsgBuilder("onCallback")
-                .data(data)
-                .type(appProperties.getComponentPubDataType(componentName))
-                .timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        Msg.Builder builder = this.createMessage(componentName, data);
 
-        String topic = appProperties.getComponentPubTopic(componentName);
-        if (topic == null || topic.isEmpty()) {
-            logger.info("Could not publish. There is no topic for component={}", componentName);
-            return;
-        }
-
-        MqttQoS qos;
-        try {
-            qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));
-        } catch (IllegalArgumentException ex) {
-            logger.error("Invalid QoS value for component={}: {}. Set QoS=0.", componentName, ex.getMessage());
-            qos = MqttQoS.valueOf(0);
-        }
-
-        boolean retain = Boolean.parseBoolean(appProperties.getComponentPubRetain(componentName));
-
-        this.publish(builder, topic, qos, retain);
+        this.publish(builder, componentName);
 
     }
 
@@ -193,17 +181,39 @@ public class ComponentServiceImpl implements ComponentService {
         }
 
         if (msg.getType().equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
-            if (msg.getData().equalsIgnoreCase("update")) {
+            String command = msg.getData();
+            if (command == null || command.isEmpty()) {
+                logger.info("Could not process for component={}, component number={}. Component data is empty.", componentName, componentNumber);
+                return;
+            }
 
-                logger.info("Update readings of component={}, number={}", componentName, componentNumber);
-                for (Object component : this.pluginComponents) {
-                    if (componentName.equalsIgnoreCase(this.invokeMethod(component, "getName"))) {
-                        this.readAndPublish(component);
-                    }
-                }
-
+            if (command.equalsIgnoreCase("update")) {
+                logger.info("Process command={}.", command);
+                this.doUpdate(componentName);
+            } else {
+                logger.warn("Unknown command={}.", command);
             }
         }
+    }
+
+    private void doUpdate(String componentName) {
+        logger.info("Update readings of component={}.", componentName);
+        this.getComponentByName(componentName).ifPresentOrElse(
+                component -> this.readAndPublish(component),
+                () -> logger.warn("Could not update readings of component={}.", componentName)
+        );
+    }
+
+    @Override
+    public Optional<Object> getComponentByName(String componentName) {
+        for (Object component : this.pluginComponents) {
+            if (componentName.equalsIgnoreCase(this.invokeMethod(component, "getName"))) {
+                return Optional.of(component);
+            }
+        }
+        logger.warn("There is no component for name={}.", componentName);
+
+        return Optional.empty();
     }
 
     @Override
@@ -226,15 +236,33 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     private void readAndPublish(Object component) {
-        Msg.Builder builder;
         String componentName = invokeMethod(component, "getName").toLowerCase();
-        builder = new MsgImpl.MsgBuilder("onPolling");
         String data = invokeMethod(component, "getData");
-        builder.data(data);
         logger.info("Get data from component={} in polling task. Data={}", componentName, data);
-        builder.type(appProperties.getComponentPubDataType(componentName));
-        builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
+        Msg.Builder builder = this.createMessage(componentName, data);
+
+        publish(builder, componentName);
+    }
+
+    private Msg.Builder createMessage(String componentName, String data) {
+        String type = appProperties.getComponentPubDataType(componentName);
+        if (type == null || type.isEmpty()) {
+            logger.info("Type is empty for component={}. Set text/plain. }.", componentName);
+            type = MediaType.TEXT_PLAIN_VALUE;
+        }
+
+        Msg.Builder builder = new MsgImpl.MsgBuilder()
+                .data(data)
+                .type(type)
+                .timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        logger.debug("Create message. Component name={}, Data={}", componentName, builder);
+
+        return builder;
+    }
+
+    @Async("processExecutor")
+    private void publish(Msg.Builder msg, String componentName) {
         String topic = appProperties.getComponentPubTopic(componentName);
         if (topic == null || topic.isEmpty()) {
             logger.info("Could not publish. There is no topic for component={}", componentName);
@@ -251,11 +279,6 @@ public class ComponentServiceImpl implements ComponentService {
 
         boolean retain = Boolean.parseBoolean(appProperties.getComponentPubRetain(componentName));
 
-        publish(builder, topic, qos, retain);
-    }
-
-    @Async("processExecutor")
-    private void publish(Msg.Builder msg, String topic, MqttQoS qos, boolean retain) {
         if (this.mediator != null && this.mediator.isConnected()) {
             logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
             this.mediator.publish(msg.build(), topic, qos, retain);
