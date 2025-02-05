@@ -36,9 +36,9 @@ public interface ComponentService {
 
     void process(Msg.Builder msg, String componentNumber);
 
-    void startPolling();
+    void startSensorStreaming();
 
-    void stopPolling();
+    void stopSensorStreaming();
 
     Optional getComponentByName(String name);
 }

@@ -144,11 +144,18 @@ public class UIServiceImpl implements UIService {
         }
 
         boolean retain = Boolean.parseBoolean(this.appProperties.getCardPubRetain(msg.getId()));
+
+        String type = this.appProperties.getCardPubDataType(msg.getId());
+        if (type == null || type.isEmpty()) {
+            logger.info("Type is empty for card={}. Set text/plain.", msg.getId());
+            type = MediaType.TEXT_PLAIN_VALUE;
+        }
+
+        msg.type(type);
         msg.data(this.appProperties.getCardPubData(msg.getId()));
-        msg.type(this.appProperties.getCardPubDataType(msg.getId()));
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
-        logger.info("Creating message for card={}, topic={}, QoS={}, retain={}.", msg.getId(), topic, qos, retain);
+        logger.info("Creating publish message for card={}, topic={}, QoS={}, retain={}.", msg.getId(), topic, qos, retain);
 
         this.mediator.publish(msg.build(), topic, qos, retain);
     }
@@ -156,16 +163,22 @@ public class UIServiceImpl implements UIService {
     @Async("processExecutor")
     @Override
     public void display(Msg.Builder builder, String cardNumber) {
-        builder.type(this.appProperties.getCardSubDataType(cardNumber));
+        String type = this.appProperties.getCardSubDataType(cardNumber);
+        if (type == null || type.isEmpty()) {
+            logger.info("Type is empty for card={}. Set text/plain.", cardNumber);
+            type = MediaType.TEXT_PLAIN_VALUE;
+        }
+
+        builder.type(type);
         if (builder.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
             String dataName = this.appProperties.getCardSubDataName(cardNumber);
             String jsonPathExpression = this.appProperties.getCardSubJsonPathExpression(cardNumber);
-            if (!jsonPathExpression.isEmpty()) {
+            if (jsonPathExpression != null && !jsonPathExpression.isEmpty()) {
                 String parsedValue = this.parseJson(builder.getData(), jsonPathExpression);
                 logger.debug("Parse data. Parsed value={}.", parsedValue);
                 builder.data("{\"name\": \"" + dataName + "\", \"type\": \"" + MediaType.TEXT_PLAIN_VALUE + "\", \"data\": \"" + parsedValue + "\"}");
             } else {
-                logger.debug("JsonPath expression is empty.");
+                logger.debug("JsonPath expression is empty for card={}.", cardNumber);
             }
         }
         builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));

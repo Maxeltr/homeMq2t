@@ -137,7 +137,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         try {
             builder = this.mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
         } catch (JsonProcessingException ex) {
-            logger.warn("Cannot convert json to Msg. {} id={}.", ex.getMessage(), id);
+            logger.warn("Cannot convert json to Msg. {} Message id={}. Data was added as plain text.", ex.getMessage(), id);
             builder = new MsgImpl.MsgBuilder();
             builder.data(mqttMessage.payload().toString(Charset.forName("UTF-8")));
             builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
@@ -145,21 +145,21 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
         String topicName = (mqttMessage.variableHeader().topicName());
         String cardNumber = this.appProperties.getCardNumberByTopic(topicName);
-        if (!cardNumber.isEmpty()) {
+        if (cardNumber != null && !cardNumber.isEmpty()) {
             this.display(builder, cardNumber);
             logger.debug("Message id={} has been passed to ui service.", id);
 
         }
 
         String commandNumber = this.appProperties.getCommandNumberByTopic(topicName);
-        if (!commandNumber.isEmpty()) {
+        if (commandNumber != null && !commandNumber.isEmpty()) {
             this.execute(builder, commandNumber);
             logger.debug("Message id={} has been passed to command service.", id);
 
         }
 
         String componentNumber = this.appProperties.getComponentNumberByTopic(topicName);
-        if (!componentNumber.isEmpty()) {
+        if (componentNumber != null && !componentNumber.isEmpty()) {
             this.process(builder, componentNumber);
             logger.debug("Message id={} has been passed to component service.", id);
 
@@ -186,7 +186,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Override
     public void shutdown() {
         this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
-        this.componentService.stopPolling();
+        this.componentService.stopSensorStreaming();
         try {
             TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {

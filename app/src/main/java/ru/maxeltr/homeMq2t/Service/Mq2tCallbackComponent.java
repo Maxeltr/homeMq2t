@@ -32,4 +32,8 @@ import java.util.function.Consumer;
 public interface Mq2tCallbackComponent extends Mq2tComponent {
 
     void setCallback(Consumer T);
+
+    void start();
+
+    void stop();
 }

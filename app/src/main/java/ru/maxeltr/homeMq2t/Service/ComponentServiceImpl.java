@@ -89,8 +89,6 @@ public class ComponentServiceImpl implements ComponentService {
 
     @PostConstruct
     public void postConstruct() {
-        logger.debug("Postconstruc ComponentService = {}", this.pluginComponents);
-
         for (Object component : this.pluginComponents) {
             if (this.isImplements(component, Mq2tCallbackComponent.class)) {
                 this.invokeMethod(component, "setCallback", (String data) -> callback(data));
@@ -98,7 +96,7 @@ public class ComponentServiceImpl implements ComponentService {
             logger.debug("Loaded component={}", this.invokeMethod(component, "getName"));   //TODO how to unload components?
         }
 
-        this.startPolling();
+        this.startSensorStreaming();
 
         //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
     }
@@ -131,8 +129,8 @@ public class ComponentServiceImpl implements ComponentService {
             Method method = component.getClass().getMethod(methodName);
             data = method.invoke(component).toString();
             logger.debug("Method={} has been  invoked in component={}", methodName, component);
-        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
-            logger.warn("Could not invoke method={} in component={}. ", methodName, component, ex);
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException | NullPointerException ex) {
+            logger.warn("Could not invoke method={} in component={}. {}", methodName, component, ex.getMessage());
         }
 
         return data;
@@ -179,8 +177,10 @@ public class ComponentServiceImpl implements ComponentService {
             logger.info("Could not process for component={}. Component name is empty.", componentNumber);
             return;
         }
+        logger.info("Process message. Component number={}, component name={}", componentNumber, componentName);
 
-        if (msg.getType().equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
+        String type = msg.getType();
+        if (type.equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             String command = msg.getData();
             if (command == null || command.isEmpty()) {
                 logger.info("Could not process for component={}, component number={}. Component data is empty.", componentName, componentNumber);
@@ -191,8 +191,10 @@ public class ComponentServiceImpl implements ComponentService {
                 logger.info("Process command={}.", command);
                 this.doUpdate(componentName);
             } else {
-                logger.warn("Unknown command={}.", command);
+                logger.warn("Could not process. Unknown command={}.", command);
             }
+        } else {
+            logger.warn("Could not process. Unknown type={}.", type);
         }
     }
 
@@ -217,21 +219,37 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     @Override
-    public void startPolling() {
+    public void startSensorStreaming() {
         if (this.pollingScheduledFuture == null) {
             logger.info("Start polling components task.");
             this.pollingScheduledFuture = this.threadPoolTaskScheduler.schedule(new PollingTask(), this.pollingPeriodicTrigger);
         } else {
             logger.warn("Could not start polling components task. Previous polling components task was not stopped.");
         }
+
+        for (Object component : this.pluginComponents) {
+            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
+                this.invokeMethod(component, "start");
+                logger.debug("Start streaming component={}", this.invokeMethod(component, "getName"));
+            }
+        }
     }
 
     @Override
-    public void stopPolling() {
+    public void stopSensorStreaming() {
         if (this.pollingScheduledFuture != null && !this.pollingScheduledFuture.isDone()) {
             this.pollingScheduledFuture.cancel(false);
             this.pollingScheduledFuture = null;
-            logger.info("Polling components task has been stopped");
+            logger.info("Polling components task is stopped");
+        } else {
+            logger.info("Polling components task has been stopped already.");
+        }
+
+        for (Object component : this.pluginComponents) {
+            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
+                this.invokeMethod(component, "stop");
+                logger.debug("Stop streaming component={}", this.invokeMethod(component, "getName"));
+            }
         }
     }
 

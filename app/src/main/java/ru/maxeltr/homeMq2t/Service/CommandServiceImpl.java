@@ -96,16 +96,23 @@ public class CommandServiceImpl implements CommandService {
         }
 
         String topic = appProperties.getCommandPubTopic(command);
-        MqttQoS qos = MqttQoS.valueOf(appProperties.getCommandPubQos(command));
-        boolean retain = Boolean.parseBoolean(appProperties.getCommandPubRetain(command));
-
-        if (topic.trim().isEmpty()) {
+        if (topic == null || topic.trim().isEmpty()) {
             logger.warn("Command {} publication topic is empty.", command);
             return;
         }
 
+        MqttQoS qos;
+        try {
+            qos = MqttQoS.valueOf(appProperties.getCommandPubQos(command));
+        } catch (IllegalArgumentException ex) {
+            logger.error("Invalid QoS value for command={}: {}. Set QoS=0.", command, ex.getMessage());
+            qos = MqttQoS.valueOf(0);
+        }
+
+        boolean retain = Boolean.parseBoolean(appProperties.getCommandPubRetain(command));
+
         String commandPath = this.appProperties.getCommandPath(command);
-        if (commandPath.trim().isEmpty()) {
+        if (commandPath == null || commandPath.trim().isEmpty()) {
             logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
             return;
         }
@@ -120,11 +127,19 @@ public class CommandServiceImpl implements CommandService {
     }
 
     private void sendReply(String data, String commandName, String topic, MqttQoS qos, boolean retain) {
-        Msg.Builder builder = new MsgImpl.MsgBuilder("onExecuteCommand").type(this.appProperties.getCommandPubDataType(commandName));
-        builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-        builder.data(data);
+        String type = this.appProperties.getCommandPubDataType(commandName);
+        if (type == null || type.isEmpty()) {
+            logger.info("Type is empty for command={}. Set text/plain.", commandName);
+            type = MediaType.TEXT_PLAIN_VALUE;
+        }
+
+        Msg.Builder builder = new MsgImpl.MsgBuilder("onExecuteCommand")
+                .type(type)
+                .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                .data(data);
+        
         Msg msg = builder.build();
-        this.mediator.publish(msg, topic, qos, retain);
+        this.mediator.publish(builder.build(), topic, qos, retain);
 
         logger.info("Reply on command={} has been sent. Msg={}, topic={}, qos={}, retain={}.", commandName, msg, topic, qos, retain);
     }
