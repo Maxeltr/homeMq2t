@@ -182,7 +182,7 @@ public class UIServiceImpl implements UIService {
             }
         }
         builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
-        logger.debug("Display data={}.", builder);
+        logger.debug("Display data={}. Card={}", builder, cardNumber);
         this.uiController.display(builder.build(), cardNumber);
     }
 

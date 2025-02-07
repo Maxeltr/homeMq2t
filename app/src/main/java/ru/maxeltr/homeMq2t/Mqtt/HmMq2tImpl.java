@@ -353,16 +353,18 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
         if (subAckQos.size() != topics.size()) {
             logger.warn("Number of topics to subscribe is not match number of returned granted QOS. QoS size={}. Topics size={}", subAckQos.size(), topics.size());
-            //TODO resub?
+            this.disconnect((byte) 1);  //TODO resub?
         } else {
             for (int i = 0; i < subAckQos.size(); i++) {
-                if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
-                    this.subscribedTopics.put(topics.get(i).topicName(), topics.get(i));
+                if (subAckQos.get(i) == 128) {
+                    logger.warn("Subscription on topic={} with Qos={} failed. Return code={}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
+                } else if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
                     logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicName(), topics.get(i).qualityOfService());
                 } else {
-                    logger.warn("Subscription on topic={} with Qos={} failed. Granted Qos={}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
+                    logger.warn("Subscribed on topic={} with Qos={}. But granted Qos={}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
                     //TODO resub with lower QoS?
                 }
+                this.subscribedTopics.put(topics.get(i).topicName(), topics.get(i));
             }
         }
         logger.info("Active topics list=[{}].", this.getSubscribedTopicAndQosAsString());

@@ -34,6 +34,7 @@ import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -107,7 +108,6 @@ public class ServiceMediatorImpl implements ServiceMediator {
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert msg to json {}", msg, ex.getMessage());
         }
-
     }
 
     @Override
@@ -135,11 +135,11 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
         Msg.Builder builder;
         try {
-            builder = this.mapper.readValue(mqttMessage.payload().toString(Charset.forName("UTF-8")), Msg.Builder.class);
+            builder = this.mapper.readValue(mqttMessage.payload().toString(StandardCharsets.UTF_8), Msg.Builder.class);
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert json to Msg. {} Message id={}. Data was added as plain text.", ex.getMessage(), id);
             builder = new MsgImpl.MsgBuilder();
-            builder.data(mqttMessage.payload().toString(Charset.forName("UTF-8")));
+            builder.data(mqttMessage.payload().toString(StandardCharsets.UTF_8));
             builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         }
 
@@ -148,21 +148,18 @@ public class ServiceMediatorImpl implements ServiceMediator {
         if (cardNumber != null && !cardNumber.isEmpty()) {
             this.display(builder, cardNumber);
             logger.debug("Message id={} has been passed to ui service.", id);
-
         }
 
         String commandNumber = this.appProperties.getCommandNumberByTopic(topicName);
         if (commandNumber != null && !commandNumber.isEmpty()) {
             this.execute(builder, commandNumber);
             logger.debug("Message id={} has been passed to command service.", id);
-
         }
 
         String componentNumber = this.appProperties.getComponentNumberByTopic(topicName);
         if (componentNumber != null && !componentNumber.isEmpty()) {
             this.process(builder, componentNumber);
             logger.debug("Message id={} has been passed to component service.", id);
-
         }
 
         logger.debug("End handle message id={}.", id);
