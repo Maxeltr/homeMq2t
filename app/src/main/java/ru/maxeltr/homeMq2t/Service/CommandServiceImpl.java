@@ -95,9 +95,21 @@ public class CommandServiceImpl implements CommandService {
             return;
         }
 
+        String commandPath = this.appProperties.getCommandPath(command);
+        if (commandPath == null || commandPath.trim().isEmpty()) {
+            logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
+            return;
+        }
+
+        String arguments = this.appProperties.getCommandArguments(command);
+
+        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
+
+        String result = this.executeCommand(commandPath, arguments);
+
         String topic = appProperties.getCommandPubTopic(command);
         if (topic == null || topic.trim().isEmpty()) {
-            logger.warn("Command {} publication topic is empty.", command);
+            logger.warn("Could not send reply. Command {} publication topic is empty.", command);
             return;
         }
 
@@ -110,18 +122,6 @@ public class CommandServiceImpl implements CommandService {
         }
 
         boolean retain = Boolean.parseBoolean(appProperties.getCommandPubRetain(command));
-
-        String commandPath = this.appProperties.getCommandPath(command);
-        if (commandPath == null || commandPath.trim().isEmpty()) {
-            logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
-            return;
-        }
-
-        String arguments = this.appProperties.getCommandArguments(command);
-
-        logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
-
-        String result = this.executeCommand(commandPath, arguments);
 
         this.sendReply(result, command, topic, qos, retain);
     }
@@ -137,7 +137,7 @@ public class CommandServiceImpl implements CommandService {
                 .type(type)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .data(data);
-        
+
         Msg msg = builder.build();
         this.mediator.publish(builder.build(), topic, qos, retain);
 

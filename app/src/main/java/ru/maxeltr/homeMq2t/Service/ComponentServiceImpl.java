@@ -118,7 +118,7 @@ public class ComponentServiceImpl implements ComponentService {
             Method method = component.getClass().getMethod(methodName, Consumer.class);
             method.invoke(component, param);
             logger.debug("Method={} has been  invoked in component={}", methodName, component);
-        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException ex) {
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException | NullPointerException ex) {
             logger.warn("Could not invoke method={} to component={}. {}", methodName, component, ex.getMessage());
         }
     }
@@ -194,7 +194,7 @@ public class ComponentServiceImpl implements ComponentService {
                 logger.warn("Could not process. Unknown command={}.", command);
             }
         } else {
-            logger.warn("Could not process. Unknown type={}.", type);
+            logger.warn("Could not process. Unknown command type={}.", type);
         }
     }
 
@@ -254,13 +254,13 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     private void readAndPublish(Object component) {
-        String componentName = invokeMethod(component, "getName").toLowerCase();
-        String data = invokeMethod(component, "getData");
+        String componentName = this.invokeMethod(component, "getName").toLowerCase();
+        String data = this.invokeMethod(component, "getData");
         logger.info("Get data from component={} in polling task. Data={}", componentName, data);
 
         Msg.Builder builder = this.createMessage(componentName, data);
 
-        publish(builder, componentName);
+        this.publish(builder, componentName);
     }
 
     private Msg.Builder createMessage(String componentName, String data) {
@@ -301,7 +301,7 @@ public class ComponentServiceImpl implements ComponentService {
             logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
             this.mediator.publish(msg.build(), topic, qos, retain);
         } else {
-            logger.info("Message could not pass to publish, because mq2t is disconnected. Message has been rejected. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
+            logger.info("Message could not pass to publish, because mq2t is disconnected. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
         }
     }
 

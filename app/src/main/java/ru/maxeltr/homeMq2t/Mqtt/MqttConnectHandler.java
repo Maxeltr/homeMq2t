@@ -39,6 +39,7 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Promise;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -148,9 +149,9 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
                 clientId,
                 MqttProperties.NO_PROPERTIES,
                 willTopic,
-                willMessage.getBytes(Charset.forName("UTF-8")),
+                willMessage.getBytes(StandardCharsets.UTF_8),
                 username,
-                password.getBytes(Charset.forName("UTF-8"))
+                password.getBytes(StandardCharsets.UTF_8)
         );
 
         MqttConnectMessage connectMessage = new MqttConnectMessage(connectFixedHeader, connectVariableHeader, connectPayload);
