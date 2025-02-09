@@ -241,25 +241,29 @@ public class AppAnnotationConfig {
 
         String dashboardPathname = env.getProperty("dashboard-template-path", "");
         if (dashboardPathname.isEmpty()) {
-            throw new IllegalArgumentException("No name defined for dashboard template pathname.");
+            logger.info("No value defined for dashboard template pathname.");
+            return dashboards;
         }
 
         String cardPathname = env.getProperty("card-template-path", "");
         if (cardPathname.isEmpty()) {
-            throw new IllegalArgumentException("No name defined for card template pathname.");
+            logger.info("No value defined for card template pathname.");
+            return dashboards;
         }
 
         while (!env.getProperty("dashboard[" + i + "].name", "").isEmpty()) {
             List<String> listOfCards = (List<String>) env.getProperty("dashboard[" + i + "].cards", List.class);
             logger.info("Dashboard={} has cards={}", i, listOfCards);
             if (listOfCards == null || listOfCards.isEmpty()) {
-                throw new IllegalArgumentException("No cards defined for dashboard=" + i);
+                logger.info("No cards defined for dashboard number={}", i);
+                return dashboards;
             }
 
             for (String cardNumber : listOfCards) {
                 String cardName = env.getProperty("card[" + cardNumber + "].name", "");
                 if (cardName.isEmpty()) {
-                    throw new IllegalArgumentException("No name defined for card=" + cardNumber);
+                    logger.info("No name defined for card={}", cardNumber);
+                    continue;
                 }
                 Card card = new CardImpl(cardNumber, cardName, cardPathname);
                 cards.add(card);
@@ -268,7 +272,8 @@ public class AppAnnotationConfig {
 
             String dashboardName = env.getProperty("dashboard[" + i + "].name", "");
             if (dashboardName.isEmpty()) {
-                throw new IllegalArgumentException("No name defined for dashboard=" + i);
+                logger.info("No name defined for dashboard={}", i);
+                continue;
             }
 
             Dashboard dashboard = new DashboardImpl(String.valueOf(i), dashboardName, cards, dashboardPathname);
@@ -279,7 +284,7 @@ public class AppAnnotationConfig {
         }
 
         if (dashboards.isEmpty()) {
-            throw new IllegalArgumentException("Dashboard list is empty.");
+            logger.info("Dashboard list is empty.");
         }
 
         logger.info("Create dashbord list with size={}.", dashboards.size());

@@ -127,8 +127,11 @@ public class ComponentServiceImpl implements ComponentService {
         String data = "";
         try {
             Method method = component.getClass().getMethod(methodName);
-            data = method.invoke(component).toString();
-            logger.debug("Method={} has been  invoked in component={}", methodName, component);
+            var output = method.invoke(component);
+            if (output != null) {
+                data = output.toString();
+            }
+            logger.debug("Method={} has been invoked in component={}", methodName, component);
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException | NullPointerException ex) {
             logger.warn("Could not invoke method={} in component={}. {}", methodName, component, ex.getMessage());
         }
@@ -247,8 +250,8 @@ public class ComponentServiceImpl implements ComponentService {
 
         for (Object component : this.pluginComponents) {
             if (this.isImplements(component, Mq2tCallbackComponent.class)) {
-                this.invokeMethod(component, "stop");
                 logger.debug("Stop streaming component={}", this.invokeMethod(component, "getName"));
+                this.invokeMethod(component, "stop");
             }
         }
     }
