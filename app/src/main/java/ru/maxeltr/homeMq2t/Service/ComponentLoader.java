@@ -54,40 +54,6 @@ public class ComponentLoader {
 
     private static final Logger logger = LoggerFactory.getLogger(ComponentLoader.class);
 
-//    public List<Object> loadComponents(String pathJar) {
-//        List<Object> componentSet = new ArrayList<>();
-//        if (pathJar.trim().isEmpty()) {
-//            logger.warn("Component path is empty.");
-//            return componentSet;
-//        }
-//
-//        for (Path path : listFiles(pathJar)) {
-//            //componentSet.addAll(this.loadClassesFromJar(path));
-//        }
-//
-//        for (var e : componentSet) {
-//            logger.info("component ", e.toString());
-//        }
-//
-//        return componentSet;
-//    }
-//
-//    private List<Path> listFiles(String dir) {
-//        List<Path> pathSet = new ArrayList();
-//
-//        try (Stream<Path> paths = Files.walk(Paths.get(dir))) {
-//            pathSet = paths
-//                    .filter(Files::isRegularFile)
-//                    .peek((file) -> {
-//                        logger.info("There is {} in component directory {}.", file.getFileName(), dir);
-//                    })
-//                    .collect(Collectors.toList());
-//        } catch (IOException e) {
-//            logger.info("Error to list files in component directory {}. {}", dir, e.getMessage());
-//        }
-//
-//        return pathSet;
-//    }
     public List<Object> loadClassesFromJar(String path) {
         List<Object> components = new ArrayList<>();
         if (path.trim().isEmpty()) {
