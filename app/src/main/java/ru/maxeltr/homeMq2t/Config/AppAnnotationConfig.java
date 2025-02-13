@@ -234,7 +234,7 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public List<Dashboard> dashboards() {
+    public List<Dashboard> dashboards(AppProperties appProperties) {
         int i = 0;
         List<Card> cards = new ArrayList<>();
         List<Dashboard> dashboards = new ArrayList<>();
@@ -265,7 +265,7 @@ public class AppAnnotationConfig {
                     logger.info("No name defined for card={}", cardNumber);
                     continue;
                 }
-                Card card = new CardImpl(cardNumber, cardName, cardPathname);
+                Card card = new CardImpl(cardNumber, cardName, cardPathname, appProperties);
                 cards.add(card);
                 logger.info("Card={} has been created and added to card list.", card.getName());
             }

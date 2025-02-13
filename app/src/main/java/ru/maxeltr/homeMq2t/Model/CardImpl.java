@@ -35,6 +35,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 
 /**
  *
@@ -55,17 +56,20 @@ public class CardImpl implements Card {
 
     private final Document view;
 
+    private AppProperties appProperties;
+
 //    public CardImpl(String name, String pathname) {
 //        this.name = Objects.requireNonNullElse(name, "");
 //        this.view = this.getViewTemplate();
 //        this.pathname = pathname;
 //    }
-    public CardImpl(String cardNumber, String name, String pathname) {
+    public CardImpl(String cardNumber, String name, String pathname, AppProperties appProperties) {
         this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
         this.name = Objects.requireNonNullElse(name, "");
         this.pathname = pathname;
-        this.view = this.getViewTemplate();
+        this.appProperties = appProperties;
 
+        this.view = this.getViewTemplate();
     }
 
     @Override
@@ -117,9 +121,7 @@ public class CardImpl implements Card {
 
         el = document.getElementById("sendCommand");
         if (el != null) {
-            //el.attr("value", this.getCardNumber().replaceAll("/", "-") + "-publish");
             el.attr("value", this.getCardNumber());
-            //el.attr("id", this.getName() + "-publish");
         }
 
         el = document.getElementById("card1-save");
@@ -129,6 +131,7 @@ public class CardImpl implements Card {
 
         el = document.getElementById("card1-text");
         if (el != null) {
+            el.text(this.appProperties.getCardSubDataName(this.cardNumber));
             el.attr("id", this.getCardNumber() + "-text");
         }
 

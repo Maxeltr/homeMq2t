@@ -30,4 +30,6 @@ package ru.maxeltr.homeMq2t.Service;
 public interface Mq2tComponent {
 
     String getName();
+
+    void shutdown();
 }

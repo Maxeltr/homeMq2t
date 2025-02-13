@@ -223,7 +223,7 @@ public class ComponentServiceImpl implements ComponentService {
 
     @Override
     public void startSensorStreaming() {
-        if (this.pollingScheduledFuture == null) {
+        if (this.pollingScheduledFuture == null || this.pollingScheduledFuture.isDone()) {
             logger.info("Start polling components task.");
             this.pollingScheduledFuture = this.threadPoolTaskScheduler.schedule(new PollingTask(), this.pollingPeriodicTrigger);
         } else {

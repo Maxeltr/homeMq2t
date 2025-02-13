@@ -119,12 +119,17 @@ public class UIServiceImpl implements UIService {
     }
 
     private String getStartDashboard() {
-        if (this.dashboards != null && !this.dashboards.isEmpty()) {
-            return this.dashboards.get(0).getHtml();
-        } else {
-            logger.warn("Dashboard list is empty or null.");
-            return "<div>No dashboards available.</div>";
+        if (this.dashboards == null || this.dashboards.isEmpty()) {
+            logger.info("Dashboard list is empty or null.");
+            return "<div style=\"color:red;\">No dashboards available.</div>";
         }
+
+        if (this.dashboards.get(0).getCards().isEmpty()) {
+            logger.info("Card list is empty.");
+            return "<div style=\"color:red;\">No cards available.</div>";
+        }
+
+        return this.dashboards.get(0).getHtml();
     }
 
     @Override
@@ -171,12 +176,13 @@ public class UIServiceImpl implements UIService {
 
         builder.type(type);
         if (builder.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
-            String dataName = this.appProperties.getCardSubDataName(cardNumber);
+            String dataName = this.parseJson(builder.getData(), "name");
+            String status = this.parseJson(builder.getData(), "status");
             String jsonPathExpression = this.appProperties.getCardSubJsonPathExpression(cardNumber);
             if (jsonPathExpression != null && !jsonPathExpression.isEmpty()) {
                 String parsedValue = this.parseJson(builder.getData(), jsonPathExpression);
                 logger.debug("Parse data. Parsed value={}.", parsedValue);
-                builder.data("{\"name\": \"" + dataName + "\", \"type\": \"" + MediaType.TEXT_PLAIN_VALUE + "\", \"data\": \"" + parsedValue + "\"}");
+                builder.data("{\"name\": \"" + dataName + "\", \"type\": \"" + MediaType.TEXT_PLAIN_VALUE + "\", \"data\": \"" + parsedValue + "\", \"status\": \"" + status + "\"}");
             } else {
                 logger.debug("JsonPath expression is empty for card={}.", cardNumber);
             }

@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -140,7 +141,8 @@ public class ServiceMediatorImpl implements ServiceMediator {
             logger.warn("Cannot convert json to Msg. {} Message id={}. Data was added as plain text.", ex.getMessage(), id);
             builder = new MsgImpl.MsgBuilder();
             builder.data(mqttMessage.payload().toString(StandardCharsets.UTF_8));
-            builder.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+            builder.timestamp("n/a");
+            builder.type(MediaType.TEXT_PLAIN_VALUE);
         }
 
         String topicName = (mqttMessage.variableHeader().topicName());
