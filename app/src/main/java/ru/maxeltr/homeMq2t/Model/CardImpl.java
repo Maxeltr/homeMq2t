@@ -135,6 +135,11 @@ public class CardImpl implements Card {
             el.attr("id", this.getCardNumber() + "-text");
         }
 
+        el = document.getElementById("card1-status");
+        if (el != null) {
+            el.attr("id", this.getCardNumber() + "-status");
+        }
+
         el = document.select(".card-title").first();
         if (el != null) {
             el.text(this.getName());

@@ -132,6 +132,13 @@ function showData(message, cardNumber) {
                 }
             }
 
+            if (payload.hasOwnProperty("status")) {
+                el = document.getElementById(cardNumber + '-status');
+                if (el !== null) {
+                    el.innerHTML = payload.status;
+                }
+            }
+
             if (!payload.hasOwnProperty("data")) {
                 console.log("There is no data property in message payload json.");
                 return;
