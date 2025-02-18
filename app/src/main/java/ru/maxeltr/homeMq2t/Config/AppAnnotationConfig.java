@@ -153,82 +153,182 @@ public class AppAnnotationConfig {
         return new ComponentServiceImpl(components);
     }
 
+    /**
+     * Retrives a mapping of card topics to their corresponding card numbers.
+     *
+     * This method iterates through the card properties defined in the
+     * environment, collecting topics and their associated card indices. Each
+     * topic can be assotiated with multiple card numbers.
+     *
+     * @return a map where the key is the card topic and the value is a list of
+     * card numbers assotiated with that topic.
+     *
+     * @throw IllegalArgumentException if a card topic is not defined for a
+     * card.
+     */
     @Bean
-    public Map<String, String> topicsAndCards() {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, List<String>> topicsAndCards() {
+        Map<String, List<String>> map = new HashMap<>();
         int i = 0;
-        while (!env.getProperty("card[" + i + "].name", "").isEmpty()) {
-            String cardTopic = env.getProperty("card[" + i + "].subscription.topic", "");
-            if (cardTopic.isEmpty()) {
+        logger.info("Starting to collect topics and their corresponding card numbers.");
+        while (true) {
+            String card = env.getProperty(String.format("card[%d].name", i), "");
+            if (card == null || card.isEmpty()) {
+                break;
+            }
+
+            String cardTopic = env.getProperty(String.format("card[%d].subscription.topic", i), "");
+            if (cardTopic == null || cardTopic.isEmpty()) {
                 throw new IllegalArgumentException("No topic defined for subscription of card=" + i);
             }
-            map.put(cardTopic, String.valueOf(i));
+
+            List<String> cardNumbers = map.getOrDefault(cardTopic, new ArrayList<>());
+            cardNumbers.add(String.valueOf(i));
+
+            map.put(cardTopic, cardNumbers);
+            logger.info("Add topic={} and card numbers={}.", cardTopic, cardNumbers);
             ++i;
         }
+
+        logger.info("Topics and cards collection completed. Found {} topics.", map.size());
 
         return map;
     }
 
+    /**
+     * Retrives a mapping of command topics to their corresponding command
+     * numbers.
+     *
+     * This method iterates through the command properties defined in the
+     * environment, collecting topics and their associated command indices. Each
+     * topic can be assotiated with multiple command numbers.
+     *
+     * @return a map where the key is the command topic and the value is a list
+     * of command numbers assotiated with that topic.
+     *
+     * @throw IllegalArgumentException if a command topic is not defined for a
+     * command.
+     */
     @Bean
-    public Map<String, String> topicsAndCommands() {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, List<String>> topicsAndCommands() {
+        Map<String, List<String>> map = new HashMap<>();
         int i = 0;
-        while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
-            String commandTopic = env.getProperty("command[" + i + "].subscription.topic", "");
-            if (commandTopic.isEmpty()) {
+        logger.info("Starting to collect topics and their corresponding command numbers.");
+        while (true) {
+            String command = env.getProperty(String.format("command[%d].name", i), "");
+            if (command == null || command.isEmpty()) {
+                break;
+            }
+
+            String commandTopic = env.getProperty(String.format("command[%d].subscription.topic", i), "");
+            if (commandTopic == null || commandTopic.isEmpty()) {
                 throw new IllegalArgumentException("No topic defined for subscription of command=" + i);
             }
-            map.put(commandTopic, String.valueOf(i));
+
+            List<String> commandNumbers = map.getOrDefault(commandTopic, new ArrayList<>());
+            commandNumbers.add(String.valueOf(i));
+
+            map.put(commandTopic, commandNumbers);
+            logger.info("Add topic={} and commands numbers={}.", commandTopic, commandNumbers);
             ++i;
         }
+
+        logger.info("Topics and commands collection completed. Found {} topics.", map.size());
 
         return map;
     }
 
+    /**
+     * Retrives a mapping of command names to their corresponding numbers.
+     *
+     * This method iterates through the command properties defined in the
+     * environment, collecting command names and their associated indexes.
+     *
+     * @return a map where the key is the command name and the value is the
+     * index of the command.
+     */
     @Bean
     public Map<String, String> commandsAndNumbers() {
         Map<String, String> map = new HashMap<>();
         int i = 0;
-        while (!env.getProperty("command[" + i + "].name", "").isEmpty()) {
-            String commandName = env.getProperty("command[" + i + "].name", "");
-            if (commandName.isEmpty()) {
-                throw new IllegalArgumentException("No name defined for command=" + i);
-            }
+        String commandName;
+        logger.info("Starting to collect commands and their corresponding command numbers.");
+        while (!(commandName = env.getProperty(String.format("command[%d].name", i), "")).isEmpty()) {
             map.put(commandName, String.valueOf(i));
+            logger.info("Add command={} with number={}.", commandName, i);
             ++i;
         }
+
+        logger.info("Commands and numbers collection completed. Found {} commands.", map.size());
 
         return map;
     }
 
+    /**
+     * Retrives a mapping of component topics to their corresponding component
+     * numbers.
+     *
+     * This method iterates through the component properties defined in the
+     * environment, collecting topics and their associated component indices.
+     * Each topic can be assotiated with multiple component numbers.
+     *
+     * @return a map where the key is the component topic and the value is a
+     * list of component numbers assotiated with that topic.
+     *
+     * @throw IllegalArgumentException if a component topic is not defined for a
+     * component.
+     */
     @Bean
-    public Map<String, String> topicsAndComponents() {
-        Map<String, String> map = new HashMap<>();
+    public Map<String, List<String>> topicsAndComponents() {
+        Map<String, List<String>> map = new HashMap<>();
         int i = 0;
-        while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
-            String componentTopic = env.getProperty("component[" + i + "].subscription.topic", "");
-            if (componentTopic.isEmpty()) {
-                throw new IllegalArgumentException("No topic defined for subscription of component=" + i);
+        logger.info("Starting to collect topics and their corresponding component numbers.");
+        while (true) {
+            String component = env.getProperty(String.format("component[%d].name", i), "");
+            if (component == null || component.isEmpty()) {
+                break;
             }
-            map.put(componentTopic, String.valueOf(i));
+
+            String componentTopic = env.getProperty(String.format("component[%d].subscription.topic", i), "");
+            if (componentTopic == null || componentTopic.isEmpty()) {
+                throw new IllegalArgumentException("No topic defined for subscription of the component=" + i);
+            }
+
+            List<String> componentNumbers = map.getOrDefault(componentTopic, new ArrayList<>());
+            componentNumbers.add(String.valueOf(i));
+
+            map.put(componentTopic, componentNumbers);
+            logger.info("Add topic={} and component numbers={}.", componentTopic, componentNumbers);
             ++i;
         }
+
+        logger.info("Topics and components collection completed. Found {} topics.", map.size());
 
         return map;
     }
 
+    /**
+     * Retrives a mapping of component names to their corresponding numbers.
+     *
+     * This method iterates through the component properties defined in the
+     * environment, collecting component names and their associated indexes.
+     *
+     * @return a map where the key is the component name and the value is the
+     * index of the component.
+     */
     @Bean
     public Map<String, String> componentsAndNumbers() {
         Map<String, String> map = new HashMap<>();
         int i = 0;
-        while (!env.getProperty("component[" + i + "].name", "").isEmpty()) {
-            String componentName = env.getProperty("component[" + i + "].name", "");
-            if (componentName.isEmpty()) {
-                throw new IllegalArgumentException("No name defined for component=" + i);
-            }
+        String componentName;
+        logger.info("Starting to collect components and their corresponding component numbers.");
+        while (!(componentName = env.getProperty(String.format("component[%d].name", i), "")).isEmpty()) {
             map.put(componentName, String.valueOf(i));
+            logger.info("Add component={} with number={}.", componentName, i);
             ++i;
         }
+
+        logger.info("Components and numbers collection completed. Found {} components.", map.size());
 
         return map;
     }

@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -40,13 +41,13 @@ public class AppProperties {
     private final static String ERROR_TOPIC = "mq2t/error";
 
     @Autowired
-    private Map<String, String> topicsAndCards;
+    private Map<String, List<String>> topicsAndCards;
 
     @Autowired
-    private Map<String, String> topicsAndCommands;
+    private Map<String, List<String>> topicsAndCommands;
 
     @Autowired
-    private Map<String, String> topicsAndComponents;
+    private Map<String, List<String>> topicsAndComponents;
 
     @Autowired
     private Map<String, String> commandsAndNumbers;
@@ -54,9 +55,8 @@ public class AppProperties {
     @Autowired
     private Map<String, String> componentsAndNumbers;
 
-    public String getCommandNumberByTopic(String topic) {
-        String number = topicsAndCommands.get(topic);
-        return number == null ? "" : number;
+    public List<String> getCommandNumbersByTopic(String topic) {
+        return topicsAndCommands.get(topic);
     }
 
     public String getCommandPubTopic(String command) {
@@ -83,9 +83,8 @@ public class AppProperties {
         return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "arguments", "");
     }
 
-    public String getCardNumberByTopic(String topic) {
-        String number = topicsAndCards.get(topic);
-        return number == null ? "" : number;
+    public List<String> getCardNumbersByTopic(String topic) {
+        return topicsAndCards.get(topic);
     }
 
     public String getCardName(String id) {
@@ -128,9 +127,8 @@ public class AppProperties {
         return env.getProperty("component[" + id + "].name", "");
     }
 
-    public String getComponentNumberByTopic(String topic) {
-        String number = topicsAndComponents.get(topic);
-        return number == null ? "" : number;
+    public List<String> getComponentNumbersByTopic(String topic) {
+        return topicsAndComponents.get(topic);
     }
 
     public String getComponentPubTopic(String component) {

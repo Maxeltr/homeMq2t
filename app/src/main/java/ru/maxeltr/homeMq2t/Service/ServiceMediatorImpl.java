@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.jsoup.Jsoup;
@@ -146,24 +147,29 @@ public class ServiceMediatorImpl implements ServiceMediator {
         }
 
         String topicName = (mqttMessage.variableHeader().topicName());
-        String cardNumber = this.appProperties.getCardNumberByTopic(topicName);
-        if (cardNumber != null && !cardNumber.isEmpty()) {
-            this.display(builder, cardNumber);
-            logger.debug("Message id={} has been passed to ui service.", id);
+        List<String> cardNumbers = this.appProperties.getCardNumbersByTopic(topicName);
+        for (String cardNumber : cardNumbers) {
+            if (cardNumber != null && !cardNumber.isEmpty()) {
+                this.display(builder, cardNumber);
+                logger.debug("Message id={} has been passed to ui service.", id);
+            }
         }
 
-        String commandNumber = this.appProperties.getCommandNumberByTopic(topicName);
-        if (commandNumber != null && !commandNumber.isEmpty()) {
-            this.execute(builder, commandNumber);
-            logger.debug("Message id={} has been passed to command service.", id);
+        List<String> commandNumbers = this.appProperties.getCommandNumbersByTopic(topicName);
+        for (String commandNumber : commandNumbers) {
+            if (commandNumber != null && !commandNumber.isEmpty()) {
+                this.execute(builder, commandNumber);
+                logger.debug("Message id={} has been passed to command service.", id);
+            }
         }
 
-        String componentNumber = this.appProperties.getComponentNumberByTopic(topicName);
-        if (componentNumber != null && !componentNumber.isEmpty()) {
-            this.process(builder, componentNumber);
-            logger.debug("Message id={} has been passed to component service.", id);
+        List<String> componentNumbers = this.appProperties.getComponentNumbersByTopic(topicName);
+        for (String componentNumber : componentNumbers) {
+            if (componentNumber != null && !componentNumber.isEmpty()) {
+                this.process(builder, componentNumber);
+                logger.debug("Message id={} has been passed to component service.", id);
+            }
         }
-
         logger.debug("End handle message id={}.", id);
     }
 
@@ -184,8 +190,9 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     @Override
     public void shutdown() {
-        this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
         this.componentService.stopSensorStreaming();
+        this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
+
         try {
             TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {
