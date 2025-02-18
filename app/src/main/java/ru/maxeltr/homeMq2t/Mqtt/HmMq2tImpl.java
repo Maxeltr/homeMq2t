@@ -79,7 +79,6 @@ import org.springframework.boot.CommandLineRunner;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-
 public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
 
     private static final Logger logger = LoggerFactory.getLogger(HmMq2tImpl.class);
@@ -197,18 +196,26 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         channelFuture.awaitUninterruptibly();
         if (channelFuture.isCancelled()) {
             logger.info("Connection attempt cancelled.");
-            connecting.set(false);
-            connected.set(false);
+            this.cancelConnect();
         } else if (!channelFuture.isSuccess()) {
             logger.info("Connection attempt failed {}.", channelFuture.cause().getMessage());
-            connecting.set(false);
-            connected.set(false);
+            this.cancelConnect();
         } else {
             logger.info("Connected to {} via port {}.", this.host, this.port);
         }
 
         return authFuture;
 
+    }
+
+    private void cancelConnect() {
+        Promise<MqttConnAckMessage> authFuture = mqttAckMediator.getConnectFuture();
+        if (authFuture != null && !authFuture.isDone()) {
+            authFuture.cancel(true);
+            logger.debug("Cancel auth future.");
+        }
+        connecting.set(false);
+        connected.set(false);
     }
 
     @Override
@@ -238,7 +245,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         try {
             TimeUnit.MILLISECONDS.sleep(timeout);
         } catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
+            Thread.currentThread().interrupt();
             logger.info("InterruptedException while reconnect delay.", ex);
         }
 
@@ -264,6 +271,12 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
 
     @Override
     public void disconnect(byte reasonCode) {
+        Promise<MqttConnAckMessage> authFuture = mqttAckMediator.getConnectFuture();
+        if (authFuture != null && !authFuture.isDone()) {
+            authFuture.cancel(true);
+        }
+        connecting.set(false);
+
         this.getPingHandler().ifPresent(pingHandler -> pingHandler.stopPing());
 
         this.stopRetransmitTask();
@@ -297,7 +310,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
         try {
             TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
+            Thread.currentThread().interrupt();
             logger.info("Disconnect message has been send. InterruptedException while timeout.", ex);
         }
 
