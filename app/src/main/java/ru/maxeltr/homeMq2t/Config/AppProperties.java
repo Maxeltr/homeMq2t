@@ -55,8 +55,10 @@ public class AppProperties {
     @Autowired
     private Map<String, String> componentsAndNumbers;
 
+    private final List<String> emptyArray = List.of();
+
     public List<String> getCommandNumbersByTopic(String topic) {
-        return topicsAndCommands.get(topic);
+        return topicsAndCommands.getOrDefault(topic, emptyArray);
     }
 
     public String getCommandPubTopic(String command) {
@@ -84,7 +86,7 @@ public class AppProperties {
     }
 
     public List<String> getCardNumbersByTopic(String topic) {
-        return topicsAndCards.get(topic);
+        return topicsAndCards.getOrDefault(topic, emptyArray);
     }
 
     public String getCardName(String id) {
@@ -128,7 +130,7 @@ public class AppProperties {
     }
 
     public List<String> getComponentNumbersByTopic(String topic) {
-        return topicsAndComponents.get(topic);
+        return topicsAndComponents.getOrDefault(topic, emptyArray);
     }
 
     public String getComponentPubTopic(String component) {

@@ -43,6 +43,7 @@ import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import com.jayway.jsonpath.JsonPath;
+import org.apache.commons.lang3.StringUtils;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
@@ -72,6 +73,11 @@ public class UIServiceImpl implements UIService {
         this.mediator = mediator;
     }
 
+    /**
+     * Attempts to establish a connection to a remote server and waits for the
+     * connection attempt to comlete. This method returns html string for
+     * display on the screen indicating success or failure.
+     */
     @Override
     public void connect() {
         logger.info("Do connect.");
@@ -82,28 +88,49 @@ public class UIServiceImpl implements UIService {
 
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
-            String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
-            logger.debug("Send data={}.", startDashboardWithError);
-            msg.data("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
-                    + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
-                    + "\"}");
+            msg.data(this.createJsonResponse("fail"));
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed.");
-            String startDashboardWithError = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>" + this.getStartDashboard();
-            logger.debug("Send data={}.", startDashboardWithError);
-            msg.data("{\"name\": \"onConnect\", \"status\": \"fail\", \"type\": \"text/html;base64\", \"data\": \""
-                    + Base64.getEncoder().encodeToString(startDashboardWithError.getBytes())
-                    + "\"}");
+            msg.data(this.createJsonResponse("fail"));
         } else {
             logger.info("Connection established successfully.");
-            String data = this.getStartDashboard();
-            logger.debug("Send data={}.", data);
-            msg.data("{\"name\": \"onConnect\", \"status\": \"ok\", \"type\": \"text/html;base64\", \"data\": \""
-                    + Base64.getEncoder().encodeToString(data.getBytes())
-                    + "\"}");
+            msg.data(this.createJsonResponse("ok"));
         }
+
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         this.display(msg, "");
+    }
+
+    /**
+     * Construct a Json response string
+     *
+     * @param status of the connection attempt, which can be either "ok" or
+     * "fail".
+     *
+     * @return a Json string representing the connection status and the html
+     * data of start dashboard.
+     */
+    private String createJsonResponse(String status) {
+        String errorCaption = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>";
+
+        String dashboard = switch (status) {
+            case "ok" ->
+                this.getStartDashboard();
+            case "fail" ->
+                errorCaption + this.getStartDashboard();
+            default ->
+                this.getStartDashboard();   //TODO create the error caption
+        };
+
+        String data = "{\"name\": \"onConnect\", \"status\": \""
+                + status
+                + "\", \"type\": \"text/html;base64\", \"data\": \""
+                + Base64.getEncoder().encodeToString(dashboard.getBytes())
+                + "\"}";
+
+        logger.debug("Send ui data={}.", data);
+
+        return data;
     }
 
     @Override
@@ -170,18 +197,18 @@ public class UIServiceImpl implements UIService {
     public void display(Msg.Builder builder, String cardNumber) {
         String type = this.appProperties.getCardSubDataType(cardNumber);
         if (type == null || type.isEmpty()) {
-            logger.info("Type is empty for card={}. Set text/plain.", cardNumber);
-            type = MediaType.TEXT_PLAIN_VALUE;
+            logger.info("Type is empty for card={}. Set application/json.", cardNumber);
+            type = MediaType.APPLICATION_JSON_VALUE;
         }
 
         builder.type(type);
         if (builder.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
-            String dataName = this.parseJson(builder.getData(), "name");
-            String status = this.parseJson(builder.getData(), "status");
             String jsonPathExpression = this.appProperties.getCardSubJsonPathExpression(cardNumber);
-            if (jsonPathExpression != null && !jsonPathExpression.isEmpty()) {
+            if (StringUtils.isNotEmpty(jsonPathExpression)) {
                 String parsedValue = this.parseJson(builder.getData(), jsonPathExpression);
-                logger.debug("Parse data. Parsed value={}.", parsedValue);
+                logger.debug("Parsed data by using jsonPath. Parsed value={}.", parsedValue);
+                String dataName = this.parseJson(builder.getData(), "name");
+                String status = this.parseJson(builder.getData(), "status");
                 builder.data("{\"name\": \"" + dataName + "\", \"type\": \"" + MediaType.TEXT_PLAIN_VALUE + "\", \"data\": \"" + parsedValue + "\", \"status\": \"" + status + "\"}");
             } else {
                 logger.debug("JsonPath expression is empty for card={}.", cardNumber);
