@@ -36,9 +36,12 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
@@ -106,7 +109,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         logger.info("Publish message has been passed to mqtt client. topic={}, qos={}, retain={}. {}", topic, qos, retain, msg);
         try {
             byte[] jsonMsg = this.mapper.writeValueAsBytes(msg);
-			this.hmMq2t.publish(topic, Unpooled.wrappedBuffer(jsonMsg), qos, retain);
+            this.hmMq2t.publish(topic, Unpooled.wrappedBuffer(jsonMsg), qos, retain);
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert msg to json {}", msg, ex.getMessage());
         }
@@ -130,6 +133,17 @@ public class ServiceMediatorImpl implements ServiceMediator {
         logger.info("Data has been passed to the component service. Data={}.", data);
     }
 
+    /**
+     * Handles an incoming Mqtt publish message.
+     *
+     * This method processes the message payload, attempts to convert it into
+     * Msg.Builder object, and then dispatch the message to various services.
+     * The method retrieves card numbers, command numbers, and component numbers
+     * assotiated with the topic and sends the message to the appropriate
+     * service for each valid numbers.
+     *
+     * @param mqttMessage the Mqtt publish message to be handled
+     */
     @Override
     public void handleMessage(MqttPublishMessage mqttMessage) {
         int id = mqttMessage.variableHeader().packetId();
@@ -147,30 +161,32 @@ public class ServiceMediatorImpl implements ServiceMediator {
         }
 
         String topicName = (mqttMessage.variableHeader().topicName());
-        List<String> cardNumbers = this.appProperties.getCardNumbersByTopic(topicName);
-        for (String cardNumber : cardNumbers) {
-            if (cardNumber != null && !cardNumber.isEmpty()) {
-                this.display(builder, cardNumber);
-                logger.debug("Message id={} has been passed to ui service.", id);
-            }
-        }
 
-        List<String> commandNumbers = this.appProperties.getCommandNumbersByTopic(topicName);
-        for (String commandNumber : commandNumbers) {
-            if (commandNumber != null && !commandNumber.isEmpty()) {
-                this.execute(builder, commandNumber);
-                logger.debug("Message id={} has been passed to command service.", id);
-            }
-        }
+        dispatchMessageToService(topicName, builder, id, "ui service", this::display);
+        dispatchMessageToService(topicName, builder, id, "command service", this::execute);
+        dispatchMessageToService(topicName, builder, id, "component service", this::process);
 
-        List<String> componentNumbers = this.appProperties.getComponentNumbersByTopic(topicName);
-        for (String componentNumber : componentNumbers) {
-            if (componentNumber != null && !componentNumber.isEmpty()) {
-                this.process(builder, componentNumber);
-                logger.debug("Message id={} has been passed to component service.", id);
-            }
-        }
         logger.debug("End handle message id={}.", id);
+    }
+
+    private void dispatchMessageToService(String topicName, Msg.Builder builder, int id, String serviceName, BiConsumer<Msg.Builder, String> action) {
+        List<String> numbers = switch (serviceName) {
+            case "ui service" ->
+                this.appProperties.getCardNumbersByTopic(topicName);
+            case "command service" ->
+                this.appProperties.getCommandNumbersByTopic(topicName);
+            case "component service" ->
+                this.appProperties.getComponentNumbersByTopic(topicName);
+            default ->
+                Collections.emptyList();
+        };
+
+        for (String number : numbers) {
+            if (StringUtils.isNotEmpty(number)) {
+                action.accept(builder, number);
+                logger.debug("Message id={} has been passed to {}.", id, serviceName);
+            }
+        }
     }
 
     @Override
@@ -196,7 +212,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         try {
             TimeUnit.MILLISECONDS.sleep(waitDisconnect);
         } catch (InterruptedException ex) {
-			Thread.currentThread().interrupt();
+            Thread.currentThread().interrupt();
             logger.info("Shutdown. InterruptedException while disconnect timeout.", ex);
         }
 

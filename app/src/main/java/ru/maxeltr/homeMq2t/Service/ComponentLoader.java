@@ -99,7 +99,7 @@ public class ComponentLoader {
                 }
             }
         } catch (IOException ex) {
-            logger.warn("Cannot get classes from jar={}.", givenFile, ex.getMessage());
+            logger.warn("Cannot get classes from jar={}. {}", givenFile, ex.getMessage());
         }
 
         return classNames;
