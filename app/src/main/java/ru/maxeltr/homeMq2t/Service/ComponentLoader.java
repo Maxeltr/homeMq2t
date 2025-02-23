@@ -114,8 +114,8 @@ public class ComponentLoader {
                 classes.add(cl.loadClass(name));
                 logger.debug("Loads class {} from jar {}", name, jarFile);
             }
-        } catch (IOException | ClassNotFoundException ex) {
-            logger.warn("Cannot load class from jar={}.", jarFile, ex.getMessage());
+        } catch (IOException | ClassNotFoundException | NoClassDefFoundError ex) {
+            logger.warn("Cannot load class from jar={}.", jarFile, ex);
         }
 
         return classes;

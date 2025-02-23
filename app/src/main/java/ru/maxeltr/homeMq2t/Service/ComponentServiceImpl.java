@@ -256,6 +256,19 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    @Override
+    public void shutdown() {
+        for (Object component : this.pluginComponents) {
+            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
+                logger.debug("Shutdown component={}", this.invokeMethod(component, "getName"));
+                this.invokeMethod(component, "shutdown");
+            }
+        }
+
+        this.threadPoolTaskScheduler.shutdown();
+
+    }
+
     private void readAndPublish(Object component) {
         String componentName = this.invokeMethod(component, "getName").toLowerCase();
         String data = this.invokeMethod(component, "getData");

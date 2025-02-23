@@ -206,7 +206,9 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     @Override
     public void shutdown() {
+        logger.info("Do shutdown.");
         this.componentService.stopSensorStreaming();
+        this.componentService.shutdown();
         this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
 
         try {
