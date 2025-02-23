@@ -141,7 +141,7 @@ public class UIServiceImpl implements UIService {
 
     @Override
     public void shutdownApp() {
-        logger.info("Do shutdown aplication.");
+        logger.info("Do shutdown application.");
         this.mediator.shutdown();   //disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
     }
 
