@@ -159,26 +159,39 @@ public class UIServiceImpl implements UIService {
         return this.dashboards.get(0).getHtml();
     }
 
+    /**
+     * Convert the given qos value from string to MqttQos enum instance. If the
+     * qos value is invalid, it defaults to qos level 0.
+     *
+     * @param qosString The qos value as a string. Must not be null.
+     * @return The qos level as a MqttQos enum value.
+     */
+    private MqttQoS convertToMqttQos(String qosString) {
+        MqttQoS qos;
+        try {
+            qos = MqttQoS.valueOf(qosString);
+        } catch (IllegalArgumentException ex) {
+            logger.error("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
+            qos = MqttQoS.AT_MOST_ONCE;
+        }
+
+        return qos;
+    }
+
     @Override
     public void publish(Msg.Builder msg) {
         String topic = this.appProperties.getCardPubTopic(msg.getId());
-        if (topic == null || topic.isEmpty()) {
+        if (StringUtils.isEmpty(topic)) {
             logger.info("Could not publish. There is no topic for card={}", msg.getId());
             return;
         }
 
-        MqttQoS qos;
-        try {
-            qos = MqttQoS.valueOf(this.appProperties.getCardPubQos(msg.getId()));
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid QoS value for card={}: {}. Set QoS=0.", msg.getId(), e.getMessage());
-            qos = MqttQoS.valueOf(0);
-        }
+        MqttQoS qos = this.convertToMqttQos(this.appProperties.getCardPubQos(msg.getId()));
 
         boolean retain = Boolean.parseBoolean(this.appProperties.getCardPubRetain(msg.getId()));
 
         String type = this.appProperties.getCardPubDataType(msg.getId());
-        if (type == null || type.isEmpty()) {
+        if (StringUtils.isEmpty(type)) {
             logger.info("Type is empty for card={}. Set text/plain.", msg.getId());
             type = MediaType.TEXT_PLAIN_VALUE;
         }
@@ -196,7 +209,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void display(Msg.Builder builder, String cardNumber) {
         String type = this.appProperties.getCardSubDataType(cardNumber);
-        if (type == null || type.isEmpty()) {
+        if (StringUtils.isEmpty(type)) {
             logger.info("Type is empty for card={}. Set application/json.", cardNumber);
             type = MediaType.APPLICATION_JSON_VALUE;
         }

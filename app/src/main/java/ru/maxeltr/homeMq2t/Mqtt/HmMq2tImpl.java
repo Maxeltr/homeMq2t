@@ -594,7 +594,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
     }
 
     public String getSubscribedTopicAndQosAsString() {
-        return this.subscribedTopics.keySet().stream().map(key -> key + "=" + this.subscribedTopics.get(key)).collect(Collectors.joining(", ", "{", "}"));
+        return this.subscribedTopics.keySet().stream().map(key -> this.subscribedTopics.get(key).toString()).collect(Collectors.joining("\\n ", "", ""));
     }
 
     private void startRetransmitTask() {
