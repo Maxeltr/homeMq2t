@@ -25,6 +25,10 @@ package ru.maxeltr.homeMq2t.Service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.SubscribableChannel;
+import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
 /**
  *
@@ -32,21 +36,19 @@ import org.slf4j.LoggerFactory;
  */
 public class Mq2tSubProtocolWebSocketHandler extends SubProtocolWebSocketHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(Mq2tSubProtocolWebSocketHandler.class);
-	
-	private SessionHandler sessionHandler;
-	
-	public Mq2tSubProtocolWebSocketHandler(MessageChannel clientInboundChannel, SubscribableChannel clientOutboundChannel) {
-		super( clientInboundChannel, clientOutboundChannel);
-	}
-	
-	@Override
-	public void afterConnectionEstablished(WebSocketSession sesssion) throws Exception {
-		logger.info("New websocket connection was established {}.", sesssion);
-		sessionHandler.register(session);
-		super.afterConnectionEstablished(session);
-	}
+    private static final Logger logger = LoggerFactory.getLogger(Mq2tSubProtocolWebSocketHandler.class);
 
-   
+    private SessionHandler sessionHandler;
+
+    public Mq2tSubProtocolWebSocketHandler(MessageChannel clientInboundChannel, SubscribableChannel clientOutboundChannel) {
+        super(clientInboundChannel, clientOutboundChannel);
+    }
+
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        logger.info("New websocket connection was established {}.", session);
+        sessionHandler.register(session);
+        super.afterConnectionEstablished(session);
+    }
 
 }

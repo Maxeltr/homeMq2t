@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import org.apache.commons.lang3.StringUtils;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
@@ -53,7 +54,7 @@ public class CommandServiceImpl implements CommandService {
 
     private static final Logger logger = LoggerFactory.getLogger(CommandServiceImpl.class);
 
-    private int waitForProcess = 60_000;
+    private long timeout = 5_000;
 
     private ServiceMediator mediator;
 
@@ -68,11 +69,18 @@ public class CommandServiceImpl implements CommandService {
         this.mediator = mediator;
     }
 
-    @Async("processExecutor")
-    @Override
-    public void execute(Msg.Builder builder, String commandNumber) {
+    /**
+     * Extracts the command from the given message. The method checks the
+     * message type and retrieves the command accordingly. If the message type
+     * is Json, it attempts to parse the data to extract the command name.
+     *
+     * @param msg The message from which to extract the command. Must not be
+     * null.
+     * @return The extraxted command as a String, or empty string if command
+     * could not be determined.
+     */
+    private String extractCommandName(Msg msg) {
         String command = "";
-        Msg msg = builder.build();
         String msgType = msg.getType();
         if (msgType.equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             command = msg.getData();
@@ -83,20 +91,39 @@ public class CommandServiceImpl implements CommandService {
                 });
             } catch (JsonProcessingException ex) {
                 logger.warn("Could not convert json data={} to map. {}", msg.getData(), ex.getMessage());
-                return;
+                return "";
             }
-            command = Optional.ofNullable(dataMap.get("name")).orElse("");
+            command = dataMap.getOrDefault("name", "");
         } else {
-            logger.warn("Unsupported type={}. Command number={}. Data={}", msgType, commandNumber, msg.getData());
+            logger.warn("Unsupported type={}. Data={}", msgType, msg.getData());
         }
 
-        if (command.trim().isEmpty()) {
+        return command;
+    }
+
+    /**
+     * Asynchronously executes a command based on the provided message and
+     * command number.
+     *
+     * The method processes the message to extract the command and its
+     * associated parameters, executes the command and send the result to the
+     * specified Mqtt topic.
+     *
+     * @param builder containing the data to be processed. Must not be null.
+     * @param commandNumber A unique identifier for the command being executed.
+     * Must not be null.
+     */
+    @Async("processExecutor")
+    @Override
+    public void execute(Msg.Builder builder, String commandNumber) {
+        String command = this.extractCommandName(builder.build());
+        if (StringUtils.isEmpty(command)) {
             logger.warn("Command is empty. Command number={}", commandNumber);
             return;
         }
 
         String commandPath = this.appProperties.getCommandPath(command);
-        if (commandPath == null || commandPath.trim().isEmpty()) {
+        if (StringUtils.isEmpty(commandPath)) {
             logger.warn("Command path is empty. Command={}, commandNumber={}", command, commandNumber);
             return;
         }
@@ -108,28 +135,41 @@ public class CommandServiceImpl implements CommandService {
         String result = this.executeCommand(commandPath, arguments);
 
         String topic = appProperties.getCommandPubTopic(command);
-        if (topic == null || topic.trim().isEmpty()) {
-            logger.warn("Could not send reply. Command {} publication topic is empty.", command);
+        if (StringUtils.isEmpty(topic)) {
+            logger.info("Could not send reply. Command {} publication topic is empty.", command);
             return;
         }
 
-        MqttQoS qos;
-        try {
-            qos = MqttQoS.valueOf(appProperties.getCommandPubQos(command));
-        } catch (IllegalArgumentException ex) {
-            logger.error("Invalid QoS value for command={}: {}. Set QoS=0.", command, ex.getMessage());
-            qos = MqttQoS.valueOf(0);
-        }
+        MqttQoS qos = this.convertToMqttQos(appProperties.getCommandPubQos(command));
 
         boolean retain = Boolean.parseBoolean(appProperties.getCommandPubRetain(command));
 
         this.sendReply(result, command, topic, qos, retain);
     }
 
+    /**
+     * Convert the given qos value from string to MqttQos enum instance. If the
+     * qos value is invalid, it defaults to qos level 0.
+     *
+     * @param qosString The qos value as a string. Must not be null.
+     * @return The qos level as a MqttQos enum value.
+     */
+    private MqttQoS convertToMqttQos(String qosString) {
+        MqttQoS qos;
+        try {
+            qos = MqttQoS.valueOf(qosString);
+        } catch (IllegalArgumentException ex) {
+            logger.error("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
+            qos = MqttQoS.AT_MOST_ONCE;
+        }
+
+        return qos;
+    }
+
     private void sendReply(String data, String commandName, String topic, MqttQoS qos, boolean retain) {
         String type = this.appProperties.getCommandPubDataType(commandName);
-        if (type == null || type.isEmpty()) {
-            logger.info("Type is empty for command={}. Set text/plain.", commandName);
+        if (StringUtils.isEmpty(type)) {
+            logger.info("Property type is empty for command={}. Set text/plain.", commandName);
             type = MediaType.TEXT_PLAIN_VALUE;
         }
 
@@ -144,55 +184,67 @@ public class CommandServiceImpl implements CommandService {
         logger.info("Reply on command={} has been sent. Msg={}, topic={}, qos={}, retain={}.", commandName, msg, topic, qos, retain);
     }
 
+    /**
+     * Execute a command in the system shell and return the output as a string.
+     *
+     * This method uses ProcessBuilder to start a process with the specified
+     * command path and arguments. It captures the output of the command and
+     * handles any potential errors that may occur during the execution. if the
+     * process does not complete within the specified timeout it will be
+     * forcibly terminated.
+     *
+     * @param commandPath the path to the command to be executed
+     * @param arguments the arguments to be passed to the command. This should
+     * be a single string containing all arguments separated by space.
+     * @return the output of the command as a string. If error occursduring
+     * execution, an error message will be returned instead.
+     */
     private String executeCommand(String commandPath, String arguments) {
         logger.debug("Start command task. commandPath={}, arguments={}.", commandPath, arguments);
 
         ProcessBuilder pb = new ProcessBuilder(commandPath, arguments);
         pb.redirectErrorStream(true);
 
-        Process p;
+        Process process;
         try {
-            p = pb.start();
+            process = pb.start();
         } catch (IOException ex) {
             logger.warn("ProcessBuilder cannot start. commandPath={}, arguments={}. {}", commandPath, arguments, ex.getMessage());
-            return "Error. Could not start.";
+            return "Error. Could execute command.";
         }
 
-        String line;
+        int character;
         StringBuilder result = new StringBuilder();
+        long startTime = System.currentTimeMillis();
 
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-            while (true) {
-                line = br.readLine();
-                if (line == null) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+            while ((character = br.read()) != -1) {
+                result.append((char) character);
+                if (System.currentTimeMillis() - startTime > timeout) {
+                    logger.warn("Reading process output timed out. commandPath={}, arguments={}. {}", commandPath, arguments);
                     break;
                 }
-                result.append(line);
             }
         } catch (IOException ex) {
             logger.warn("Can not read process output of command. commandPath={}, arguments={}. {}", commandPath, arguments, ex.getMessage());
-            return "Error. Could not read output.";
+            result.append("Error. Could not read output.");
         }
 
-        int exitCode = 0;
+        boolean finished = false;
         try {
-            boolean finished = p.waitFor(this.waitForProcess, TimeUnit.MILLISECONDS);
-            if (!finished) {
-                logger.warn("Process did not finish in time={}. commandPath={}, arguments={}.", this.waitForProcess, commandPath, arguments);
-                p.destroy();
-                return "Error. Process timed out.";
-            }
-            exitCode = p.exitValue();
+            finished = process.waitFor(this.timeout, TimeUnit.MILLISECONDS);
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             logger.warn("Waiting for process was interrupted.", ex.getMessage());
         }
 
-        if (exitCode != 0) {
-            logger.warn("Command executed with error. commandPath={}, arguments={}. exitCode={}", commandPath, arguments, exitCode);
+        if (!finished) {
+            logger.warn("Process did not finish in time={}. Destroy process. commandPath={}, arguments={}.", this.timeout, commandPath, arguments);
+            process.destroyForcibly();
+            return result.toString();
         }
 
-        logger.debug("End command task. commandPath={}, arguments={}.", commandPath, arguments);
+        logger.info("Command has been executed. commandPath={}, arguments={}. exitCode={}", commandPath, arguments, process.exitValue());
 
         return result.toString();
     }
