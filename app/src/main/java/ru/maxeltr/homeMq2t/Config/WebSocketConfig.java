@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Configuration;
@@ -31,6 +33,11 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.web.socket.WebSocketHandler;
+import ru.maxeltr.homeMq2t.Service.Mq2tSubProtocolWebSocketHandler;
+import ru.maxeltr.homeMq2t.Service.SessionHandler;
 
 /**
  *
@@ -40,12 +47,16 @@ import org.springframework.beans.factory.annotation.Value;
 @EnableWebSocketMessageBroker
 public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebServerFactoryCustomizer<ConfigurableServletWebServerFactory> {
 
+    @Autowired
+    @Qualifier("processExecutor")
+    ThreadPoolTaskScheduler threadPoolTaskScheduler;
+
     @Value("${local-server-port:8028}")
     private int port;
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");
+        config.enableSimpleBroker("/topic").setHeartbeatValue(new long[]{20_000, 0}).setTaskScheduler(threadPoolTaskScheduler);
         config.setApplicationDestinationPrefixes("/app");
     }
 
@@ -58,4 +69,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSer
     public void customize(ConfigurableServletWebServerFactory factory) {
         factory.setPort(port);
     }
+
+    @Bean
+    public WebSocketHandler mq2tSubProtocolWebSocketHandler() {
+        return new Mq2tSubProtocolWebSocketHandler(clientInboundChannel(), clientOutBoundChannel());
+    }
+
+    @Bean
+    public SessionHandler sessionHandler() {
+        return new SessionHandler();
+    }
+
 }

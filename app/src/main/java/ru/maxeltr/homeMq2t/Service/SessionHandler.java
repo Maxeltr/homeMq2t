@@ -23,8 +23,13 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.SubscribableChannel;
+import org.springframework.web.socket.WebSocketSession;
 
 /**
  *
@@ -32,15 +37,15 @@ import org.slf4j.LoggerFactory;
  */
 public class SessionHandler {
 
-	private static final Logger logger = LoggerFactory.getLogger(SessionHandler.class);
-	
-	private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
-	
-	public Mq2tSubProtocolWebSocketHandler(MessageChannel clientInboundChannel, SubscribableChannel clientOutboundChannel) {
-		super( clientInboundChannel, clientOutboundChannel);
-	}
-	
-	public void register(WebSocketSession session) {
-		sessions.put(session.getId(), session);
-	}
+    private static final Logger logger = LoggerFactory.getLogger(SessionHandler.class);
+
+    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+
+    public Mq2tSubProtocolWebSocketHandler(MessageChannel clientInboundChannel, SubscribableChannel clientOutboundChannel) {
+        super(clientInboundChannel, clientOutboundChannel);
+    }
+
+    public void register(WebSocketSession session) {
+        sessions.put(session.getId(), session);
+    }
 }
