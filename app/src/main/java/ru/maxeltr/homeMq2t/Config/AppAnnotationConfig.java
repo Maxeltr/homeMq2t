@@ -31,8 +31,10 @@ import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -452,6 +454,24 @@ public class AppAnnotationConfig {
         return subscriptions;
     }
 
+    @Bean(name = "startupTasks")
+    public Set<String> tasks(AppProperties appProperties) {
+        int i = 0;
+        Set<String> tasks = new HashSet<>();
+        while (true) {
+            String task = env.getProperty(String.format("task[%d].path", i), "");
+            if (StringUtils.isEmpty(task)) {
+                break;
+            }
+
+            tasks.add(task);
+            logger.info("Add task={}.", task);
+            i++;
+        }
+
+        return tasks;
+    }
+
     @Bean
     public ObjectMapper getObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -464,7 +484,7 @@ public class AppAnnotationConfig {
         return new AppShutdownManager();
     }
 
-    @Bean
+    @Bean(name = "mq2tTaskScheduler")
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
         ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
         threadPoolTaskScheduler.setPoolSize(10);

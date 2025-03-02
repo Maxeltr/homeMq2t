@@ -34,8 +34,10 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.web.socket.WebSocketHandler;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurationSupport;
 import ru.maxeltr.homeMq2t.Service.Mq2tSubProtocolWebSocketHandler;
 import ru.maxeltr.homeMq2t.Service.SessionHandler;
 
@@ -49,6 +51,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSer
 
     @Autowired
     @Qualifier("processExecutor")
+    TaskExecutor threadPoolTaskExecutor;
+
+    @Autowired
+    @Qualifier("mq2tTaskScheduler")
     ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
     @Value("${local-server-port:8028}")
@@ -70,14 +76,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer, WebSer
         factory.setPort(port);
     }
 
-    @Bean
-    public WebSocketHandler mq2tSubProtocolWebSocketHandler() {
-        return new Mq2tSubProtocolWebSocketHandler(clientInboundChannel(), clientOutBoundChannel());
-    }
-
-    @Bean
-    public SessionHandler sessionHandler() {
-        return new SessionHandler();
-    }
+//    @Bean
+//    public WebSocketHandler mq2tSubProtocolWebSocketHandler() {
+//        return new Mq2tSubProtocolWebSocketHandler(clientInboundChannel(threadPoolTaskExecutor), clientOutboundChannel(threadPoolTaskExecutor));
+//    }
+//
+//    @Bean
+//    public SessionHandler sessionHandler() {
+//        return new SessionHandler();
+//    }
 
 }
