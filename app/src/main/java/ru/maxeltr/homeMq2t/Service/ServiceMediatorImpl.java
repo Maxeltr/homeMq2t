@@ -39,6 +39,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +48,7 @@ import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
@@ -88,12 +90,20 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private AppProperties appProperties;
 
+    @Autowired
+    @Qualifier("startupTasks")
+    private Set<String> tasks;
+
     @Value("${wait-disconnect-while-shutdown:1000}")
     private int waitDisconnect;
 
     @PostConstruct
     public void postConstruct() {
         this.setMediator();
+        for (String task : tasks) {
+            logger.info("Start task={}", task);
+            this.commandService.execute(task, "");
+        }
     }
 
     public void setMediator() {

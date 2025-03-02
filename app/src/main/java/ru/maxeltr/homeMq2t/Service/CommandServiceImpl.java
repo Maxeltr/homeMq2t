@@ -132,7 +132,7 @@ public class CommandServiceImpl implements CommandService {
 
         logger.info("Execute command. name={}, commandNumber={}, commandPath={}, arguments={}.", command, commandNumber, commandPath, arguments);
 
-        String result = this.executeCommand(commandPath, arguments);
+        String result = this.execute(commandPath, arguments);
 
         String topic = appProperties.getCommandPubTopic(command);
         if (StringUtils.isEmpty(topic)) {
@@ -199,7 +199,8 @@ public class CommandServiceImpl implements CommandService {
      * @return the output of the command as a string. If error occursduring
      * execution, an error message will be returned instead.
      */
-    private String executeCommand(String commandPath, String arguments) {
+    @Override
+    public String execute(String commandPath, String arguments) {
         logger.debug("Start command task. commandPath={}, arguments={}.", commandPath, arguments);
 
         ProcessBuilder pb = new ProcessBuilder(commandPath, arguments);

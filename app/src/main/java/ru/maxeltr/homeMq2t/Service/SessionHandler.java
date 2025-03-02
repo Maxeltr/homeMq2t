@@ -41,10 +41,6 @@ public class SessionHandler {
 
     private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
 
-    public Mq2tSubProtocolWebSocketHandler(MessageChannel clientInboundChannel, SubscribableChannel clientOutboundChannel) {
-        super(clientInboundChannel, clientOutboundChannel);
-    }
-
     public void register(WebSocketSession session) {
         sessions.put(session.getId(), session);
     }
