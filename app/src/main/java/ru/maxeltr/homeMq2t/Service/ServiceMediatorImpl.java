@@ -92,7 +92,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     @Autowired
     @Qualifier("startupTasks")
-    private Set<String> tasks;
+    private Map<String, String> startupTasksAndNumbers;
 
     @Value("${wait-disconnect-while-shutdown:1000}")
     private int waitDisconnect;
@@ -100,9 +100,9 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @PostConstruct
     public void postConstruct() {
         this.setMediator();
-        for (String task : tasks) {
+        for (String task : startupTasksAndNumbers.keySet()) {
             logger.info("Start task={}", task);
-            this.commandService.execute(task, "");
+            this.commandService.execute(this.appProperties.getStartupTaskPath(task), this.appProperties.getStartupTaskArguments(task));
         }
     }
 

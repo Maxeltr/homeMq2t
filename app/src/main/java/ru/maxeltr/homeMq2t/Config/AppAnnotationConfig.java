@@ -32,8 +32,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -63,6 +65,7 @@ import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ComponentLoader;
 import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ComponentService;
+import ru.maxeltr.homeMq2t.Service.Mq2tCallbackComponent;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
 import ru.maxeltr.homeMq2t.Service.UIService;
@@ -134,6 +137,20 @@ public class AppAnnotationConfig {
     @Bean
     public UIService getUIService() {
         return new UIServiceImpl();
+    }
+
+    @Bean
+    public List<Mq2tCallbackComponent> callbackComponents() {	//add
+        List<Mq2tCallbackComponent> providers = new ArrayList<>();
+        ServiceLoader<Mq2tCallbackComponent> loader = ServiceLoader.load(Mq2tCallbackComponent.class);
+        Iterator<Mq2tCallbackComponent> iterator = loader.iterator();
+        while (iterator.hasNext()) {
+            Mq2tCallbackComponent provider = iterator.next();
+            logger.info("Add {} as {} provider.", provider.getClass().getName(), Mq2tCallbackComponent.class);
+            providers.add(provider);
+        }
+
+        return providers;
     }
 
     @Bean
@@ -342,6 +359,27 @@ public class AppAnnotationConfig {
         return map;
     }
 
+    @Bean(name = "startupTasks")
+    public Map<String, String> startupTasksAndNumbers() {
+        Map<String, String> map = new HashMap<>();
+        int i = 0;
+        String taskName;
+        logger.info("Starting to collect startup tasks and their corresponding task numbers.");
+        while (true) {
+            taskName = env.getProperty(String.format("startup.task[%d].name", i), "");
+            if (StringUtils.isEmpty(taskName)) {
+                break;
+            }
+            map.put(taskName, String.valueOf(i));
+            logger.info("Add startup task={} with number={}.", taskName, i);
+            ++i;
+        }
+
+        logger.info("Startup tasks and numbers collection completed. Found {} task.", map.size());
+
+        return map;
+    }
+
     /**
      * Creates a list of dashboards based on the configuration properties
      * defined in the environment. Each dashboard can contain multiple cards,
@@ -452,24 +490,6 @@ public class AppAnnotationConfig {
         this.addSubscriptions(subscriptions, "component");
 
         return subscriptions;
-    }
-
-    @Bean(name = "startupTasks")
-    public Set<String> tasks(AppProperties appProperties) {
-        int i = 0;
-        Set<String> tasks = new HashSet<>();
-        while (true) {
-            String task = env.getProperty(String.format("task[%d].path", i), "");
-            if (StringUtils.isEmpty(task)) {
-                break;
-            }
-
-            tasks.add(task);
-            logger.info("Add task={}.", task);
-            i++;
-        }
-
-        return tasks;
     }
 
     @Bean

@@ -26,6 +26,7 @@ package ru.maxeltr.homeMq2t.Config;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 
@@ -55,7 +56,23 @@ public class AppProperties {
     @Autowired
     private Map<String, String> componentsAndNumbers;
 
+    @Autowired
+    @Qualifier("startupTasks")
+    private Map<String, String> startupTasksAndNumbers;
+
     private final List<String> emptyArray = List.of();
+
+    public String getStartupTaskNumber(String taskName) {
+        return startupTasksAndNumbers.getOrDefault(taskName, "");
+    }
+
+    public String getStartupTaskArguments(String taskName) {
+        return env.getProperty("startup.task[" + startupTasksAndNumbers.get(taskName) + "]." + "arguments", "");
+    }
+
+    public String getStartupTaskPath(String taskName) {
+        return env.getProperty("startup.task[" + startupTasksAndNumbers.get(taskName) + "]." + "path", "");
+    }
 
     public List<String> getCommandNumbersByTopic(String topic) {
         return topicsAndCommands.getOrDefault(topic, emptyArray);
