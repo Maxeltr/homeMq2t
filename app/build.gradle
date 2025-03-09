@@ -39,7 +39,10 @@ dependencies {
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.16.2'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0'
-
+    
+    implementation files('./plugins/heartbeat/app.jar')
+    //implementation fileTree(dir: './plugins', include: ['*.jar'])
+    implementation project(':mq2tLib')
 }
 
 application {

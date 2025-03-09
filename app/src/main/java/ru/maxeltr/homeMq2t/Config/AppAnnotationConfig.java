@@ -65,11 +65,12 @@ import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ComponentLoader;
 import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ComponentService;
-import ru.maxeltr.homeMq2t.Service.Mq2tCallbackComponent;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
 import ru.maxeltr.homeMq2t.Service.UIService;
 import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
+//import ru.maxeltr.homeMq2t.Service.Mq2tCallbackComponent;
+import ru.maxeltr.mq2tLib.Mq2tCallbackComponent;
 
 /**
  *
@@ -140,8 +141,9 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public List<Mq2tCallbackComponent> callbackComponents() {	//add
+    public List<Mq2tCallbackComponent> callbackComponents() {
         List<Mq2tCallbackComponent> providers = new ArrayList<>();
+        logger.info("search for={}.", Mq2tCallbackComponent.class);
         ServiceLoader<Mq2tCallbackComponent> loader = ServiceLoader.load(Mq2tCallbackComponent.class);
         Iterator<Mq2tCallbackComponent> iterator = loader.iterator();
         while (iterator.hasNext()) {
@@ -150,27 +152,34 @@ public class AppAnnotationConfig {
             providers.add(provider);
         }
 
+        for (Object pr : providers) {
+            logger.info("providers={}.", pr);
+        }
+        if (providers.isEmpty()) {
+            logger.info("providers are empty.");
+        }
+
         return providers;
     }
 
     @Bean
-    public ComponentService getComponentService() {
-        int i = 0;
-        List<Object> components = new ArrayList<>();
-        ComponentLoader componentLoader = new ComponentLoader();
-        while (StringUtils.isNotEmpty(env.getProperty("component[" + i + "].name", ""))) {
-            String path = env.getProperty("component[" + i + "].path", "");
-            ++i;
+    public ComponentService getComponentService(List<Mq2tCallbackComponent> callbackComponents) {
+//        int i = 0;
+//        List<Object> components = new ArrayList<>();
+//        ComponentLoader componentLoader = new ComponentLoader();
+//        while (StringUtils.isNotEmpty(env.getProperty("component[" + i + "].name", ""))) {
+//            String path = env.getProperty("component[" + i + "].path", "");
+//            ++i;
+//
+//            List<Object> instances = componentLoader.loadClassesFromJar(path);
+//            if (instances == null || instances.isEmpty()) {
+//                logger.warn("Failed to load classes from path={}", path);
+//                continue;
+//            }
+//            components.addAll(instances);
+//        }
 
-            List<Object> instances = componentLoader.loadClassesFromJar(path);
-            if (instances == null || instances.isEmpty()) {
-                logger.warn("Failed to load classes from path={}", path);
-                continue;
-            }
-            components.addAll(instances);
-        }
-
-        return new ComponentServiceImpl(components);
+        return new ComponentServiceImpl(callbackComponents);
     }
 
     /**

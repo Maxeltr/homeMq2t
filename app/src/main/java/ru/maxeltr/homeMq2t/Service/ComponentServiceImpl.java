@@ -51,7 +51,7 @@ import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
-
+import ru.maxeltr.mq2tLib.Mq2tCallbackComponent;
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -62,7 +62,7 @@ public class ComponentServiceImpl implements ComponentService {
 
     private ServiceMediator mediator;
 
-    private final List<Object> pluginComponents;
+    private final List<Mq2tCallbackComponent> pluginComponents;
 
     @Autowired
     private ObjectMapper mapper;
@@ -78,7 +78,7 @@ public class ComponentServiceImpl implements ComponentService {
 
     private ScheduledFuture<?> pollingScheduledFuture;
 
-    public ComponentServiceImpl(List<Object> pluginComponents) {
+    public ComponentServiceImpl(List<Mq2tCallbackComponent> pluginComponents) {
         this.pluginComponents = pluginComponents;
     }
 
@@ -87,13 +87,27 @@ public class ComponentServiceImpl implements ComponentService {
         this.mediator = mediator;
     }
 
+//    @PostConstruct
+//    public void postConstruct() {
+//        for (Object component : this.pluginComponents) {
+//            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
+//                this.invokeMethod(component, "setCallback", (String data) -> callback(data));
+//            }
+//            logger.debug("Loaded component={}", this.invokeMethod(component, "getName"));   //TODO how to unload components?
+//        }
+//
+//        this.startSensorStreaming();
+//
+//        //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
+//    }
     @PostConstruct
     public void postConstruct() {
         for (Object component : this.pluginComponents) {
-            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
-                this.invokeMethod(component, "setCallback", (String data) -> callback(data));
+            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
+                mq2tCallbackComponent.setCallback(data -> callback((String) data));
+                logger.debug("Loaded component={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
             }
-            logger.debug("Loaded component={}", this.invokeMethod(component, "getName"));   //TODO how to unload components?
+
         }
 
         this.startSensorStreaming();
@@ -231,9 +245,9 @@ public class ComponentServiceImpl implements ComponentService {
         }
 
         for (Object component : this.pluginComponents) {
-            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
-                this.invokeMethod(component, "start");
-                logger.debug("Start streaming component={}", this.invokeMethod(component, "getName"));
+            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
+                mq2tCallbackComponent.start();
+                logger.debug("Start streaming component={}", mq2tCallbackComponent.getName());
             }
         }
     }
@@ -249,9 +263,9 @@ public class ComponentServiceImpl implements ComponentService {
         }
 
         for (Object component : this.pluginComponents) {
-            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
-                logger.debug("Stop streaming component={}", this.invokeMethod(component, "getName"));
-                this.invokeMethod(component, "stop");
+            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
+                mq2tCallbackComponent.stop();
+                logger.debug("Stop streaming component={}", mq2tCallbackComponent.getName());
             }
         }
     }
@@ -259,13 +273,13 @@ public class ComponentServiceImpl implements ComponentService {
     @Override
     public void shutdown() {
         for (Object component : this.pluginComponents) {
-            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
-                logger.debug("Shutdown component={}", this.invokeMethod(component, "getName"));
-                this.invokeMethod(component, "shutdown");
+            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
+                mq2tCallbackComponent.shutdown();
+                logger.debug("Shutdown component={}", mq2tCallbackComponent.getName());
             }
         }
 
-        this.threadPoolTaskScheduler.shutdown();
+        //this.threadPoolTaskScheduler.shutdown();
 
     }
 
