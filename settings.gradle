@@ -9,3 +9,6 @@
 
 rootProject.name = 'homeMq2t'
 include('app')
+
+include ':mq2tLib'
+project(':mq2tLib').projectDir = file('../mq2tLib/lib')
