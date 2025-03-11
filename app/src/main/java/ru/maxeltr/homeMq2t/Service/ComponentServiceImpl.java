@@ -51,6 +51,7 @@ import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
+import ru.maxeltr.mq2tLib.Mq2tComponent;
 import ru.maxeltr.mq2tLib.Mq2tCallbackComponent;
 /**
  *
@@ -62,7 +63,7 @@ public class ComponentServiceImpl implements ComponentService {
 
     private ServiceMediator mediator;
 
-    private final List<Mq2tCallbackComponent> pluginComponents;
+    private final List<Mq2tComponent> pluginComponents;
 
     @Autowired
     private ObjectMapper mapper;
@@ -78,7 +79,7 @@ public class ComponentServiceImpl implements ComponentService {
 
     private ScheduledFuture<?> pollingScheduledFuture;
 
-    public ComponentServiceImpl(List<Mq2tCallbackComponent> pluginComponents) {
+    public ComponentServiceImpl(List<Mq2tComponent> pluginComponents) {
         this.pluginComponents = pluginComponents;
     }
 
@@ -103,6 +104,7 @@ public class ComponentServiceImpl implements ComponentService {
     @PostConstruct
     public void postConstruct() {
         for (Object component : this.pluginComponents) {
+            logger.debug("component instanceof ={}", component instanceof Mq2tCallbackComponent);
             if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
                 mq2tCallbackComponent.setCallback(data -> callback((String) data));
                 logger.debug("Loaded component={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
