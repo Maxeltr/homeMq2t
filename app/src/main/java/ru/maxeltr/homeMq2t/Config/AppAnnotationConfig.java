@@ -70,7 +70,7 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
 import ru.maxeltr.homeMq2t.Service.UIService;
 import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
 //import ru.maxeltr.homeMq2t.Service.Mq2tCallbackComponent;
-import ru.maxeltr.mq2tLib.Mq2tCallbackComponent;
+import ru.maxeltr.mq2tLib.Mq2tComponent;
 
 /**
  *
@@ -141,14 +141,14 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public List<Mq2tCallbackComponent> callbackComponents() {
-        List<Mq2tCallbackComponent> providers = new ArrayList<>();
-        logger.info("search for={}.", Mq2tCallbackComponent.class);
-        ServiceLoader<Mq2tCallbackComponent> loader = ServiceLoader.load(Mq2tCallbackComponent.class);
-        Iterator<Mq2tCallbackComponent> iterator = loader.iterator();
+    public List<Mq2tComponent> callbackComponents() {
+        List<Mq2tComponent> providers = new ArrayList<>();
+        logger.info("search for={}.", Mq2tComponent.class);
+        ServiceLoader<Mq2tComponent> loader = ServiceLoader.load(Mq2tComponent.class);
+        Iterator<Mq2tComponent> iterator = loader.iterator();
         while (iterator.hasNext()) {
-            Mq2tCallbackComponent provider = iterator.next();
-            logger.info("Add {} as {} provider.", provider.getClass().getName(), Mq2tCallbackComponent.class);
+            Mq2tComponent provider = iterator.next();
+            logger.info("Add {} as {} provider.", provider.getClass().getName(), Mq2tComponent.class.getName());
             providers.add(provider);
         }
 
@@ -163,7 +163,7 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public ComponentService getComponentService(List<Mq2tCallbackComponent> callbackComponents) {
+    public ComponentService getComponentService(List<Mq2tComponent> components) {
 //        int i = 0;
 //        List<Object> components = new ArrayList<>();
 //        ComponentLoader componentLoader = new ComponentLoader();
@@ -179,7 +179,7 @@ public class AppAnnotationConfig {
 //            components.addAll(instances);
 //        }
 
-        return new ComponentServiceImpl(callbackComponents);
+        return new ComponentServiceImpl(components);
     }
 
     /**
