@@ -132,6 +132,12 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
+    public String execute(String commandPath, String arguments) {
+        logger.debug("Pass command to the command service. commandPath={}, arguments={}.", commandPath, arguments);
+        return this.commandService.execute(commandPath, arguments);
+    }
+
+    @Override
     public void display(Msg.Builder data, String cardNumber) {
         this.uiService.display(data, cardNumber);
         logger.info("Data has been passed to the ui service. Card number={}, data={}.", cardNumber, data);

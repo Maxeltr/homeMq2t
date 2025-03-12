@@ -40,6 +40,8 @@ public interface ServiceMediator {
 
     void execute(Msg.Builder command, String commandNumber);
 
+    String execute(String commandPath, String arguments);
+
     void process(Msg.Builder data, String componentNumber);
 
     void display(Msg.Builder data, String cardNumber);

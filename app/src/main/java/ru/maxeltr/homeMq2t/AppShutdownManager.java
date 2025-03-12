@@ -33,5 +33,6 @@ public class AppShutdownManager {
 
     public void shutdownApp(int returnCode){
         SpringApplication.exit(appContext, () -> returnCode);
+        //System.exit();
     }
 }

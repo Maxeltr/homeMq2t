@@ -115,7 +115,7 @@ public class AppProperties {
     }
 
     public String getCardSubDataType(String id) {
-        return env.getProperty("card[" + id + "].subscription.data.type", MediaType.APPLICATION_JSON_VALUE);
+        return env.getProperty("card[" + id + "].subscription.data.type", "");
     }
 
     public String getCardSubJsonPathExpression(String id) {
@@ -142,6 +142,14 @@ public class AppProperties {
         return env.getProperty("card[" + id + "].publication.data.type", "");
     }
 
+    public String getCardLocalTaskPath(String id) {
+        return env.getProperty("card[" + id + "].local.task.path", "");
+    }
+
+    public String getCardLocalTaskArguments(String id) {
+        return env.getProperty("card[" + id + "].local.task.arguments", "");
+    }
+
     public String getComponentName(String id) {
         return env.getProperty("component[" + id + "].name", "");
     }
@@ -166,4 +174,7 @@ public class AppProperties {
         return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.data.type", MediaType.TEXT_PLAIN_VALUE);
     }
 
+    public String getComponentPubLocalCardId(String component) {
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.local.card.id", "");
+    }
 }

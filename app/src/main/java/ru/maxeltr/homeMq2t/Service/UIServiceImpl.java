@@ -205,16 +205,40 @@ public class UIServiceImpl implements UIService {
         this.mediator.publish(msg.build(), topic, qos, retain);
     }
 
+    @Override
+    public void launch(Msg.Builder msg) {
+        String path = this.appProperties.getCardLocalTaskPath(msg.getId());
+        if (StringUtils.isEmpty(path)) {
+            logger.info("There is no local task to launch for msg={}.", msg.getId());
+            return;
+        }
+
+        String arguments = this.appProperties.getCardLocalTaskArguments(msg.getId());
+        logger.info("Launch local task for msg={}. commandPath={}, arguments={}.", msg.getId(), path, arguments);
+        String data = this.mediator.execute(path, arguments);
+
+        Msg.Builder builder = new MsgImpl.MsgBuilder()
+                .data(data)
+                .timestamp(String.valueOf(Instant.now().toEpochMilli()));
+
+        logger.info("Display result of local task for msg={}.", msg.getId());
+        this.display(builder, msg.getId());
+    }
+
     @Async("processExecutor")
     @Override
     public void display(Msg.Builder builder, String cardNumber) {
         String type = this.appProperties.getCardSubDataType(cardNumber);
-        if (StringUtils.isEmpty(type)) {
-            logger.info("Type is empty for card={}. Set application/json.", cardNumber);
-            type = MediaType.APPLICATION_JSON_VALUE;
+        if (StringUtils.isNotEmpty(type)) {
+            builder.type(type);
+            logger.info("Changed type to defined in properties for card={}. Set type={}.", cardNumber, type);
+        } else {
+            if (StringUtils.isEmpty(builder.getType())) {
+                logger.info("Type is undefined for card={}. Set application/json.", cardNumber);
+                builder.type(MediaType.APPLICATION_JSON_VALUE);
+            }
         }
 
-        builder.type(type);
         if (builder.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
             String jsonPathExpression = this.appProperties.getCardSubJsonPathExpression(cardNumber);
             if (StringUtils.isNotEmpty(jsonPathExpression)) {
