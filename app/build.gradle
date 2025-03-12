@@ -8,7 +8,7 @@
 
 plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
-    id 'java-library'
+    //id 'java-library'
     id 'application'
     id 'org.springframework.boot' version '3.1.0'
     id "io.spring.dependency-management" version "1.1.0"
@@ -26,11 +26,11 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 
     // This dependency is used by the application.
-    implementation 'com.google.guava:guava:31.1-jre'
+    //implementation 'com.google.guava:guava:31.1-jre'
     implementation group: 'io.netty', name: 'netty-all', version: '4.1.99.Final'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: '3.3.1'
     implementation group: 'org.springframework.boot', name: 'spring-boot-starter-websocket', version: '3.3.1'
-    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    //implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
     implementation 'org.webjars:webjars-locator-core'
     implementation 'org.webjars:sockjs-client:1.0.2'
     implementation 'org.webjars:stomp-websocket:2.3.3'
@@ -53,4 +53,12 @@ application {
 tasks.named('test') {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
+}
+
+group = 'ru.maxeltr'
+version = '1.0.0'
+
+jar {
+    archiveBaseName.set('mq2t.jar')
+    archiveVersion.set(version)
 }

@@ -40,6 +40,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,8 @@ import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.mq2tLib.Mq2tComponent;
 import ru.maxeltr.mq2tLib.Mq2tCallbackComponent;
+import ru.maxeltr.mq2tLib.Mq2tPollableComponent;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -192,7 +195,7 @@ public class ComponentServiceImpl implements ComponentService {
         logger.info("Process message. Component number={}, msg={}", componentNumber, msg);
 
         String componentName = appProperties.getComponentName(componentNumber);
-        if (componentName == null || componentName.isEmpty()) {
+        if (StringUtils.isEmpty(componentName)) {
             logger.info("Could not process for component={}. Component name is empty.", componentNumber);
             return;
         }
@@ -201,7 +204,7 @@ public class ComponentServiceImpl implements ComponentService {
         String type = msg.getType();
         if (type.equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             String command = msg.getData();
-            if (command == null || command.isEmpty()) {
+            if (StringUtils.isEmpty(command)) {
                 logger.info("Could not process for component={}, component number={}. Component data is empty.", componentName, componentNumber);
                 return;
             }
@@ -220,7 +223,7 @@ public class ComponentServiceImpl implements ComponentService {
     private void doUpdate(String componentName) {
         logger.info("Update readings of component={}.", componentName);
         this.getComponentByName(componentName).ifPresentOrElse(
-                component -> this.readAndPublish(component),
+                component -> this.readAndPublish((Mq2tComponent) component),
                 () -> logger.warn("Could not update readings of component={}.", componentName)
         );
     }
@@ -228,8 +231,10 @@ public class ComponentServiceImpl implements ComponentService {
     @Override
     public Optional<Object> getComponentByName(String componentName) {
         for (Object component : this.pluginComponents) {
-            if (componentName.equalsIgnoreCase(this.invokeMethod(component, "getName"))) {
-                return Optional.of(component);
+            if (component instanceof Mq2tComponent mq2tComponent) {
+                if (componentName.equalsIgnoreCase(mq2tComponent.getName())) {
+                    return Optional.of(mq2tComponent);
+                }
             }
         }
         logger.warn("There is no component for name={}.", componentName);
@@ -272,6 +277,12 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    private void readAndPublish(Mq2tComponent component) {
+        if (component instanceof Mq2tPollableComponent mq2tPollableComponent) {
+            this.readAndPublish(mq2tPollableComponent);
+        }
+    }
+
     @Override
     public void shutdown() {
         for (Object component : this.pluginComponents) {
@@ -282,22 +293,34 @@ public class ComponentServiceImpl implements ComponentService {
         }
 
         //this.threadPoolTaskScheduler.shutdown();
-
     }
 
-    private void readAndPublish(Object component) {
-        String componentName = this.invokeMethod(component, "getName").toLowerCase();
-        String data = this.invokeMethod(component, "getData");
+    private void readAndPublish(Mq2tPollableComponent component) {
+        String componentName = component.getName().toLowerCase();
+        String data = component.getData();
         logger.info("Get data from component={} in polling task. Data={}", componentName, data);
 
         Msg.Builder builder = this.createMessage(componentName, data);
 
         this.publish(builder, componentName);
+
+        this.publishLocally(builder, componentName);
+    }
+
+    private void publishLocally(Msg.Builder builder, String componentName) {
+        String cardId = this.appProperties.getComponentPubLocalCardId(componentName);
+        if (StringUtils.isEmpty(cardId)) {
+            logger.info("There is no card for component={} to publish locally.", componentName);
+            return;
+        }
+
+        logger.info("Message passes to dispay locally. Message={}, card id={}", builder, cardId);
+        this.mediator.display(builder, cardId);
     }
 
     private Msg.Builder createMessage(String componentName, String data) {
         String type = appProperties.getComponentPubDataType(componentName);
-        if (type == null || type.isEmpty()) {
+        if (StringUtils.isEmpty(type)) {
             logger.info("Type is empty for component={}. Set text/plain. }.", componentName);
             type = MediaType.TEXT_PLAIN_VALUE;
         }
@@ -314,18 +337,12 @@ public class ComponentServiceImpl implements ComponentService {
     @Async("processExecutor")
     private void publish(Msg.Builder msg, String componentName) {
         String topic = appProperties.getComponentPubTopic(componentName);
-        if (topic == null || topic.isEmpty()) {
+        if (StringUtils.isEmpty(topic)) {
             logger.info("Could not publish. There is no topic for component={}", componentName);
             return;
         }
 
-        MqttQoS qos;
-        try {
-            qos = MqttQoS.valueOf(appProperties.getComponentPubQos(componentName));
-        } catch (IllegalArgumentException ex) {
-            logger.error("Invalid QoS value for component={}: {}. Set QoS=0.", componentName, ex.getMessage());
-            qos = MqttQoS.valueOf(0);
-        }
+        MqttQoS qos = this.convertToMqttQos(appProperties.getComponentPubQos(componentName));
 
         boolean retain = Boolean.parseBoolean(appProperties.getComponentPubRetain(componentName));
 
@@ -337,6 +354,25 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    /**
+     * Convert the given qos value from string to MqttQos enum instance. If the
+     * qos value is invalid, it defaults to qos level 0.
+     *
+     * @param qosString The qos value as a string. Must not be null.
+     * @return The qos level as a MqttQos enum value.
+     */
+    private MqttQoS convertToMqttQos(String qosString) {
+        MqttQoS qos;
+        try {
+            qos = MqttQoS.valueOf(qosString);
+        } catch (IllegalArgumentException ex) {
+            logger.error("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
+            qos = MqttQoS.AT_MOST_ONCE;
+        }
+
+        return qos;
+    }
+
     class PollingTask implements Runnable {
 
         @Override
@@ -344,12 +380,10 @@ public class ComponentServiceImpl implements ComponentService {
             logger.debug("Start/resume polling");
 
             for (Object component : pluginComponents) {
-                String componentName = invokeMethod(component, "getName");
-                if (!isImplements(component, Mq2tPollableComponent.class)) {
-                    logger.debug("Component={} does not implement Mq2tPollingComponent. Skipped.", componentName);
-                    continue;
+                if (component instanceof Mq2tPollableComponent mq2tPollableComponent) {
+                    logger.debug("Poll component={}.", mq2tPollableComponent.getName());
+                    readAndPublish(mq2tPollableComponent);
                 }
-                readAndPublish(component);
             }
             logger.debug("Pause polling");
         }

@@ -32,15 +32,17 @@ import ru.maxeltr.homeMq2t.Model.Msg;
  */
 public interface UIService {
 
-    public void connect();
+    void connect();
 
-    public void disconnect(byte reasonCode);
+    void disconnect(byte reasonCode);
 
-    public void publish(Msg.Builder msg);
+    void publish(Msg.Builder msg);
 
-    public void display(Msg.Builder message, String cardNumber);
+    void launch(Msg.Builder msg);
 
-    public void setMediator(ServiceMediator mediator);
+    void display(Msg.Builder message, String cardNumber);
 
-    public void shutdownApp();
+    void setMediator(ServiceMediator mediator);
+
+    void shutdownApp();
 }
