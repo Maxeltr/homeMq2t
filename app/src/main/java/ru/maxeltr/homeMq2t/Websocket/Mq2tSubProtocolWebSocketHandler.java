@@ -21,27 +21,37 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service;
+package ru.maxeltr.homeMq2t.Websocket;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.SubscribableChannel;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class SessionHandler {
+public class Mq2tSubProtocolWebSocketHandler extends SubProtocolWebSocketHandler {
 
-    private static final Logger logger = LoggerFactory.getLogger(SessionHandler.class);
+    private static final Logger logger = LoggerFactory.getLogger(Mq2tSubProtocolWebSocketHandler.class);
 
-    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+    @Autowired
+    private SessionHandler sessionHandler;
 
-    public void register(WebSocketSession session) {
-        sessions.put(session.getId(), session);
+    public Mq2tSubProtocolWebSocketHandler(MessageChannel clientInboundChannel, SubscribableChannel clientOutboundChannel) {
+        super(clientInboundChannel, clientOutboundChannel);
+
     }
+
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        logger.info("New websocket connection was established {}.", session);
+        sessionHandler.register(session);
+        super.afterConnectionEstablished(session);
+    }
+
 }

@@ -150,6 +150,10 @@ public class AppProperties {
         return env.getProperty("card[" + id + "].local.task.arguments", "");
     }
 
+    public String getCardLocalTaskDataType(String id) {
+        return env.getProperty("card[" + id + "].local.task.data.type", "");
+    }
+
     public String getComponentName(String id) {
         return env.getProperty("component[" + id + "].name", "");
     }
