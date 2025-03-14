@@ -91,71 +91,17 @@ public class ComponentServiceImpl implements ComponentService {
         this.mediator = mediator;
     }
 
-//    @PostConstruct
-//    public void postConstruct() {
-//        for (Object component : this.pluginComponents) {
-//            if (this.isImplements(component, Mq2tCallbackComponent.class)) {
-//                this.invokeMethod(component, "setCallback", (String data) -> callback(data));
-//            }
-//            logger.debug("Loaded component={}", this.invokeMethod(component, "getName"));   //TODO how to unload components?
-//        }
-//
-//        this.startSensorStreaming();
-//
-//        //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
-//    }
     @PostConstruct
     public void postConstruct() {
         for (Object component : this.pluginComponents) {
-            logger.debug("component instanceof ={}", component instanceof Mq2tCallbackComponent);
             if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
                 mq2tCallbackComponent.setCallback(data -> callback((String) data));
-                logger.debug("Loaded component={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
+                logger.debug("Set callback for component={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
             }
 
         }
 
         this.startSensorStreaming();
-
-        //this.future = taskScheduler.schedule(new RunnableTask(), periodicTrigger);
-    }
-
-    private boolean isImplements(Object component, Class testedInterface) {
-        for (Class componentInterface : component.getClass().getInterfaces()) {
-            if (componentInterface.getSimpleName().equals(testedInterface.getSimpleName())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-//    private boolean isImplements(Object component, Class testedInterface) { //TODO check in componentloader
-//        return testedInterface.isAssignableFrom(component.getClass());
-//    }
-    private void invokeMethod(Object component, String methodName, Consumer<String> param) {
-        try {
-            Method method = component.getClass().getMethod(methodName, Consumer.class);
-            method.invoke(component, param);
-            logger.debug("Method={} has been  invoked in component={}", methodName, component);
-        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException | NullPointerException ex) {
-            logger.warn("Could not invoke method={} to component={}. {}", methodName, component, ex.getMessage());
-        }
-    }
-
-    private String invokeMethod(Object component, String methodName) {
-        String data = "";
-        try {
-            Method method = component.getClass().getMethod(methodName);
-            var output = method.invoke(component);
-            if (output != null) {
-                data = output.toString();
-            }
-            logger.debug("Method={} has been invoked in component={}", methodName, component);
-        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | InvocationTargetException | NullPointerException ex) {
-            logger.warn("Could not invoke method={} in component={}. {}", methodName, component, ex.getMessage());
-        }
-
-        return data;
     }
 
     private Optional<String> getComponentNameFromJson(String data) {
@@ -291,8 +237,6 @@ public class ComponentServiceImpl implements ComponentService {
                 logger.debug("Shutdown component={}", mq2tCallbackComponent.getName());
             }
         }
-
-        //this.threadPoolTaskScheduler.shutdown();
     }
 
     private void readAndPublish(Mq2tPollableComponent component) {
@@ -366,7 +310,7 @@ public class ComponentServiceImpl implements ComponentService {
         try {
             qos = MqttQoS.valueOf(qosString);
         } catch (IllegalArgumentException ex) {
-            logger.error("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
+            logger.warn("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
             qos = MqttQoS.AT_MOST_ONCE;
         }
 

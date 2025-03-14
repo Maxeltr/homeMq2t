@@ -33,13 +33,8 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.web.socket.WebSocketHandler;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurationSupport;
-import ru.maxeltr.homeMq2t.Service.Mq2tSubProtocolWebSocketHandler;
-import ru.maxeltr.homeMq2t.Service.SessionHandler;
 
 /**
  *

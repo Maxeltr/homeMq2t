@@ -112,6 +112,7 @@ public class UIServiceImpl implements UIService {
      */
     private String createJsonResponse(String status) {
         String errorCaption = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>";
+        String unknownStatusCaption = "<div style=\"color:red;\">Unknknown status of the connection.</div>";
 
         String dashboard = switch (status) {
             case "ok" ->
@@ -119,7 +120,7 @@ public class UIServiceImpl implements UIService {
             case "fail" ->
                 errorCaption + this.getStartDashboard();
             default ->
-                this.getStartDashboard();   //TODO create the error caption
+                unknownStatusCaption + this.getStartDashboard();
         };
 
         String data = "{\"name\": \"onConnect\", \"status\": \""
@@ -216,10 +217,14 @@ public class UIServiceImpl implements UIService {
         String arguments = this.appProperties.getCardLocalTaskArguments(msg.getId());
         logger.info("Launch local task for msg={}. commandPath={}, arguments={}.", msg.getId(), path, arguments);
         String data = this.mediator.execute(path, arguments);
+        if (data == null) {
+            data = "";
+        }
 
         Msg.Builder builder = new MsgImpl.MsgBuilder()
                 .data(data)
-                .timestamp(String.valueOf(Instant.now().toEpochMilli()));
+                .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                .type(this.appProperties.getCardLocalTaskDataType(msg.getId()));
 
         logger.info("Display result of local task for msg={}.", msg.getId());
         this.display(builder, msg.getId());

@@ -141,9 +141,9 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public List<Mq2tComponent> callbackComponents() {
+    public List<Mq2tComponent> mq2tComponents() {
         List<Mq2tComponent> providers = new ArrayList<>();
-        logger.info("search for={}.", Mq2tComponent.class);
+        logger.info("Starting to collect components implement Mq2tComponent.");
         ServiceLoader<Mq2tComponent> loader = ServiceLoader.load(Mq2tComponent.class);
         Iterator<Mq2tComponent> iterator = loader.iterator();
         while (iterator.hasNext()) {
@@ -152,18 +152,11 @@ public class AppAnnotationConfig {
             providers.add(provider);
         }
 
-        for (Object pr : providers) {
-            logger.info("providers={}.", pr);
-        }
-        if (providers.isEmpty()) {
-            logger.info("providers are empty.");
-        }
-
         return providers;
     }
 
     @Bean
-    public ComponentService getComponentService(List<Mq2tComponent> components) {
+    public ComponentService getComponentService(List<Mq2tComponent> mq2tComponents) {
 //        int i = 0;
 //        List<Object> components = new ArrayList<>();
 //        ComponentLoader componentLoader = new ComponentLoader();
@@ -179,7 +172,7 @@ public class AppAnnotationConfig {
 //            components.addAll(instances);
 //        }
 
-        return new ComponentServiceImpl(components);
+        return new ComponentServiceImpl(mq2tComponents);
     }
 
     /**
@@ -234,11 +227,13 @@ public class AppAnnotationConfig {
      * environment, collecting topics and their associated command indices. Each
      * topic can be assotiated with multiple command numbers.
      *
+     * This method is linked to the commandsAndNumbers() method through the
+     * indexing of commands, meaning that the index used here corresponds to the
+     * same command in the commandsAndNumbers() method. Refactoring of these
+     * methods should be done together to maintain consistency.
+     *
      * @return a map where the key is the command topic and the value is a list
      * of command numbers assotiated with that topic.
-     *
-     * @throw IllegalArgumentException if a command topic is not defined for a
-     * command.
      */
     @Bean
     public Map<String, List<String>> topicsAndCommands() {
@@ -277,6 +272,11 @@ public class AppAnnotationConfig {
      * This method iterates through the command properties defined in the
      * environment, collecting command names and their associated indexes.
      *
+     * This method is linked to the topicsAndCommands() method through the
+     * indexing of commands, meaning that the index used here corresponds to the
+     * same command in the topicsAndCommands() method. Refactoring of these
+     * methods should be done together to maintain consistency.
+     *
      * @return a map where the key is the command name and the value is the
      * index of the command.
      */
@@ -305,11 +305,13 @@ public class AppAnnotationConfig {
      * environment, collecting topics and their associated component indices.
      * Each topic can be assotiated with multiple component numbers.
      *
+     * This method is linked to the componentsAndNumbers() method through the
+     * indexing of commands, meaning that the index used here corresponds to the
+     * same command in the componentsAndNumbers() method. Refactoring of these
+     * methods should be done together to maintain consistency.
+     *
      * @return a map where the key is the component topic and the value is a
      * list of component numbers assotiated with that topic.
-     *
-     * @throw IllegalArgumentException if a component topic is not defined for a
-     * component.
      */
     @Bean
     public Map<String, List<String>> topicsAndComponents() {
@@ -347,6 +349,11 @@ public class AppAnnotationConfig {
      *
      * This method iterates through the component properties defined in the
      * environment, collecting component names and their associated indexes.
+     *
+     * This method is linked to the topicsAndComponents() method through the
+     * indexing of commands, meaning that the index used here corresponds to the
+     * same command in the topicsAndComponents() method. Refactoring of these
+     * methods should be done together to maintain consistency.
      *
      * @return a map where the key is the component name and the value is the
      * index of the component.
