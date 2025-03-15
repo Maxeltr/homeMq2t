@@ -28,23 +28,15 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import jakarta.annotation.PostConstruct;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.util.logging.Level;
-import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -93,11 +85,14 @@ public class ComponentServiceImpl implements ComponentService {
 
     @PostConstruct
     public void postConstruct() {
-        for (Object component : this.pluginComponents) {
+        logger.debug("ComponentServiceImpl postconstruct");
+        for (Mq2tComponent component : this.pluginComponents) {
             if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
                 mq2tCallbackComponent.setCallback(data -> callback((String) data));
                 logger.debug("Set callback for component={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
             }
+
+            logger.debug("There is component={}", component);
 
         }
 
@@ -126,7 +121,7 @@ public class ComponentServiceImpl implements ComponentService {
             logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data);
             return;
         }
-        String componentName = componentNameOpt.get().toLowerCase();
+        String componentName = componentNameOpt.get();
 
         Msg.Builder builder = this.createMessage(componentName, data);
 
@@ -240,7 +235,7 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     private void readAndPublish(Mq2tPollableComponent component) {
-        String componentName = component.getName().toLowerCase();
+        String componentName = component.getName();
         String data = component.getData();
         logger.info("Get data from component={} in polling task. Data={}", componentName, data);
 
@@ -252,9 +247,15 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     private void publishLocally(Msg.Builder builder, String componentName) {
-        String cardId = this.appProperties.getComponentPubLocalCardId(componentName);
+        String cardName = this.appProperties.getComponentPubLocalCard(componentName);
+        if (StringUtils.isEmpty(cardName)) {
+            logger.info("There is no local card for component={} to publish locally.", componentName);
+            return;
+        }
+
+        String cardId = this.appProperties.getCardNumber(cardName);
         if (StringUtils.isEmpty(cardId)) {
-            logger.info("There is no card for component={} to publish locally.", componentName);
+            logger.warn("Could not get card number by card name={}.", cardName);
             return;
         }
 
@@ -325,7 +326,7 @@ public class ComponentServiceImpl implements ComponentService {
 
             for (Object component : pluginComponents) {
                 if (component instanceof Mq2tPollableComponent mq2tPollableComponent) {
-                    logger.debug("Poll component={}.", mq2tPollableComponent.getName());
+                    logger.debug("Polling component={}.", mq2tPollableComponent.getName());
                     readAndPublish(mq2tPollableComponent);
                 }
             }
