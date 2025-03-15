@@ -31,12 +31,9 @@ import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
-import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +59,6 @@ import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
-import ru.maxeltr.homeMq2t.Service.ComponentLoader;
 import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ComponentService;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -140,39 +136,32 @@ public class AppAnnotationConfig {
         return new UIServiceImpl();
     }
 
+//    @Bean
+//    public List<Mq2tComponent> mq2tComponents() {
+//        List<Mq2tComponent> providers = new ArrayList<>();
+//        logger.info("Starting to collect components implement Mq2tComponent.");
+//        ServiceLoader<Mq2tComponent> loader = ServiceLoader.load(Mq2tComponent.class);
+//        Iterator<Mq2tComponent> iterator = loader.iterator();
+//        while (iterator.hasNext()) {
+//            Mq2tComponent provider = iterator.next();
+//            logger.info("Add {} as {} provider.", provider.getClass().getName(), Mq2tComponent.class.getName());
+//            providers.add(provider);
+//        }
+//
+//        return providers;
+//    }
+
     @Bean
-    public List<Mq2tComponent> mq2tComponents() {
+    public ComponentService getComponentService() {
         List<Mq2tComponent> providers = new ArrayList<>();
         logger.info("Starting to collect components implement Mq2tComponent.");
         ServiceLoader<Mq2tComponent> loader = ServiceLoader.load(Mq2tComponent.class);
-        Iterator<Mq2tComponent> iterator = loader.iterator();
-        while (iterator.hasNext()) {
-            Mq2tComponent provider = iterator.next();
+        for (Mq2tComponent provider : loader) {
             logger.info("Add {} as {} provider.", provider.getClass().getName(), Mq2tComponent.class.getName());
             providers.add(provider);
         }
 
-        return providers;
-    }
-
-    @Bean
-    public ComponentService getComponentService(List<Mq2tComponent> mq2tComponents) {
-//        int i = 0;
-//        List<Object> components = new ArrayList<>();
-//        ComponentLoader componentLoader = new ComponentLoader();
-//        while (StringUtils.isNotEmpty(env.getProperty("component[" + i + "].name", ""))) {
-//            String path = env.getProperty("component[" + i + "].path", "");
-//            ++i;
-//
-//            List<Object> instances = componentLoader.loadClassesFromJar(path);
-//            if (instances == null || instances.isEmpty()) {
-//                logger.warn("Failed to load classes from path={}", path);
-//                continue;
-//            }
-//            components.addAll(instances);
-//        }
-
-        return new ComponentServiceImpl(mq2tComponents);
+        return new ComponentServiceImpl(providers);
     }
 
     /**
@@ -181,6 +170,11 @@ public class AppAnnotationConfig {
      * This method iterates through the card properties defined in the
      * environment, collecting topics and their associated card indices. Each
      * topic can be assotiated with multiple card numbers.
+     *
+     * This method is linked to the cardsAndNumbers() method through the
+     * indexing of cards, meaning that the index used here corresponds to the
+     * same card in the cardsAndNumbers() method. Refactoring of these methods
+     * should be done together to maintain consistency.
      *
      * @return a map where the key is the card topic and the value is a list of
      * card numbers assotiated with that topic.
@@ -215,6 +209,37 @@ public class AppAnnotationConfig {
         }
 
         logger.info("Topics and cards collection completed. Found {} topics.", map.size());
+
+        return map;
+    }
+
+    /**
+     * Retrives a mapping of card names to their corresponding numbers.
+     *
+     * This method iterates through the card properties defined in the
+     * environment, collecting card names and their associated indexes.
+     *
+     * This method is linked to the topicsAndCards() method through the indexing
+     * of cards, meaning that the index used here corresponds to the same card
+     * in the topicsAndCards() method. Refactoring of these methods should be
+     * done together to maintain consistency.
+     *
+     * @return a map where the key is the card name and the value is the index
+     * of the card.
+     */
+    @Bean
+    public Map<String, String> cardsAndNumbers() {
+        Map<String, String> map = new HashMap<>();
+        int i = 0;
+        String cardName;
+        logger.info("Starting to collect cards and their corresponding card numbers.");
+        while (StringUtils.isNotEmpty(cardName = env.getProperty(String.format("card[%d].name", i), ""))) {
+            map.put(cardName, String.valueOf(i));
+            logger.info("Add card={} with number={}.", cardName, i);
+            ++i;
+        }
+
+        logger.info("Cards and numbers collection completed. Found {} cards.", map.size());
 
         return map;
     }

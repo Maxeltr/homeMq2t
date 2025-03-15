@@ -40,7 +40,7 @@ dependencies {
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0'
     
-    implementation files('./plugins/heartbeat/app.jar')
+    implementation files('./plugins/mq2tHttpPollableComponent/mq2tHttpPollableComponent.jar')
     //implementation fileTree(dir: './plugins', include: ['*.jar'])
     implementation project(':mq2tLib')
 }
@@ -56,9 +56,14 @@ tasks.named('test') {
 }
 
 group = 'ru.maxeltr'
-version = '1.0.0'
 
-jar {
-    archiveBaseName.set('mq2t.jar')
-    archiveVersion.set(version)
+bootJar {
+    archiveBaseName.set('mq2t')
+
+    manifest {
+        attributes(
+            'Implementation-Title': 'mq2t',
+            'Implementation-Version': '1.0.1' 
+        )
+    }
 }

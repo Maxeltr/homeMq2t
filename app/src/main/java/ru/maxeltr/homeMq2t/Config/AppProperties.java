@@ -57,6 +57,9 @@ public class AppProperties {
     private Map<String, String> componentsAndNumbers;
 
     @Autowired
+    private Map<String, String> cardsAndNumbers;
+
+    @Autowired
     @Qualifier("startupTasks")
     private Map<String, String> startupTasksAndNumbers;
 
@@ -79,7 +82,7 @@ public class AppProperties {
     }
 
     public String getCommandPubTopic(String command) {
-        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.topic", ERROR_TOPIC);
+        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.topic", "");
     }
 
     public String getCommandPubQos(String command) {
@@ -110,6 +113,10 @@ public class AppProperties {
         return env.getProperty("card[" + id + "].name", "");
     }
 
+    public String getCardNumber(String name) {
+        return cardsAndNumbers.getOrDefault(name, "");
+    }
+
     public String getCardSubDataName(String id) {
         return env.getProperty("card[" + id + "].subscription.data.name", "");
     }
@@ -123,7 +130,7 @@ public class AppProperties {
     }
 
     public String getCardPubTopic(String id) {
-        return env.getProperty("card[" + id + "].publication.topic", ERROR_TOPIC);
+        return env.getProperty("card[" + id + "].publication.topic", "");
     }
 
     public String getCardPubQos(String id) {
@@ -163,7 +170,7 @@ public class AppProperties {
     }
 
     public String getComponentPubTopic(String component) {
-        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.topic", ERROR_TOPIC);
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.topic", "");
     }
 
     public String getComponentPubQos(String component) {
@@ -178,7 +185,7 @@ public class AppProperties {
         return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.data.type", MediaType.TEXT_PLAIN_VALUE);
     }
 
-    public String getComponentPubLocalCardId(String component) {
-        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.local.card.id", "");
+    public String getComponentPubLocalCard(String component) {
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.local.card", "");
     }
 }
