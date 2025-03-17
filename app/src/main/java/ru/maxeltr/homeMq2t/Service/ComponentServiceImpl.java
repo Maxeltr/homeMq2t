@@ -259,8 +259,12 @@ public class ComponentServiceImpl implements ComponentService {
             return;
         }
 
-        logger.info("Message passes to dispay locally. Message={}, card id={}", builder, cardId);
-        this.mediator.display(builder, cardId);
+        if (this.mediator != null && this.mediator.isConnected()) {
+            logger.info("Message passes to dispay locally. Message={}, card id={}", builder, cardId);
+            this.mediator.display(builder, cardId);
+        } else {
+            logger.info("Message could not passes to dispay locally, , because mediator is null. Message={}, card id={}", builder, cardId);
+        }
     }
 
     private Msg.Builder createMessage(String componentName, String data) {
