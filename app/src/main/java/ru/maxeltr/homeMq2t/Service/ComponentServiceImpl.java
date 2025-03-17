@@ -229,7 +229,7 @@ public class ComponentServiceImpl implements ComponentService {
         for (Object component : this.pluginComponents) {
             if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
                 mq2tCallbackComponent.shutdown();
-                logger.debug("Shutdown component={}", mq2tCallbackComponent.getName());
+                logger.debug("Try to shutdown component={}", mq2tCallbackComponent.getName());
             }
         }
     }
@@ -259,8 +259,12 @@ public class ComponentServiceImpl implements ComponentService {
             return;
         }
 
-        logger.info("Message passes to dispay locally. Message={}, card id={}", builder, cardId);
-        this.mediator.display(builder, cardId);
+        if (this.mediator != null && this.mediator.isConnected()) {
+            logger.info("Message passes to dispay locally. Message={}, card id={}", builder, cardId);
+            this.mediator.display(builder, cardId);
+        } else {
+            logger.info("Message could not passes to dispay locally, , because mediator is null. Message={}, card id={}", builder, cardId);
+        }
     }
 
     private Msg.Builder createMessage(String componentName, String data) {
@@ -280,7 +284,7 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     @Async("processExecutor")
-    private void publish(Msg.Builder msg, String componentName) {
+    private void publish(Msg.Builder msg, String componentName) {       // TODO several topics?
         String topic = appProperties.getComponentPubTopic(componentName);
         if (StringUtils.isEmpty(topic)) {
             logger.info("Could not publish. There is no topic for component={}", componentName);
