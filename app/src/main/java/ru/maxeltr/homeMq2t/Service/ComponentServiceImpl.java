@@ -229,7 +229,7 @@ public class ComponentServiceImpl implements ComponentService {
         for (Object component : this.pluginComponents) {
             if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
                 mq2tCallbackComponent.shutdown();
-                logger.debug("Shutdown component={}", mq2tCallbackComponent.getName());
+                logger.debug("Try to shutdown component={}", mq2tCallbackComponent.getName());
             }
         }
     }
@@ -280,7 +280,7 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     @Async("processExecutor")
-    private void publish(Msg.Builder msg, String componentName) {
+    private void publish(Msg.Builder msg, String componentName) {       // TODO several topics?
         String topic = appProperties.getComponentPubTopic(componentName);
         if (StringUtils.isEmpty(topic)) {
             logger.info("Could not publish. There is no topic for component={}", componentName);
