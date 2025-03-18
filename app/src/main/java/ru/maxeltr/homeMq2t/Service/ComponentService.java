@@ -40,7 +40,5 @@ public interface ComponentService {
 
     void stopSensorStreaming();
 
-    Optional getComponentByName(String name);
-
     void shutdown();
 }

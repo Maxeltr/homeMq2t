@@ -245,7 +245,7 @@ public class UIServiceImpl implements UIService {
         }
 
         if (builder.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
-            String jsonPathExpression = this.appProperties.getCardSubJsonPathExpression(cardNumber);
+            String jsonPathExpression = this.appProperties.getCardJsonPathExpression(cardNumber);
             if (StringUtils.isNotEmpty(jsonPathExpression)) {
                 String parsedValue = this.parseJson(builder.getData(), jsonPathExpression);
                 logger.debug("Parsed data by using jsonPath. Parsed value={}.", parsedValue);

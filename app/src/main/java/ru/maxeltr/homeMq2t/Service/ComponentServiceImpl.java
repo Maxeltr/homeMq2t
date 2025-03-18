@@ -88,17 +88,39 @@ public class ComponentServiceImpl implements ComponentService {
         logger.debug("ComponentServiceImpl postconstruct");
         for (Mq2tComponent component : this.pluginComponents) {
             if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
-                mq2tCallbackComponent.setCallback(data -> callback((String) data));
+                mq2tCallbackComponent.setCallback(
+                        data -> {
+                            if (data instanceof String dataStr) {
+                                onDataReceived(dataStr);
+                            } else {
+                                logger.warn("Invalid type of data.");
+                            }
+                        }
+                );
                 logger.debug("Set callback for component={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
             }
 
             logger.debug("There is component={}", component);
-
         }
 
         this.startSensorStreaming();
     }
 
+//    @PostConstruct
+//    public void postConstruct() {
+//        logger.debug("ComponentServiceImpl postconstruct");
+//        for (Mq2tComponent component : this.pluginComponents) {
+//            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
+//                mq2tCallbackComponent.setCallback(data -> callback((String) data));
+//                logger.debug("Set callback for component={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
+//            }
+//
+//            logger.debug("There is component={}", component);
+//
+//        }
+//
+//        this.startSensorStreaming();
+//    }
     private Optional<String> getComponentNameFromJson(String data) {
         HashMap<String, String> dataMap;
         try {
@@ -113,20 +135,12 @@ public class ComponentServiceImpl implements ComponentService {
 
     }
 
-    public void callback(String data) {
-        logger.debug("Callback has been called. Data={}", data);
-
-        Optional<String> componentNameOpt = this.getComponentNameFromJson(data);
-        if (componentNameOpt.isEmpty()) {
-            logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data);
-            return;
-        }
-        String componentName = componentNameOpt.get();
-
-        Msg.Builder builder = this.createMessage(componentName, data);
-
-        this.publish(builder, componentName);
-
+    public void onDataReceived(String data) {
+        logger.info("Callback method triggered. Received data={}", data);
+        this.getComponentNameFromJson(data).ifPresentOrElse(
+                componentName -> publish(createMessage(componentName, data), componentName),
+                () -> logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data)
+        );
     }
 
     @Async("processExecutor")
@@ -163,26 +177,22 @@ public class ComponentServiceImpl implements ComponentService {
 
     private void doUpdate(String componentName) {
         logger.info("Update readings of component={}.", componentName);
-        this.getComponentByName(componentName).ifPresentOrElse(
-                component -> this.readAndPublish((Mq2tComponent) component),
-                () -> logger.warn("Could not update readings of component={}.", componentName)
-        );
+        this.readAndPublish(componentName);
     }
 
-    @Override
-    public Optional<Object> getComponentByName(String componentName) {
-        for (Object component : this.pluginComponents) {
-            if (component instanceof Mq2tComponent mq2tComponent) {
-                if (componentName.equalsIgnoreCase(mq2tComponent.getName())) {
-                    return Optional.of(mq2tComponent);
-                }
-            }
-        }
-        logger.warn("There is no component for name={}.", componentName);
-
-        return Optional.empty();
-    }
-
+//    @Override
+//    public Optional<Object> getComponentByName(String componentName) {
+//        for (Object component : this.pluginComponents) {
+//            if (component instanceof Mq2tComponent mq2tComponent) {
+//                if (componentName.equalsIgnoreCase(mq2tComponent.getName())) {
+//                    return Optional.of(mq2tComponent);
+//                }
+//            }
+//        }
+//        logger.warn("There is no component for name={}.", componentName);
+//
+//        return Optional.empty();
+//    }
     @Override
     public void startSensorStreaming() {
         if (this.pollingScheduledFuture == null || this.pollingScheduledFuture.isDone()) {
@@ -218,12 +228,11 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
-    private void readAndPublish(Mq2tComponent component) {
-        if (component instanceof Mq2tPollableComponent mq2tPollableComponent) {
-            this.readAndPublish(mq2tPollableComponent);
-        }
-    }
-
+//    private void readAndPublish(Mq2tComponent component) {
+//        if (component instanceof Mq2tPollableComponent mq2tPollableComponent) {
+//            this.readAndPublish(mq2tPollableComponent);
+//        }
+//    }
     @Override
     public void shutdown() {
         for (Object component : this.pluginComponents) {
@@ -234,18 +243,47 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
-    private void readAndPublish(Mq2tPollableComponent component) {
-        String componentName = component.getName();
-        String data = component.getData();
-        logger.info("Get data from component={} in polling task. Data={}", componentName, data);
+    private Optional<Mq2tComponent> lookUpComponentProvider(String name) {
+        for (Mq2tComponent component : pluginComponents) {
+            if (component.getName().equalsIgnoreCase(name)) {
+                logger.debug("Found component={}.", component.getName());
+                return Optional.of(component);
+            }
+        }
 
-        Msg.Builder builder = this.createMessage(componentName, data);
-
-        this.publish(builder, componentName);
-
-        this.publishLocally(builder, componentName);
+        logger.debug("No component was found for component name={}.", name);
+        return Optional.empty();
     }
 
+    private void readAndPublish(String componentName) {
+        String args = this.appProperties.getComponentProviderArgs(componentName);
+        String providerName = this.appProperties.getComponentProvider(componentName);
+        Optional<Mq2tComponent> componentOpt = this.lookUpComponentProvider(providerName);
+        if (componentOpt.isEmpty()) {
+            logger.warn("Could not get provider for component name={}.", componentName);
+            return;
+        }
+
+        if (componentOpt.get() instanceof Mq2tPollableComponent mq2tPollableComponent) {
+            String data = mq2tPollableComponent.getData(args.split(","));
+            logger.info("Get data from component={}. Data={}", componentName, data);
+            Msg.Builder builder = this.createMessage(componentName, data);
+            this.publish(builder, componentName);
+            this.publishLocally(builder, componentName);
+        }
+    }
+
+//    private void readAndPublish(Mq2tPollableComponent component) {
+//        String componentName = component.getName();
+//        String data = component.getData();
+//        logger.info("Get data from component={} in polling task. Data={}", componentName, data);
+//
+//        Msg.Builder builder = this.createMessage(componentName, data);
+//
+//        this.publish(builder, componentName);
+//
+//        this.publishLocally(builder, componentName);
+//    }
     private void publishLocally(Msg.Builder builder, String componentName) {
         String cardName = this.appProperties.getComponentPubLocalCard(componentName);
         if (StringUtils.isEmpty(cardName)) {
@@ -322,19 +360,37 @@ public class ComponentServiceImpl implements ComponentService {
         return qos;
     }
 
-    class PollingTask implements Runnable {
+    class PollingTask implements Runnable {	//add
 
         @Override
         public void run() {
             logger.debug("Start/resume polling");
 
-            for (Object component : pluginComponents) {
-                if (component instanceof Mq2tPollableComponent mq2tPollableComponent) {
-                    logger.debug("Polling component={}.", mq2tPollableComponent.getName());
-                    readAndPublish(mq2tPollableComponent);
-                }
+            int i = 0;
+            String componentName;
+            while (StringUtils.isNotEmpty(componentName = appProperties.getComponentName(String.valueOf(i)))) {
+                logger.debug("Polling component={}.", componentName);
+                readAndPublish(componentName);
+                i++;
             }
+
             logger.debug("Pause polling");
         }
     }
+
+//    class PollingTask implements Runnable {
+//
+//        @Override
+//        public void run() {
+//            logger.debug("Start/resume polling");
+//
+//            for (Object component : pluginComponents) {
+//                if (component instanceof Mq2tPollableComponent mq2tPollableComponent) {
+//                    logger.debug("Polling component={}.", mq2tPollableComponent.getName());
+//                    readAndPublish(mq2tPollableComponent);
+//                }
+//            }
+//            logger.debug("Pause polling");
+//        }
+//    }
 }

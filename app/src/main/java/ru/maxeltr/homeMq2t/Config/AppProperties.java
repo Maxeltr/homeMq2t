@@ -125,8 +125,8 @@ public class AppProperties {
         return env.getProperty("card[" + id + "].subscription.data.type", "");
     }
 
-    public String getCardSubJsonPathExpression(String id) {
-        return env.getProperty("card[" + id + "].subscription.data.jsonpath", "");
+    public String getCardJsonPathExpression(String id) {
+        return env.getProperty("card[" + id + "].display.data.jsonpath", "");
     }
 
     public String getCardPubTopic(String id) {
@@ -187,5 +187,13 @@ public class AppProperties {
 
     public String getComponentPubLocalCard(String component) {
         return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.local.card", "");
+    }
+
+    public String getComponentProvider(String component) {
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].provider", "");
+    }
+
+    public String getComponentProviderArgs(String component) {
+        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].provider.args", "");
     }
 }
