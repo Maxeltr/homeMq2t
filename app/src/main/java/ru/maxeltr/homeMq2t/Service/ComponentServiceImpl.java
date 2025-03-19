@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import jakarta.annotation.PostConstruct;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
@@ -60,6 +61,8 @@ public class ComponentServiceImpl implements ComponentService {
 
     private final List<Mq2tComponent> pluginComponents;
 
+    private final List<Mq2tCallbackComponent> initializedCallbackComponents = new ArrayList<>();
+
     @Autowired
     private ObjectMapper mapper;
 
@@ -72,7 +75,7 @@ public class ComponentServiceImpl implements ComponentService {
     @Autowired
     private PeriodicTrigger pollingPeriodicTrigger;
 
-    private ScheduledFuture<?> pollingScheduledFuture;
+    private ScheduledFuture<?> scheduledPollingTask;
 
     public ComponentServiceImpl(List<Mq2tComponent> pluginComponents) {
         this.pluginComponents = pluginComponents;
@@ -85,42 +88,46 @@ public class ComponentServiceImpl implements ComponentService {
 
     @PostConstruct
     public void postConstruct() {
-        logger.debug("ComponentServiceImpl postconstruct");
+        logger.debug("Starting postConstruct initialization for {}.", ComponentServiceImpl.class);
+
         for (Mq2tComponent component : this.pluginComponents) {
-            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
+            logger.info("There is component={} as provider.", component);
+        }
+
+        this.initializeCallbackComponents();
+
+        this.startSensorStreaming();
+
+    }
+
+    private void initializeCallbackComponents() {
+        int i = 0;
+        String componentName;
+        while (StringUtils.isNotEmpty(componentName = appProperties.getComponentName(String.valueOf(i)))) {
+            Optional<Mq2tComponent> componentOpt = this.lookUpComponentProvider(this.appProperties.getComponentProvider(componentName));
+            if (componentOpt.isEmpty()) {
+                logger.warn("Could not get provider for component name={}.", componentName);
+                i++;
+                continue;
+            }
+
+            if (componentOpt.get() instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
                 mq2tCallbackComponent.setCallback(
                         data -> {
                             if (data instanceof String dataStr) {
                                 onDataReceived(dataStr);
                             } else {
-                                logger.warn("Invalid type of data.");
+                                logger.warn("Invalid data type received from provider={}.", mq2tCallbackComponent.getName());
                             }
                         }
                 );
-                logger.debug("Set callback for component={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
+                logger.debug("Set callback to provider={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
+                this.initializedCallbackComponents.add(mq2tCallbackComponent);
             }
-
-            logger.debug("There is component={}", component);
+            i++;
         }
-
-        this.startSensorStreaming();
     }
 
-//    @PostConstruct
-//    public void postConstruct() {
-//        logger.debug("ComponentServiceImpl postconstruct");
-//        for (Mq2tComponent component : this.pluginComponents) {
-//            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
-//                mq2tCallbackComponent.setCallback(data -> callback((String) data));
-//                logger.debug("Set callback for component={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
-//            }
-//
-//            logger.debug("There is component={}", component);
-//
-//        }
-//
-//        this.startSensorStreaming();
-//    }
     private Optional<String> getComponentNameFromJson(String data) {
         HashMap<String, String> dataMap;
         try {
@@ -180,83 +187,67 @@ public class ComponentServiceImpl implements ComponentService {
         this.readAndPublish(componentName);
     }
 
-//    @Override
-//    public Optional<Object> getComponentByName(String componentName) {
-//        for (Object component : this.pluginComponents) {
-//            if (component instanceof Mq2tComponent mq2tComponent) {
-//                if (componentName.equalsIgnoreCase(mq2tComponent.getName())) {
-//                    return Optional.of(mq2tComponent);
-//                }
-//            }
-//        }
-//        logger.warn("There is no component for name={}.", componentName);
-//
-//        return Optional.empty();
-//    }
     @Override
     public void startSensorStreaming() {
-        if (this.pollingScheduledFuture == null || this.pollingScheduledFuture.isDone()) {
+        if (this.scheduledPollingTask == null || this.scheduledPollingTask.isDone()) {
             logger.info("Start polling components task.");
-            this.pollingScheduledFuture = this.threadPoolTaskScheduler.schedule(new PollingTask(), this.pollingPeriodicTrigger);
+            this.scheduledPollingTask = this.threadPoolTaskScheduler.schedule(new PollingTask(), this.pollingPeriodicTrigger);
         } else {
             logger.warn("Could not start polling components task. Previous polling components task was not stopped.");
         }
 
-        for (Object component : this.pluginComponents) {
-            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
-                mq2tCallbackComponent.start();
-                logger.debug("Start streaming component={}", mq2tCallbackComponent.getName());
-            }
+        this.startCallbackComponentStreaming();
+    }
+
+    private void startCallbackComponentStreaming() {
+        for (Mq2tCallbackComponent mq2tCallbackComponent : this.initializedCallbackComponents) {
+            mq2tCallbackComponent.start();
+            logger.debug("Start streaming component={}", mq2tCallbackComponent.getName());
         }
     }
 
     @Override
     public void stopSensorStreaming() {
-        if (this.pollingScheduledFuture != null && !this.pollingScheduledFuture.isDone()) {
-            this.pollingScheduledFuture.cancel(false);
-            this.pollingScheduledFuture = null;
+        if (this.scheduledPollingTask != null && !this.scheduledPollingTask.isDone()) {
+            this.scheduledPollingTask.cancel(false);
+            this.scheduledPollingTask = null;
             logger.info("Polling components task is stopped");
         } else {
             logger.info("Polling components task has been stopped already.");
         }
 
-        for (Object component : this.pluginComponents) {
-            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
-                mq2tCallbackComponent.stop();
-                logger.debug("Stop streaming component={}", mq2tCallbackComponent.getName());
-            }
+        this.stopCallbackComponentStreaming();
+    }
+
+    private void stopCallbackComponentStreaming() {
+        for (Mq2tCallbackComponent mq2tCallbackComponent : this.initializedCallbackComponents) {
+            mq2tCallbackComponent.stop();
+            logger.debug("Stop streaming component={}", mq2tCallbackComponent.getName());
         }
     }
 
-//    private void readAndPublish(Mq2tComponent component) {
-//        if (component instanceof Mq2tPollableComponent mq2tPollableComponent) {
-//            this.readAndPublish(mq2tPollableComponent);
-//        }
-//    }
     @Override
     public void shutdown() {
-        for (Object component : this.pluginComponents) {
-            if (component instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
-                mq2tCallbackComponent.shutdown();
-                logger.debug("Try to shutdown component={}", mq2tCallbackComponent.getName());
-            }
+        for (Mq2tComponent component : this.pluginComponents) {
+            component.shutdown();
+            logger.debug("Try to shutdown component={}", component.getName());
         }
     }
 
     private Optional<Mq2tComponent> lookUpComponentProvider(String name) {
         for (Mq2tComponent component : pluginComponents) {
             if (component.getName().equalsIgnoreCase(name)) {
-                logger.debug("Found component={}.", component.getName());
+                logger.debug("Found component={} as provider.", component.getName());
                 return Optional.of(component);
             }
         }
 
-        logger.debug("No component was found for component name={}.", name);
+        logger.debug("No provider was found for component name={}.", name);
         return Optional.empty();
     }
 
     private void readAndPublish(String componentName) {
-        String args = this.appProperties.getComponentProviderArgs(componentName);
+
         String providerName = this.appProperties.getComponentProvider(componentName);
         Optional<Mq2tComponent> componentOpt = this.lookUpComponentProvider(providerName);
         if (componentOpt.isEmpty()) {
@@ -265,25 +256,26 @@ public class ComponentServiceImpl implements ComponentService {
         }
 
         if (componentOpt.get() instanceof Mq2tPollableComponent mq2tPollableComponent) {
-            String data = mq2tPollableComponent.getData(args.split(","));
-            logger.info("Get data from component={}. Data={}", componentName, data);
+            String[] args = {};
+            String argsProperty = this.appProperties.getComponentProviderArgs(componentName);
+            if (StringUtils.isNotEmpty(argsProperty)) {
+                args = argsProperty.split(",");
+            }
+
+            String data;
+            try {
+                data = mq2tPollableComponent.getData(args);
+                logger.info("Get data from component={}. Data={}", componentName, data);
+            } catch (Exception ex) {
+                logger.info("Could not get data from component={}.", componentName, ex);
+                data = "Error get data. " + ex.getMessage();
+            }
             Msg.Builder builder = this.createMessage(componentName, data);
             this.publish(builder, componentName);
             this.publishLocally(builder, componentName);
         }
     }
 
-//    private void readAndPublish(Mq2tPollableComponent component) {
-//        String componentName = component.getName();
-//        String data = component.getData();
-//        logger.info("Get data from component={} in polling task. Data={}", componentName, data);
-//
-//        Msg.Builder builder = this.createMessage(componentName, data);
-//
-//        this.publish(builder, componentName);
-//
-//        this.publishLocally(builder, componentName);
-//    }
     private void publishLocally(Msg.Builder builder, String componentName) {
         String cardName = this.appProperties.getComponentPubLocalCard(componentName);
         if (StringUtils.isEmpty(cardName)) {
@@ -301,7 +293,7 @@ public class ComponentServiceImpl implements ComponentService {
             logger.info("Message passes to dispay locally. Message={}, card id={}", builder, cardId);
             this.mediator.display(builder, cardId);
         } else {
-            logger.info("Message could not passes to dispay locally, , because mediator is null. Message={}, card id={}", builder, cardId);
+            logger.debug("Message could not passes to dispay locally, , because mediator is null. Message={}, card id={}", builder, cardId);
         }
     }
 
@@ -337,7 +329,7 @@ public class ComponentServiceImpl implements ComponentService {
             logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
             this.mediator.publish(msg.build(), topic, qos, retain);
         } else {
-            logger.info("Message could not pass to publish, because mq2t is disconnected. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
+            logger.debug("Message could not pass to publish, because mq2t is disconnected. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
         }
     }
 
@@ -360,7 +352,7 @@ public class ComponentServiceImpl implements ComponentService {
         return qos;
     }
 
-    class PollingTask implements Runnable {	//add
+    class PollingTask implements Runnable {
 
         @Override
         public void run() {
@@ -377,20 +369,4 @@ public class ComponentServiceImpl implements ComponentService {
             logger.debug("Pause polling");
         }
     }
-
-//    class PollingTask implements Runnable {
-//
-//        @Override
-//        public void run() {
-//            logger.debug("Start/resume polling");
-//
-//            for (Object component : pluginComponents) {
-//                if (component instanceof Mq2tPollableComponent mq2tPollableComponent) {
-//                    logger.debug("Polling component={}.", mq2tPollableComponent.getName());
-//                    readAndPublish(mq2tPollableComponent);
-//                }
-//            }
-//            logger.debug("Pause polling");
-//        }
-//    }
 }
