@@ -88,9 +88,17 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     public void remove(int key) {
         synchronized (this) {
             Promise<? extends MqttMessage> future = this.futures.remove(key);
-            logger.debug("Future was removed key={}. Amount futures={}. Future={}", key, futures.size(), future);
+            if (future != null) {
+                logger.debug("Future was removed key={}. Amount futures={}. Future={}", key, futures.size(), future);
+            } else {
+                logger.debug("No future found key={}. Amount futures={}.", key, futures.size());
+            }
             MqttMessage message = this.messages.remove(key);
-            logger.debug("Message was removed key={}. Amount messages={}. Message={}", key, messages.size(), message.variableHeader());
+            if (message != null) {
+                logger.debug("Message was removed key={}. Amount messages={}. Message={}", key, messages.size(), message.variableHeader());
+            } else {
+                logger.debug("No message found key={}. Amount messages={}.", key, messages.size());
+            }
         }
     }
 

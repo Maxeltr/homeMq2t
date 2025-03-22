@@ -242,10 +242,9 @@ public class CommandServiceImpl implements CommandService {
         if (!finished) {
             logger.warn("Process did not finish in time={}. Destroy process. commandPath={}, arguments={}.", this.timeout, commandPath, arguments);
             process.destroyForcibly();
-            return result.toString();
+        } else {
+            logger.info("Command has been executed. commandPath={}, arguments={}. exitCode={}", commandPath, arguments, process.exitValue());
         }
-
-        logger.info("Command has been executed. commandPath={}, arguments={}. exitCode={}", commandPath, arguments, process.exitValue());
 
         return result.toString();
     }
