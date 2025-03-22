@@ -57,35 +57,91 @@ public class ComponentServiceImpl implements ComponentService {
 
     private static final Logger logger = LoggerFactory.getLogger(ComponentServiceImpl.class);
 
+    /**
+     * The service mediator used for communication between components and
+     * external systems. This property holds an instance of ServiceMediator,
+     * which facilitates the interaction between the various components managed
+     * by this service and other parts of the appliction or external services.
+     * The mediator is responsible for handling message passing, data publishing
+     * and other communication tasks. The mediator is set using the setMediator
+     * method and it expected to be non-null. It allows components to publish
+     * messages and receive data in a decoupled manner, promoting a modular
+     * architecture.
+     */
     private ServiceMediator mediator;
 
+    /**
+     * This list contains instances of Mq2tComponent that represetn various
+     * components which can be utilized by the service. These components are
+     * loaded using the ServiceLoder mechanism, allowing for dynamic discovery
+     * and integration of new components. The components are injected through
+     * thr constructor of the servcie
+     */
     private final List<Mq2tComponent> pluginComponents;
 
+    /**
+     * A list of initialized callback components.
+     *
+     * This list holds instances of Mq2tCallbackComponent that have been
+     * initialized during the postConstruct method. Each component is configured
+     * with a callback function that processes incoming data.
+     */
     private final List<Mq2tCallbackComponent> initializedCallbackComponents = new ArrayList<>();
 
+    /**
+     * This property holds an instance of ObjectMapper from the Jackson library,
+     * which is utilized for converting Java objects to Json and vice versa.
+     */
     @Autowired
     private ObjectMapper mapper;
 
+    /**
+     * The application properties used fpr configuration.
+     */
     @Autowired
     private AppProperties appProperties;
 
+    /**
+     * This property holds an instance of ThreadPoolTaskScheduler used to
+     * schedule and execute tasks asynchronously, such as polling components at
+     * regular intervals.
+     */
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
+    /**
+     * This property holds an instance of PeriosicTrigger that defines the
+     * interval and configuration for executing polling tasks. It is used to
+     * determine how frequently the service should poll components for data.
+     */
     @Autowired
     private PeriodicTrigger pollingPeriodicTrigger;
 
+    /**
+     * This property holds a ScheduledFuture that represents the ongoing polling
+     * task. It is used to mange the lifecycle of the polling task.
+     */
     private ScheduledFuture<?> scheduledPollingTask;
 
     public ComponentServiceImpl(List<Mq2tComponent> pluginComponents) {
         this.pluginComponents = pluginComponents;
     }
 
+    /**
+     * Sets mediator for this component service.
+     *
+     * @param mediator the ServiceMediator instance to be set
+     */
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
     }
 
+    /**
+     * Performs initialization tasks after the component service has been
+     * constructed. It logs the initialization process, iterates through the
+     * plugin components.
+     */
     @PostConstruct
     public void postConstruct() {
         logger.debug("Starting postConstruct initialization for {}.", ComponentServiceImpl.class);
@@ -100,34 +156,78 @@ public class ComponentServiceImpl implements ComponentService {
 
     }
 
+    /**
+     * Initialize the callback components based on the configuration provided in
+     * the application properties.
+     *
+     * This method iterates through the components names defined in the
+     * application properties and attempts to retrieve the corresponding
+     * component providers. If a provider is found and it is an instance of
+     * Mq2tCallbackComponent, a callback is set for that component. The
+     * initialized callback components are stored in the list for further
+     * proccessing.
+     */
     private void initializeCallbackComponents() {
         int i = 0;
         String componentName;
         while (StringUtils.isNotEmpty(componentName = appProperties.getComponentName(String.valueOf(i)))) {
-            Optional<Mq2tComponent> componentOpt = this.lookUpComponentProvider(this.appProperties.getComponentProvider(componentName));
-            if (componentOpt.isEmpty()) {
-                logger.warn("Could not get provider for component name={}.", componentName);
-                i++;
-                continue;
-            }
-
-            if (componentOpt.get() instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
-                mq2tCallbackComponent.setCallback(
-                        data -> {
-                            if (data instanceof String dataStr) {
-                                onDataReceived(dataStr);
-                            } else {
-                                logger.warn("Invalid data type received from provider={}.", mq2tCallbackComponent.getName());
-                            }
-                        }
-                );
-                logger.debug("Set callback to provider={}", mq2tCallbackComponent.getName());   //TODO how to unload components?
-                this.initializedCallbackComponents.add(mq2tCallbackComponent);
-            }
+            this.initializeCallbackComponent(componentName);
             i++;
         }
     }
 
+    /**
+     * Initializes a callback component based on the provided component name.
+     *
+     * This method attempts to retrieve the component provider associated with
+     * the specified component name from the application properties. If a valid
+     * provider is found and it is an instance of Mq2tCallbackComponent, a
+     * callback is set for that component toEpochMilli handle incoming data. The
+     * initialized callback component is then added to the list. If the
+     * component is not of type Mq2tCallbackComponent, no action is taken, and
+     * the method exits without modifying the state.
+     *
+     * @param componentName the name of the component to initialize
+     */
+    private void initializeCallbackComponent(String componentName) {
+        Optional<Mq2tComponent> componentOpt = this.lookUpComponentProvider(this.appProperties.getComponentProvider(componentName));
+        if (componentOpt.isEmpty()) {
+            logger.warn("Could not get provider for component name={}.", componentName);
+            return;
+        }
+
+        if (componentOpt.get() instanceof Mq2tCallbackComponent mq2tCallbackComponent) {
+            this.setCallback(mq2tCallbackComponent);
+            this.initializedCallbackComponents.add(mq2tCallbackComponent);
+        }
+    }
+
+    /**
+     * Sets a callback for the specified Mq2tCallbackComponent th handle
+     * incoming data.
+     *
+     * @param mq2tCallbackComponent the callback component for which the
+     * callback is to be set.
+     */
+    private void setCallback(Mq2tCallbackComponent mq2tCallbackComponent) {
+        mq2tCallbackComponent.setCallback(
+                data -> {
+                    if (data instanceof String dataStr) {
+                        onDataReceived(dataStr);
+                    } else {
+                        logger.warn("Invalid data type received from provider={}.", mq2tCallbackComponent.getName());
+                    }
+                });
+    }
+
+    /**
+     * Extract the component name from a json string.
+     *
+     * @param data the JSON string from which to extract the component name
+     *
+     * @return an Optional containing the component name if found, or an empty
+     * Optional if the name could not be extracted.
+     */
     private Optional<String> getComponentNameFromJson(String data) {
         HashMap<String, String> dataMap;
         try {
@@ -142,6 +242,15 @@ public class ComponentServiceImpl implements ComponentService {
 
     }
 
+    /**
+     * Handles the reception of data from callback components.
+     *
+     * This method is triggered when data is received from a registered callback
+     * component. It processes the incoming data, extracting the component name
+     * from json payload and publish the data accordingly.
+     *
+     * @param data the received data as a JSON string
+     */
     public void onDataReceived(String data) {
         logger.info("Callback method triggered. Received data={}", data);
         this.getComponentNameFromJson(data).ifPresentOrElse(
@@ -150,6 +259,19 @@ public class ComponentServiceImpl implements ComponentService {
         );
     }
 
+    /**
+     * Processes a message for the specified component.
+     *
+     * The method retrives the component name assosiated with the given
+     * component number. It checks the message type and retrieves command
+     * accordingly. Then it processes the command contained in the incoming
+     * message.
+     *
+     * @param builder the Msg.Builder used to construct the message to be
+     * processed
+     * @param componentNumber the identifier of the component for which the
+     * message is being processed.
+     */
     @Async("processExecutor")
     @Override
     public void process(Msg.Builder builder, String componentNumber) {
@@ -167,7 +289,7 @@ public class ComponentServiceImpl implements ComponentService {
         if (type.equalsIgnoreCase(MediaType.TEXT_PLAIN_VALUE)) {
             String command = msg.getData();
             if (StringUtils.isEmpty(command)) {
-                logger.info("Could not process for component={}, component number={}. Component data is empty.", componentName, componentNumber);
+                logger.info("Could not process for component={}, component number={}. Data is empty.", componentName, componentNumber);
                 return;
             }
 
@@ -178,15 +300,24 @@ public class ComponentServiceImpl implements ComponentService {
                 logger.warn("Could not process. Unknown command={}.", command);
             }
         } else {
-            logger.warn("Could not process. Unknown command type={}.", type);
+            logger.warn("Could not process. Unknown type={}.", type);
         }
     }
 
+    /**
+     * Perfoms an update operation for the specified component.
+     *
+     * @param componentName the name pf the component to be updated
+     */
     private void doUpdate(String componentName) {
         logger.info("Update readings of component={}.", componentName);
         this.readAndPublish(componentName);
     }
 
+    /**
+     * This method starts polling tasks for the cofigured components and begins
+     * streaming data from initialized callback components.
+     */
     @Override
     public void startSensorStreaming() {
         if (this.scheduledPollingTask == null || this.scheduledPollingTask.isDone()) {
@@ -199,6 +330,10 @@ public class ComponentServiceImpl implements ComponentService {
         this.startCallbackComponentStreaming();
     }
 
+    /**
+     * This method iterates through the list of initialized callback components
+     * and invokes their start methods to begin data streaming.
+     */
     private void startCallbackComponentStreaming() {
         for (Mq2tCallbackComponent mq2tCallbackComponent : this.initializedCallbackComponents) {
             mq2tCallbackComponent.start();
@@ -206,6 +341,10 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    /**
+     * This method cancels any ongoing polling tasks and stops the streaming for
+     * all initiliazed callback components.
+     */
     @Override
     public void stopSensorStreaming() {
         if (this.scheduledPollingTask != null && !this.scheduledPollingTask.isDone()) {
@@ -219,6 +358,10 @@ public class ComponentServiceImpl implements ComponentService {
         this.stopCallbackComponentStreaming();
     }
 
+    /**
+     * This method iterates through the list of initilialized callback
+     * components and invokes their stop methods to halt data streaming.
+     */
     private void stopCallbackComponentStreaming() {
         for (Mq2tCallbackComponent mq2tCallbackComponent : this.initializedCallbackComponents) {
             mq2tCallbackComponent.stop();
@@ -226,6 +369,11 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    /**
+     * This method iterates through the list of plugin components and invokes
+     * their shutdown methods to release resources and perfom any necessary
+     * cleanup.
+     */
     @Override
     public void shutdown() {
         for (Mq2tComponent component : this.pluginComponents) {
@@ -234,6 +382,16 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
+    /**
+     * Looks up a component provider by its name.
+     *
+     * This method searches through the list of registered plugin components to
+     * find a component that matches the specified name.
+     *
+     * @param name the name of the component provider to look up
+     * @return an Optional containing the matching Mq2tComponent if found, or an
+     * empty Optional if no match is found.
+     */
     private Optional<Mq2tComponent> lookUpComponentProvider(String name) {
         for (Mq2tComponent component : pluginComponents) {
             if (component.getName().equalsIgnoreCase(name)) {
@@ -267,8 +425,8 @@ public class ComponentServiceImpl implements ComponentService {
                 data = mq2tPollableComponent.getData(args);
                 logger.info("Get data from component={}. Data={}", componentName, data);
             } catch (Exception ex) {
-                logger.info("Could not get data from component={}.", componentName, ex);
-                data = "Error get data. " + ex.getMessage();
+                logger.warn("Could not get data from component={}.", componentName, ex);
+                return;
             }
             Msg.Builder builder = this.createMessage(componentName, data);
             this.publish(builder, componentName);
