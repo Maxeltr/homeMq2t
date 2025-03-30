@@ -39,9 +39,7 @@ dependencies {
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.16.2'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
     implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0'
-    
-    implementation files('./plugins/mq2tHttpPollableComponent/mq2tHttpPollableComponent.jar')
-    //implementation fileTree(dir: './plugins', include: ['*.jar'])
+
     implementation project(':mq2tLib')
 }
 
@@ -65,5 +63,16 @@ bootJar {
             'Implementation-Title': 'mq2t',
             'Implementation-Version': '1.0.1' 
         )
+    }
+}
+
+bootRun {
+    if (project.hasProperty('env') && project.env == 'dev') {
+        args = ['--spring.profiles.active=dev']
+
+        //add dependencies in dev profile
+        dependencies {
+            implementation files('./plugins/mq2tHttpPollableComponent/mq2tHttpPollableComponent.jar')
+        }
     }
 }
