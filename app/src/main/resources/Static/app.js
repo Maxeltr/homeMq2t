@@ -14,8 +14,6 @@ function connect() {
         stompClient.subscribe('/topic/data', function (message) {
             showData(JSON.parse(message.body), message.headers.card);
         });
-        //stompClient.send("/app/connect", {}, JSON.stringify({'topic': "", 'type': "application/json", 'timestamp': Date.now(), 'payload': {'name': "connect"}}));
-        //stompClient.send("/app/connect", {}, JSON.stringify({'topic': "onconnecte", 'payload': "-", 'type': "application/json", 'timestamp': "--"}));
         stompClient.send("/app/connect", {}, JSON.stringify({'id': "doConnect"}));
     });
 }
@@ -26,23 +24,19 @@ function disconnect() {
         stompClient.disconnect();
     }
     setConnected(false);
-    console.log("Disconnected");
 }
 
 function shutdown() {
     stompClient.send("/app/shutdownApp", {}, JSON.stringify({'id': "shutdown"}));
-    console.log("shutdown");
     document.body.innerHTML = "<div style=\"color:green;\">Bye!</div>";
 }
 
 function createCommand(id) {
-    console.log('createCommand ' + id);
     stompClient.send("/app/publish", {}, JSON.stringify({'id': id}));
     //stompClient.send("/app/connected", {}, JSON.stringify({'id': "connectsfgdsfgsdfg"}));
 }
 
 function showImage(message, cardNumber) {
-    console.log('message.type is IMAGE/JPEG ' + message.data);
     var image = new Image();
     image.src = 'data:image/jpeg;base64,' + message.data;
 
@@ -59,7 +53,6 @@ function showImage(message, cardNumber) {
 }
 
 function showPlainText(message, cardNumber) {
-    console.log('message.type is TEXT/PLAIN ' + message.data);
     el = document.getElementById(cardNumber + '-payload');
     if (el !== null) {
         el.innerHTML = '<p>' + message.data + '</p>';
@@ -68,14 +61,12 @@ function showPlainText(message, cardNumber) {
 
 function showTimestamp(message, cardNumber) {
     if (message.timestamp === 'undefined') {
-        console.log('message.timestamp is undefined');
         el = document.getElementById(cardNumber + '-timestamp');
         if (el !== null) {
             el.innerHTML = 'undefined';
         }
     } else {
         var date = new Date(parseInt(message.timestamp, 10));
-        console.log(date);
         var hours = date.getHours();
         var minutes = '0' + date.getMinutes();
         var seconds = '0' + date.getSeconds();
@@ -99,12 +90,10 @@ function showData(message, cardNumber) {
             showPlainText(message, cardNumber);
 
         } else if (message.type.toUpperCase() === 'APPLICATION/JSON') {
-            console.log('message.type is APPLICATION/JSON ' + message.data);
-
             try {
                 var payload = JSON.parse(message.data);
             } catch (SyntaxError) {
-                console.log('Not valid Json. Shows as plain text.');
+                console.log('Error. Not valid Json. Shows as plain text.');
                 document.getElementById('errors').innerHTML = "<div style=\"color:red;\">Error. Invalid json. Card=" + cardNumber + ".</div>";
                 showPlainText(message, cardNumber);
                 return;
@@ -112,16 +101,27 @@ function showData(message, cardNumber) {
 
             if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONCONNECT') {
                 if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
-                    el = document.getElementById('dashboard');
-                    if (el !== null) {
-                        el.innerHTML = payload.hasOwnProperty("data") ? atob(payload.data) : "<div style=\"color:red;\">Error to show dashboard.</div>";
-                    }
+                    data = payload.hasOwnProperty("data") ? atob(payload.data) : "<div style=\"color:red;\">Error to show dashboard. No data available.</div>";
                 } else {
                     console.log("Error. Incorrect payload type. Require text/html;base64 for message 'onconnect'");
+                    data = "<div style=\"color:red;\">Error. Incorrect payload type. Require text/html;base64 for message 'onconnect'.</div>";
                 }
-                if (payload.hasOwnProperty("status") && payload.status.toUpperCase() === 'OK') {
-                    setConnected(true);
+                
+                if (payload.hasOwnProperty("status")) {
+                    if (payload.status.toUpperCase() === 'OK') {	
+                        setConnected(true);
+                    }
+                } else {
+                    console.log("Error. No status available.");
                 }
+                
+                el = document.getElementById('dashboard');
+                if (el !== null) {
+                    el.innerHTML = data;	
+                } else {
+                    console.log("Error. No dashboard available.");	
+                }
+                                
                 return;
             }
 
@@ -139,14 +139,13 @@ function showData(message, cardNumber) {
                 }
             }
 
-            if (!payload.hasOwnProperty("data")) {
-                console.log("There is no data property in message payload json.");
-                return;
-            }
-
             el = document.getElementById(cardNumber + '-payload');
             if (el !== null) {
-                el.innerHTML = '<p>' + payload.data + '</p>';
+                if (payload.hasOwnProperty("data")) {
+                    el.innerHTML = '<p>' + payload.data + '</p>';
+                } else {
+                    el.innerHTML = '<p>' + payload + '</p>';
+                }
             }
 
         } else {
