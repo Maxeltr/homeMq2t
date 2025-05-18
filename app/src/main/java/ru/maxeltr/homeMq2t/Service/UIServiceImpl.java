@@ -43,6 +43,8 @@ import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import com.jayway.jsonpath.JsonPath;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import org.apache.commons.lang3.StringUtils;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
@@ -255,8 +257,17 @@ public class UIServiceImpl implements UIService {
             } else {
                 logger.debug("JsonPath expression is empty for card={}.", cardNumber);
             }
+        } else if (builder.getType().equalsIgnoreCase(MediaType.IMAGE_JPEG_VALUE)) {    //TODO надо переделать Msg тип свойства data со строки на Object чтобы можно было принимать не только строку
+            logger.debug("Encode img to base64 for card=" + cardNumber);
+            String img;		//TODO default img?
+            try {
+                img = Base64.getEncoder().encodeToString(builder.getData().getBytes());
+                builder.data(img);
+            } catch (Exception ex) {
+                logger.warn("Error encoding image to Base64");
+            }
         }
-        builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
+        //builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
         logger.debug("Display data={}. Card={}", builder, cardNumber);
         this.uiController.display(builder.build(), cardNumber);
     }
@@ -265,8 +276,8 @@ public class UIServiceImpl implements UIService {
         String parsedValue = "";
         try {
             parsedValue = JsonPath.parse(json).read(jsonPathExpression, String.class);
-        } catch (InvalidPathException ex) {
-            logger.warn("Could not parse json. {}", ex.getMessage());
+        } catch (Exception ex) {
+            logger.info("Could not parse json. {}", ex.getMessage());
         }
 
         return parsedValue;
