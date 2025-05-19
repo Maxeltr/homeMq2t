@@ -83,7 +83,7 @@ function showData(message, cardNumber) {
     showTimestamp(message, cardNumber);
 
     if (message.type !== 'undefined') {
-        if (message.type.toUpperCase() === 'IMAGE/JPEG') {
+        if (message.type.toUpperCase() === 'IMAGE/JPEG;BASE64') {
             showImage(message, cardNumber);
 
         } else if (message.type.toUpperCase() === 'TEXT/PLAIN') {
@@ -149,7 +149,7 @@ function showData(message, cardNumber) {
             }
 
         } else {
-            console.log("Error. Incorrect payload type for card=." + cardNumber + "Message type is " + message.type);
+            console.log("Error. Incorrect payload type for card=" + cardNumber + ". Message type is " + message.type);
             document.getElementById('errors').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type for card=" + cardNumber + ".</div>";
         }
     } else {
