@@ -257,17 +257,9 @@ public class UIServiceImpl implements UIService {
             } else {
                 logger.debug("JsonPath expression is empty for card={}.", cardNumber);
             }
-        } else if (builder.getType().equalsIgnoreCase(MediaType.IMAGE_JPEG_VALUE)) {    //TODO надо переделать Msg тип свойства data со строки на Object чтобы можно было принимать не только строку
-            logger.debug("Encode img to base64 for card=" + cardNumber);
-            String img;		//TODO default img?
-            try {
-                img = Base64.getEncoder().encodeToString(builder.getData().getBytes());
-                builder.data(img);
-            } catch (Exception ex) {
-                logger.warn("Error encoding image to Base64");
-            }
         }
-        //builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
+
+        builder.data(Jsoup.clean(builder.getData(), Safelist.basic()));
         logger.debug("Display data={}. Card={}", builder, cardNumber);
         this.uiController.display(builder.build(), cardNumber);
     }
