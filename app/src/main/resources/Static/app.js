@@ -144,7 +144,8 @@ function showData(message, cardNumber) {
                 if (payload.hasOwnProperty("data")) {
                     el.innerHTML = '<p>' + payload.data + '</p>';
                 } else {
-                    el.innerHTML = '<p>' + payload + '</p>';
+                    el.innerHTML = '<p>' + JSON.stringify(payload) + '</p>';
+                    console.log("Error. No property data for card=" + cardNumber);
                 }
             }
 

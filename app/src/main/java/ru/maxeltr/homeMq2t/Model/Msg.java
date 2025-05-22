@@ -41,7 +41,7 @@ public interface Msg {
     String getTimestamp();
 
     @JsonDeserialize(as = MsgImpl.MsgBuilder.class)
-    @JsonIgnoreProperties(ignoreUnknown = true)
+    @JsonIgnoreProperties(ignoreUnknown = false)
     interface Builder {
 
         String getId();
