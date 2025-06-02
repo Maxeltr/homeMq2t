@@ -22,6 +22,16 @@
                             <div class="btn-group">
                                 <button id="connect" class="btn btn-sm btn-outline-light" type="submit">Connect</button>
                                 <button id="disconnect" class="btn btn-sm btn-outline-light" type="submit" disabled="disabled">Disconnect</button>
+                                <button id="options" type="button" class="btn btn-sm btn-outline-light" aria-haspopup="true" aria-expanded="false" disabled="disabled">
+                                    Options
+                                </button>
+                                <div class="dropdown-menu" id="dropdown-menu" style="display: none;">
+                                    <a class="dropdown-item" href="#">Add card</a>
+                                    <a class="dropdown-item" href="#">Add command</a>
+                                    <a class="dropdown-item" href="#">Add plugin</a>
+                                    <div class="dropdown-divider"></div>
+                                    <button id="shutdown" class="dropdown-item" type="button" disabled="disabled">Shutdown</button>
+                                </div>
                             </div>
                         </div>
                     </form>
@@ -30,11 +40,11 @@
 
                 </div>
                 <div class="col-md-2">
-                    <form class="form-inline">
+                    <!--<form class="form-inline">
                         <div class="form-group text-white">
                             <button id="shutdown" class="btn btn-sm btn-outline-light" type="submit" disabled="disabled">shutdown</button>
                         </div>
-                    </form>
+                    </form>-->
                 </div>
             </div>
             <div id="errors"></div>

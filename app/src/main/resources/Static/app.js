@@ -4,6 +4,7 @@ function setConnected(connected) {
     $("#connect").prop("disabled", connected);
     $("#disconnect").prop("disabled", !connected);
     $("#shutdown").prop("disabled", !connected);
+    $("#options").prop("disabled", !connected);
 }
 
 function connect() {
@@ -106,22 +107,22 @@ function showData(message, cardNumber) {
                     console.log("Error. Incorrect payload type. Require text/html;base64 for message 'onconnect'");
                     data = "<div style=\"color:red;\">Error. Incorrect payload type. Require text/html;base64 for message 'onconnect'.</div>";
                 }
-                
+
                 if (payload.hasOwnProperty("status")) {
-                    if (payload.status.toUpperCase() === 'OK') {	
+                    if (payload.status.toUpperCase() === 'OK') {
                         setConnected(true);
                     }
                 } else {
                     console.log("Error. No status available.");
                 }
-                
+
                 el = document.getElementById('dashboard');
                 if (el !== null) {
-                    el.innerHTML = data;	
+                    el.innerHTML = data;
                 } else {
-                    console.log("Error. No dashboard available.");	
+                    console.log("Error. No dashboard available.");
                 }
-                                
+
                 return;
             }
 
@@ -171,6 +172,16 @@ $(function () {
     });
     $("#shutdown").click(function () {
         shutdown();
+    });
+
+    $("#options").click(function () {
+        $("#dropdown-menu").toggle();
+    });
+
+    $(document).click(function (event) {
+        if (!$(event.target).closest('#options').length) {
+            $("#dropdown-menu").hide();
+        }
     });
 
     $(document).on("click", "#sendCommand", function () {
