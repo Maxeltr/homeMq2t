@@ -5,6 +5,7 @@ This application allows for the subscription and publication of messages to vari
 ## Features
 
 - Support for MQTT 3.1.1 protocol.
+- Support subscribing, publishing, authentication, will messages, keep alive pings and all 3 QoS levels.
 - Web UI built on WebSocket and STOMP.
 - Data is transmitted in JSON format (including fields: `data`, `type`, and `timestamp`) via MQTT.
 - Images must be encoded in Base64 due to JSON constraints.
@@ -14,6 +15,33 @@ This application allows for the subscription and publication of messages to vari
 - The application displays data from topics in cards, with each card representing a single topic.
 - From each card, you can send a message to the configured topic.
 - The number of cards is determined by the configuration settings.
+
+## MQTT Settings Description
+```properties
+host = 
+port = 
+mq2t-password = 
+mq2t-username = 
+client-id = 
+has-user-name = 
+has-password = 
+will-qos = 
+will-retain = 
+will-flag = 
+clean-session = 
+auto-connect = 
+keep-alive-timer = 
+wait-disconnect-while-shutdown = 
+will-topic =
+will-message =
+connect-timeout = 
+max-bytes-in-message = 
+retransmit-delay = 
+reconnect = 
+reconnect-delay = 
+reconnect-delay-max = 
+polling-sensors-delay = 
+```
 
 ## Card Settings Description
 
@@ -29,9 +57,10 @@ card[0].publication.qos = The Quality of Service level for the publication, dete
 card[0].publication.retain = A boolean value indicating whether the published message should be retained by the broker for future subscribers.
 card[0].publication.data = The actual data being published to the topic, which can include status updates, commands, or other relevant information.
 card[0].publication.data.type = The MIME type of the data being published, indicating the format of the content (e.g., "text/plain").
-card[0].local.task.path = The file path to a local task or script that can be executed in conjunction with the card's functionality.
+card[0].local.task.path = The file path to a local task or script that can be executed in conjunction with the card functionality.
 card[0].local.task.arguments = The arguments to be passed to the local task or script when it is executed.
 card[0].local.task.data.type = The MIME type of the data that the local task will output to stdout and will be displayed in the local card.
+```
 
 ## Command Settings Description
 
@@ -45,6 +74,7 @@ command[0].publication.retain = A boolean value indicating whether the published
 command[0].publication.data.type = The MIME type of the data being published, indicating the format of the content (e.g., "text/plain").
 command[0].path = The name of the command, file, or script to be executed (e.g., "java").
 command[0].arguments = The arguments to be passed to the command via the command line when it is executed (e.g., "-version").
+```
 
 ## Component Settings Description
 
@@ -59,3 +89,10 @@ component[0].publication.data.type = The MIME type of the data being published, 
 component[0].publication.local.card = The name of the local card associated with the component, which displays the data locally on the dashboard card. This functionality works without an internet connection.
 component[0].provider = The Java plugin that is dynamically loaded by the Java ClassLoader and is responsible for polling the sensors or executing specific tasks. This is a plugin that implements the interfaces `Mq2tHttpPollableComponent` or `Mq2tHttpCallbackComponent`.
 component[0].provider.args = The arguments or parameters required by the provider.
+```
+
+Persistence:
+Persistence is not implemented nowadays. The app starts with in-memory persistence, which means all sessions and messages are lost after a server restart.
+
+Contributing:
+Feel free to contribute to the project in any way you like!
