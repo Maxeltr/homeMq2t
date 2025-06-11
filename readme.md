@@ -18,29 +18,29 @@ This application allows for the subscription and publication of messages to vari
 
 ## MQTT Settings Description
 ```properties
-host = 
-port = 
-mq2t-password = 
-mq2t-username = 
-client-id = 
-has-user-name = 
-has-password = 
-will-qos = 
-will-retain = 
-will-flag = 
-clean-session = 
-auto-connect = 
-keep-alive-timer = 
-wait-disconnect-while-shutdown = 
-will-topic =
-will-message =
-connect-timeout = 
-max-bytes-in-message = 
-retransmit-delay = 
-reconnect = 
-reconnect-delay = 
-reconnect-delay-max = 
-polling-sensors-delay = 
+host = The address of the MQTT server to which the client will connect. This can be an IP address or a domain name.
+port = The port used to connect to the MQTT server.
+mq2t-password = The password for authenticating the client on the MQTT server.
+mq2t-username = The username for authenticating the client on the MQTT server.
+client-id = A unique identifier for the client, used to identify the connection on the server. It should be unique for each client.
+has-user-name = A flag indicating whether a username is required for connecting to the server. If set to true, the mq2t-username must be provided.
+has-password = A flag indicating whether a password is required for connecting to the server. If set to true, the mq2t-password must be provided.
+will-qos = The Quality of Service (QoS) level for the "Last Will and Testament" (LWT) message. It determines how the server should handle this message in case of an unexpected client disconnection.
+will-retain = A flag indicating whether the LWT message should be retained on the server for new subscribers.
+will-flag = A flag indicating whether the last will message should be sent when the client disconnects.
+clean-session = A flag indicating whether the server should delete all subscriptions and messages associated with the client upon disconnection. If set to true, the server will not retain the client's state.
+auto-connect = A flag indicating whether to automatically connect to the server when the application starts.
+keep-alive-timer = The time interval (in milliseconds) within which the client should send "ping" messages to the server to keep the connection alive.
+wait-disconnect-while-shutdown = A time interval (in milliseconds) to wait for all disconnection operations to complete before shutting down the application.
+will-topic = The topic to which the LWT message will be sent in case of client disconnection.
+will-message = The message that will be sent to the will-topic if the client disconnects unexpectedly.
+connect-timeout = (in milliseconds)
+max-bytes-in-message = The maximum size of a message (in bytes) that can be sent or received by the client.
+retransmit-delay = The time delay (in milliseconds) before retransmitting a message if no acknowledgment has been received.
+reconnect = flag indicating whether to automatically attempt to reconnect to the server in case of a lost connection.
+reconnect-delay = The time delay (in milliseconds) before attempting to reconnect to the server after a connection drop. This value may increase with each failed attempt.
+reconnect-delay-max = The maximum time delay (in milliseconds) between reconnection attempts. 
+polling-sensors-delay = The time interval (in milliseconds) for polling sensors or other data sources if the application uses them to send messages to the server.
 ```
 
 ## Card Settings Description
