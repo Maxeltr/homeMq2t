@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS dashboard_config (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    card_name VARCHAR(255)
+);

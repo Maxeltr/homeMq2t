@@ -5,6 +5,7 @@
 build
 logs
 plugins
+db
 
 #properties
 application-dev.properties
