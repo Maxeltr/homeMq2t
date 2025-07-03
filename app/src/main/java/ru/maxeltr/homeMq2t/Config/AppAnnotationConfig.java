@@ -57,6 +57,7 @@ import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
+import ru.maxeltr.homeMq2t.Repository.CardRepository;
 import ru.maxeltr.homeMq2t.Service.CommandService;
 import ru.maxeltr.homeMq2t.Service.CommandServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
@@ -81,6 +82,9 @@ public class AppAnnotationConfig {
 
     @Autowired
     private Environment env;
+
+    @Autowired
+    private CardRepository cardRepository;
 
     @Bean
     public AppProperties getAppProperty() {
