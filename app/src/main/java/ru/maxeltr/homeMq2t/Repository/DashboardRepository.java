@@ -29,9 +29,9 @@ import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 
 public interface DashboardRepository extends JpaRepository<DashboardEntity, Long> {
 
-    DashboardEntity findByDashboardNumber(String dashboardNumber);
+    Optional<DashboardEntity> findByNumber(int number);
 
-    DashboardEntity findByName(String name);
+    Optional<DashboardEntity> findByName(String name);
 
     @Override
     Optional<DashboardEntity> findById(Long id);
