@@ -31,10 +31,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.hibernate.engine.internal.Cascade;
 
 @Entity
-@Table(name = "dashboard")
+@Table(name = "dashboard_settings")
 public class DashboardEntity {
 
     @Id
@@ -42,9 +43,9 @@ public class DashboardEntity {
     private long id;
 
     private String name;
-    private String dashboardNumber;
+    private int number;
 
-    @OneToMany(mappedBy = "dashboard")
+    @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)
     private List<CardEntity> cards;
 
     public long getId() {
@@ -63,12 +64,12 @@ public class DashboardEntity {
         this.name = name;
     }
 
-    public String getDashboardNumber() {
-        return dashboardNumber;
+    public int getNumber() {
+        return number;
     }
 
-    public void setDashboardNumber(String dashboardNumber) {
-        this.dashboardNumber = dashboardNumber;
+    public void setNumber(int number) {
+        this.number = number;
     }
 
     public List<CardEntity> getCards() {
@@ -79,5 +80,15 @@ public class DashboardEntity {
         this.cards = cards;
     }
 
+    @Override
+    public String toString() {
+        String cardNames = (cards != null)
+                ? cards.stream()
+                        .map(CardEntity::getName)
+                        .collect(Collectors.joining(", "))
+                : "[]";
+
+        return "DashboardEntity{" + "id=" + id + ", name=" + name + ", number=" + number + ", cards=" + cardNames + '}';
+    }
 
 }

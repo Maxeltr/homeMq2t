@@ -25,15 +25,13 @@ package ru.maxeltr.homeMq2t.Repository;
 
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Entity.MqttSettingsEntity;
 
-public interface CardRepository extends JpaRepository<CardEntity, Long> {
+public interface MqttSettingsRepository extends JpaRepository<MqttSettingsEntity, Long> {
 
-    Optional<CardEntity> findByNumber(int number);
-
-    Optional<CardEntity> findByName(String name);
+    Optional<MqttSettingsEntity> findByName(String name);
 
     @Override
-    Optional<CardEntity> findById(Long id);
+    Optional<MqttSettingsEntity> findById(Long id);
 
 }

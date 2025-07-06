@@ -21,19 +21,65 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Repository;
+package ru.maxeltr.homeMq2t.Entity;
 
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-public interface CardRepository extends JpaRepository<CardEntity, Long> {
+@Entity
+@Table(name = "startup_task_settings")
+public class StartupTaskEntity {
 
-    Optional<CardEntity> findByNumber(int number);
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
 
-    Optional<CardEntity> findByName(String name);
+    private String name;
+    private String path;
+    private String arguments;
+    private int number;
 
-    @Override
-    Optional<CardEntity> findById(Long id);
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public void setPath(String path) {
+        this.path = path;
+    }
+
+    public String getArguments() {
+        return arguments;
+    }
+
+    public void setArguments(String arguments) {
+        this.arguments = arguments;
+    }
+
+    public int getNumber() {
+        return number;
+    }
+
+    public void setNumber(int number) {
+        this.number = number;
+    }
 
 }

@@ -27,13 +27,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "card_settings")
-public class CardEntity {
+@Table(name = "component_settings")
+public class ComponentEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,22 +40,14 @@ public class CardEntity {
     private String name;
     private String subscriptionTopic;
     private String subscriptionQos;
-    private String subscriptionDataName;
-    private String subscriptionDataType;
-    private String displayDataJsonpath;
     private String publicationTopic;
     private String publicationQos;
     private boolean publicationRetain;
-    private String publicationData;
     private String publicationDataType;
-    private String localTaskPath;
-    private String localTaskArguments;
-    private String localTaskDataType;
+    private String publicationLocalCardId;
+    private String provider;
+    private String providerArgs;
     private int number;
-
-    @ManyToOne
-    @JoinColumn(name = "dashboard_id", nullable = false)
-    private DashboardEntity dashboard;
 
     public long getId() {
         return id;
@@ -91,30 +81,6 @@ public class CardEntity {
         this.subscriptionQos = subscriptionQos;
     }
 
-    public String getSubscriptionDataName() {
-        return subscriptionDataName;
-    }
-
-    public void setSubscriptionDataName(String subscriptionDataName) {
-        this.subscriptionDataName = subscriptionDataName;
-    }
-
-    public String getSubscriptionDataType() {
-        return subscriptionDataType;
-    }
-
-    public void setSubscriptionDataType(String subscriotionDataType) {
-        this.subscriptionDataType = subscriotionDataType;
-    }
-
-    public String getDisplayDataJsonpath() {
-        return displayDataJsonpath;
-    }
-
-    public void setDisplayDataJsonpath(String displayDataJsonpath) {
-        this.displayDataJsonpath = displayDataJsonpath;
-    }
-
     public String getPublicationTopic() {
         return publicationTopic;
     }
@@ -139,14 +105,6 @@ public class CardEntity {
         this.publicationRetain = publicationRetain;
     }
 
-    public String getPublicationData() {
-        return publicationData;
-    }
-
-    public void setPublicationData(String publicationData) {
-        this.publicationData = publicationData;
-    }
-
     public String getPublicationDataType() {
         return publicationDataType;
     }
@@ -155,28 +113,28 @@ public class CardEntity {
         this.publicationDataType = publicationDataType;
     }
 
-    public String getLocalTaskPath() {
-        return localTaskPath;
+    public String getPublicationLocalCardId() {
+        return publicationLocalCardId;
     }
 
-    public void setLocalTaskPath(String localTaskPath) {
-        this.localTaskPath = localTaskPath;
+    public void setPublicationLocalCardId(String publicationLocalCardId) {
+        this.publicationLocalCardId = publicationLocalCardId;
     }
 
-    public String getLocalTaskArguments() {
-        return localTaskArguments;
+    public String getProvider() {
+        return provider;
     }
 
-    public void setLocalTaskArguments(String localTaskArguments) {
-        this.localTaskArguments = localTaskArguments;
+    public void setProvider(String provider) {
+        this.provider = provider;
     }
 
-    public String getLocalTaskDataType() {
-        return localTaskDataType;
+    public String getProviderArgs() {
+        return providerArgs;
     }
 
-    public void setLocalTaskDataType(String localTaskDataType) {
-        this.localTaskDataType = localTaskDataType;
+    public void setProviderArgs(String providerArgs) {
+        this.providerArgs = providerArgs;
     }
 
     public int getNumber() {
@@ -185,19 +143,6 @@ public class CardEntity {
 
     public void setNumber(int number) {
         this.number = number;
-    }
-
-    public DashboardEntity getDashboard() {
-        return dashboard;
-    }
-
-    public void setDashboard(DashboardEntity dashboard) {
-        this.dashboard = dashboard;
-    }
-
-    @Override
-    public String toString() {
-        return "CardEntity{" + "id=" + id + ", name=" + name + ", subscriptionTopic=" + subscriptionTopic + ", subscriptionQos=" + subscriptionQos + ", subscriptionDataName=" + subscriptionDataName + ", subscriptionDataType=" + subscriptionDataType + ", displayDataJsonpath=" + displayDataJsonpath + ", publicationTopic=" + publicationTopic + ", publicationQos=" + publicationQos + ", publicationRetain=" + publicationRetain + ", publicationData=" + publicationData + ", publicationDataType=" + publicationDataType + ", localTaskPath=" + localTaskPath + ", localTaskArguments=" + localTaskArguments + ", localTaskDataType=" + localTaskDataType + ", number=" + number + ", dashboard=" + dashboard.getName() + '}';
     }
 
 }

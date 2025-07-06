@@ -167,14 +167,14 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
         Msg.Builder builder;
         try {
-            builder = this.mapper.readValue(mqttMessage.payload().toString(StandardCharsets.UTF_8), Msg.Builder.class);
+            builder = this.mapper.readValue(mqttMessage.payload().toString(StandardCharsets.UTF_8), Msg.Builder.class); //TODO pass only binary data from Msg.data. Create msg locally.
             logger.debug("Convert mqttMessage to Msg. {}", builder);
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert json to Msg. Message id={}. Data was added as plain text. {}", id, ex.getMessage());
             builder = new MsgImpl.MsgBuilder();
             builder.data(mqttMessage.payload().toString(StandardCharsets.UTF_8));
             builder.timestamp("n/a");
-            builder.type(MediaType.TEXT_PLAIN_VALUE);
+            builder.type(MediaType.TEXT_PLAIN_VALUE);   //TODO get type from options by topic
         }
 
         String topicName = (mqttMessage.variableHeader().topicName());

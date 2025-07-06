@@ -68,6 +68,7 @@ import ru.maxeltr.homeMq2t.Service.UIService;
 import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
 //import ru.maxeltr.homeMq2t.Service.Mq2tCallbackComponent;
 import ru.maxeltr.mq2tLib.Mq2tComponent;
+import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
 
 /**
  *
@@ -86,6 +87,9 @@ public class AppAnnotationConfig {
     @Autowired
     private CardRepository cardRepository;
 
+    @Autowired
+    private DashboardRepository dashboardRepository;
+
     @Bean
     public AppProperties getAppProperty() {
         logger.info("Current user dir={}", System.getProperty("user.dir"));
@@ -95,6 +99,9 @@ public class AppAnnotationConfig {
         }
         logger.info("Java home={}", System.getenv("JAVA_HOME"));
         logger.info("OS name={}", System.getProperty("os.name"));
+
+        logger.info("cardRepository={}", cardRepository.findByNumber(1).get());
+        logger.info("dashboardRepository={}", dashboardRepository.findByNumber(0).get());
 
         return new AppProperties();
     }
