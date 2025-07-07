@@ -23,15 +23,18 @@
  */
 package ru.maxeltr.homeMq2t.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 
 public interface CardRepository extends JpaRepository<CardEntity, Long> {
 
-    Optional<CardEntity> findByNumber(int number);
+    Optional<CardEntity> findByNumber(Integer number);
 
     Optional<CardEntity> findByName(String name);
+
+    List<CardEntity> findBySubscriptionTopic(String subscriptionTopic);
 
     @Override
     Optional<CardEntity> findById(Long id);
