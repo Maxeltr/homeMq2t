@@ -23,12 +23,17 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
+import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Repository.CardRepository;
 
 /**
  *
@@ -62,6 +67,9 @@ public class AppProperties {
     @Autowired
     @Qualifier("startupTasks")
     private Map<String, String> startupTasksAndNumbers;
+
+    @Autowired
+    private CardRepository cardRepository;
 
     private final List<String> emptyArray = List.of();
 
@@ -105,60 +113,230 @@ public class AppProperties {
         return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "arguments", "");
     }
 
+    /**
+     * Retrieves the list of card numbers associated with a specific
+     * subscriptoin topic.
+     *
+     * The metod searches for card numbers that are subscribed to the given
+     * topic within the dashboard.
+     *
+     * @param topic the subscription topic for which to retrieve card numbers.
+     * @return a list of card numbers subscribed to the specified topic, returns
+     * empty list if no cards are found for the topic.
+     */
     public List<String> getCardNumbersByTopic(String topic) {
-        return topicsAndCards.getOrDefault(topic, emptyArray);
+        //return topicsAndCards.getOrDefault(topic, emptyArray);
+
+        List<String> cardNumbers = new ArrayList<>();
+        List<CardEntity> cards = cardRepository.findBySubscriptionTopic(topic);
+        cards.forEach(card -> {
+            cardNumbers.add(String.valueOf(card.getNumber()));
+        });
+
+        return cardNumbers;
     }
 
-    public String getCardName(String id) {
-        return env.getProperty("card[" + id + "].name", "");
+    /**
+     * Retrieves the name of a card based on its number.
+     *
+     * @param number the number of the card whose name is to be retrieved.
+     * @return the name of the card associated with the specified number,
+     * returns an empty string if card name is not found.
+     */
+    public String getCardName(String number) {
+        //return env.getProperty("card[" + id + "].name", "");
+
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getName).orElse("");
     }
 
+    /**
+     * Retrieves the card number associated with the specified name.
+     *
+     * @param name the name associated with the card number
+     * @return the card number if found, or an empty string.
+     */
     public String getCardNumber(String name) {
-        return cardsAndNumbers.getOrDefault(name, "");
+        //return cardsAndNumbers.getOrDefault(name, "");
+
+        return cardRepository.findByName(name).map(CardEntity::getNumber).map(String::valueOf).orElse("");
     }
 
-    public String getCardSubDataName(String id) {
-        return env.getProperty("card[" + id + "].subscription.data.name", "");
+    /**
+     * Retrieves the subscription topic associated with the specified card
+     * number.
+     *
+     * @param number the number of the card for which to retrieve the
+     * subscription topic
+     * @return the subscription topic if found, or an empty string.
+     */
+    public String getCardSubTopic(String number) {
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getSubscriptionTopic).orElse("");
     }
 
-    public String getCardSubDataType(String id) {
-        return env.getProperty("card[" + id + "].subscription.data.type", "");
+    /**
+     * Retrieves the Quality of Service (QoS) level associated with the
+     * specified card number for subscription.
+     *
+     * @param number the number of the card for which to retrieve the
+     * subscription QoS level
+     * @return the subscription QoS level if found, or "AT_MOST_ONCE".
+     */
+    public String getCardSubQos(String number) {
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getSubscriptionQos).orElse("AT_MOST_ONCE");
     }
 
-    public String getCardJsonPathExpression(String id) {
-        return env.getProperty("card[" + id + "].display.data.jsonpath", "");
+    /**
+     * Retrieves the subscription data name associated with the specified card
+     * number.
+     *
+     * @param number the number of the card for which to retrieve the
+     * subscription data name
+     * @return the subscription data name if found, or an empty string.
+     */
+    public String getCardSubDataName(String number) {
+        //return env.getProperty("card[" + id + "].subscription.data.name", "");
+
+        //return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getSubscriptionDataName).orElse("");
+        return Optional.ofNullable(number)
+                .filter(StringUtils::isNotBlank)
+                .map(Integer::valueOf)
+                .flatMap(cardRepository::findByNumber)
+                .map(CardEntity::getSubscriptionDataName)
+                .orElse("");
     }
 
-    public String getCardPubTopic(String id) {
-        return env.getProperty("card[" + id + "].publication.topic", "");
+    /**
+     * Retrieves the subscription data type associated with the specified card
+     * number.
+     *
+     * @param number the number of the card for which to retrieve the
+     * subscription data type
+     * @return the subscription data type if found, or an empty string.
+     */
+    public String getCardSubDataType(String number) {
+        //return env.getProperty("card[" + id + "].subscription.data.type", "");
+
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getSubscriptionDataType).orElse("");
     }
 
-    public String getCardPubQos(String id) {
-        return env.getProperty("card[" + id + "].publication.qos", "AT_MOST_ONCE");
+    /**
+     * Retrieves the jsonpath expression associated with the specified card
+     * number.
+     *
+     * @param number the number of the card for which to retrieve the jsonpath
+     * expression
+     * @return the jsonpath expression if found, or an empty string.
+     */
+    public String getCardJsonPathExpression(String number) {
+        //return env.getProperty("card[" + id + "].display.data.jsonpath", "");
+
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getDisplayDataJsonpath).orElse("");
     }
 
-    public String getCardPubRetain(String id) {
-        return env.getProperty("card[" + id + "].publication.retain", "false");
+    /**
+     * Retrieves the publication topic associated with the specified card
+     * number.
+     *
+     * @param number the number of the card for which to retrieve the
+     * publication topic
+     * @return the publication topic if found, or an empty string.
+     */
+    public String getCardPubTopic(String number) {
+        //return env.getProperty("card[" + id + "].publication.topic", "");
+
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationTopic).orElse("");
     }
 
-    public String getCardPubData(String id) {
-        return env.getProperty("card[" + id + "].publication.data", "");
+    /**
+     * Retrieves the Quality of Service (QoS) level associated with the
+     * specified card number for publication.
+     *
+     * @param number the number of the card for which to retrieve the
+     * publication QoS level
+     * @return the publication QoS level if found, or "AT_MOST_ONCE".
+     */
+    public String getCardPubQos(String number) {
+        //return env.getProperty("card[" + id + "].publication.qos", "AT_MOST_ONCE");
+
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationQos).orElse("AT_MOST_ONCE");
     }
 
-    public String getCardPubDataType(String id) {
-        return env.getProperty("card[" + id + "].publication.data.type", "");
+    /**
+     * Retrieves the retain flag associated with the specified card number for
+     * publication.
+     *
+     * @param number the number of the card for which to retrieve the
+     * publication retain flag
+     * @return the publication retain flag if found, or "false".
+     */
+    public String getCardPubRetain(String number) {
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationRetain).map(String::valueOf).orElse("false");
     }
 
-    public String getCardLocalTaskPath(String id) {
-        return env.getProperty("card[" + id + "].local.task.path", "");
+    /**
+     * Retrieves the publication data associated with the specified card number.
+     *
+     * @param number the number of the card for which to retrieve the
+     * publication data
+     * @return the publication data if found, or an empty string.
+     */
+    public String getCardPubData(String number) {
+        //return env.getProperty("card[" + id + "].publication.data", "");
+
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationData).orElse("");
     }
 
-    public String getCardLocalTaskArguments(String id) {
-        return env.getProperty("card[" + id + "].local.task.arguments", "");
+    /**
+     * Retrieves the publication data type associated with the specified card
+     * number.
+     *
+     * @param number the number of the card for which to retrieve the
+     * publication data type
+     * @return the publication data type if found, or an empty string.
+     */
+    public String getCardPubDataType(String number) {
+        //return env.getProperty("card[" + id + "].publication.data.type", "");
+
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationDataType).orElse("");
     }
 
-    public String getCardLocalTaskDataType(String id) {
-        return env.getProperty("card[" + id + "].local.task.data.type", "");
+    /**
+     * Retrieves the local task path associated with the specified card number.
+     *
+     * @param number the number of the card for which to retrieve the local task
+     * path
+     * @return the local task path if found, or an empty string.
+     */
+    public String getCardLocalTaskPath(String number) {
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getLocalTaskPath).orElse("");
+    }
+
+    /**
+     * Retrieves the local task arguments associated with the specified card
+     * number.
+     *
+     * @param number the number of the card for which to retrieve the local task
+     * arguments
+     * @return the local task arguments if found, or an empty string.
+     */
+    public String getCardLocalTaskArguments(String number) {
+        //return env.getProperty("card[" + id + "].local.task.arguments", "");
+
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getLocalTaskArguments).orElse("");
+    }
+
+    /**
+     * Retrieves the local task data type associated with the specified card
+     * number.
+     *
+     * @param number the number of the card for which to retrieve the local task
+     * data type
+     * @return the local task data type if found, or an empty string.
+     */
+    public String getCardLocalTaskDataType(String number) {
+        //return env.getProperty("card[" + id + "].local.task.data.type", "");
+
+        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getLocalTaskDataType).orElse("");
     }
 
     public String getComponentName(String id) {
