@@ -42,11 +42,11 @@ public class CommandEntity {
     private String subscriptionQos;
     private String publicationTopic;
     private String publicationQos;
-    private boolean publicationRetain;
+    private Boolean publicationRetain;
     private String publicationDataType;
     private String path;
     private String arguments;
-    private int number;
+    private Integer number;
 
     public long getId() {
         return id;
