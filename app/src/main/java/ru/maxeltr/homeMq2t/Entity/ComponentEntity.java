@@ -42,12 +42,12 @@ public class ComponentEntity {
     private String subscriptionQos;
     private String publicationTopic;
     private String publicationQos;
-    private boolean publicationRetain;
+    private Boolean publicationRetain;
     private String publicationDataType;
     private String publicationLocalCardId;
     private String provider;
     private String providerArgs;
-    private int number;
+    private Integer number;
 
     public long getId() {
         return id;

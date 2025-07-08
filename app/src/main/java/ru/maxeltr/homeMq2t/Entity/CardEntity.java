@@ -47,13 +47,13 @@ public class CardEntity {
     private String displayDataJsonpath;
     private String publicationTopic;
     private String publicationQos;
-    private boolean publicationRetain;
+    private Boolean publicationRetain;
     private String publicationData;
     private String publicationDataType;
     private String localTaskPath;
     private String localTaskArguments;
     private String localTaskDataType;
-    private int number;
+    private Integer number;
 
     @ManyToOne
     @JoinColumn(name = "dashboard_id", nullable = false)

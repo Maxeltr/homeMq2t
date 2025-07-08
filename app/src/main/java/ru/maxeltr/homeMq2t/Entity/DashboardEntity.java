@@ -43,7 +43,7 @@ public class DashboardEntity {
     private long id;
 
     private String name;
-    private int number;
+    private Integer number;
 
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)
     private List<CardEntity> cards;

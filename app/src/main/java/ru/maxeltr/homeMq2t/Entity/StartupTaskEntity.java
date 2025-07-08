@@ -40,7 +40,7 @@ public class StartupTaskEntity {
     private String name;
     private String path;
     private String arguments;
-    private int number;
+    private Integer number;
 
     public long getId() {
         return id;
