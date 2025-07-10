@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.maxeltr.homeMq2t.Entity.CommandEntity;
@@ -32,6 +33,11 @@ public interface CommandRepository extends JpaRepository<CommandEntity, Long> {
     Optional<CommandEntity> findByNumber(int number);
 
     Optional<CommandEntity> findByName(String name);
+
+    List<CommandEntity> findBySubscriptionTopic(String subscriptionTopic);
+
+    @Override
+    List<CommandEntity> findAll();
 
     @Override
     Optional<CommandEntity> findById(Long id);

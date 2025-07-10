@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
+import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,11 +33,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
-import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
+import ru.maxeltr.homeMq2t.Entity.StartupTaskEntity;
+import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Repository.CardRepository;
+import ru.maxeltr.homeMq2t.Repository.CommandRepository;
 import ru.maxeltr.homeMq2t.Repository.ComponentRepository;
+import ru.maxeltr.homeMq2t.Repository.StartupTaskRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
+import ru.maxeltr.homeMq2t.Model.Card;
+import ru.maxeltr.homeMq2t.Model.CardImpl;
+import ru.maxeltr.homeMq2t.Model.DashboardImpl;
+import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
 
 /**
  *
@@ -48,27 +61,27 @@ public class AppProperties {
 
     private final static String ERROR_TOPIC = "mq2t/error";
 
-    @Autowired
-    private Map<String, List<String>> topicsAndCards;
-
-    @Autowired
-    private Map<String, List<String>> topicsAndCommands;
-
-    @Autowired
-    private Map<String, List<String>> topicsAndComponents;
-
-    @Autowired
-    private Map<String, String> commandsAndNumbers;
-
-    @Autowired
-    private Map<String, String> componentsAndNumbers;
-
-    @Autowired
-    private Map<String, String> cardsAndNumbers;
-
-    @Autowired
-    @Qualifier("startupTasks")
-    private Map<String, String> startupTasksAndNumbers;
+//    @Autowired
+//    private Map<String, List<String>> topicsAndCards;
+//
+//    @Autowired
+//    private Map<String, List<String>> topicsAndCommands;
+//
+//    @Autowired
+//    private Map<String, List<String>> topicsAndComponents;
+//
+//    @Autowired
+//    private Map<String, String> commandsAndNumbers;
+//
+//    @Autowired
+//    private Map<String, String> componentsAndNumbers;
+//
+//    @Autowired
+//    private Map<String, String> cardsAndNumbers;
+//
+//    @Autowired
+//    @Qualifier("startupTasks")
+//    private Map<String, String> startupTasksAndNumbers;
 
     @Autowired
     private CardRepository cardRepository;
@@ -76,46 +89,152 @@ public class AppProperties {
     @Autowired
     private ComponentRepository componentRepository;
 
+    @Autowired
+    private CommandRepository commandRepository;
+
+    @Autowired
+    private StartupTaskRepository startupTaskRepository;
+
+    @Autowired
+    private DashboardRepository dashboardRepository;
+
     private final List<String> emptyArray = List.of();
 
-    public String getStartupTaskNumber(String taskName) {
-        return startupTasksAndNumbers.getOrDefault(taskName, "");
+    private static final Logger logger = LoggerFactory.getLogger(AppProperties.class);
+
+    public List<StartupTaskEntity> getAllStartupTasks() {
+        return startupTaskRepository.findAll();
     }
 
-    public String getStartupTaskArguments(String taskName) {
-        return env.getProperty("startup.task[" + startupTasksAndNumbers.get(taskName) + "]." + "arguments", "");
+    /**
+     * Retrieves the startup task number associated with the specified name.
+     *
+     * @param name the name associated with the startup task
+     * @return the startup task number if found, or an empty string.
+     */
+    public String getStartupTaskNumber(String name) {
+        //return startupTasksAndNumbers.getOrDefault(taskName, "");
+        return startupTaskRepository.findByName(name).map(StartupTaskEntity::getNumber).map(String::valueOf).orElse("");
     }
 
-    public String getStartupTaskPath(String taskName) {
-        return env.getProperty("startup.task[" + startupTasksAndNumbers.get(taskName) + "]." + "path", "");
+    /**
+     * Retrieves the startup task arguments associated with the specified
+     * startup task.
+     *
+     * @param name the name associated with the startup task
+     * @return the startup task arguments if found, or an empty string.
+     */
+    public String getStartupTaskArguments(String name) {
+        //return env.getProperty("startup.task[" + startupTasksAndNumbers.get(taskName) + "]." + "arguments", "");
+        return startupTaskRepository.findByName(name).map(StartupTaskEntity::getArguments).orElse("");
     }
 
+    /**
+     * Retrieves the startup task path associated with the specified startup
+     * task.
+     *
+     * @param name the name associated with the startup task
+     * @return the startup task path if found, or an empty string.
+     */
+    public String getStartupTaskPath(String name) {
+        //return env.getProperty("startup.task[" + startupTasksAndNumbers.get(taskName) + "]." + "path", "");
+        return startupTaskRepository.findByName(name).map(StartupTaskEntity::getPath).orElse("");
+    }
+
+    /**
+     * Retrieves the list of command numbers associated with a specific
+     * subscriptoin topic.
+     *
+     * The metod searches for command numbers that are subscribed to the given
+     * topic.
+     *
+     * @param topic the subscription topic for which to retrieve command
+     * numbers.
+     * @return a list of command numbers subscribed to the specified topic,
+     * returns empty list if no command numbers are found for the topic.
+     */
     public List<String> getCommandNumbersByTopic(String topic) {
-        return topicsAndCommands.getOrDefault(topic, emptyArray);
+        //return topicsAndCommands.getOrDefault(topic, emptyArray);
+        List<String> commandNumbers = new ArrayList<>();
+        List<CommandEntity> commands = commandRepository.findBySubscriptionTopic(topic);
+        commands.forEach(command -> {
+            commandNumbers.add(String.valueOf(command.getNumber()));
+        });
+
+        return commandNumbers;
     }
 
-    public String getCommandPubTopic(String command) {
-        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.topic", "");
+    /**
+     * Retrieves the publication topic associated with the specified command.
+     *
+     * @param name the name of the command for which to retrieve the publication
+     * topic
+     * @return the publication topic if found, or an empty string.
+     */
+    public String getCommandPubTopic(String name) {
+        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.topic", "");
+        return commandRepository.findByName(name).map(CommandEntity::getPublicationTopic).orElse("");
     }
 
-    public String getCommandPubQos(String command) {
-        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.qos", "EXACTLY_ONCE");
+    /**
+     * Retrieves the Quality of Service (QoS) level associated with the
+     * specified command for publication.
+     *
+     * @param name the name of the command for which to retrieve the publication
+     * QoS level
+     * @return the publication QoS level if found, or "AT_MOST_ONCE".
+     */
+    public String getCommandPubQos(String name) {
+        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.qos", "EXACTLY_ONCE");
+        return commandRepository.findByName(name).map(CommandEntity::getPublicationQos).orElse("");
     }
 
-    public String getCommandPubRetain(String command) {
-        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.retain", "false");
+    /**
+     * Retrieves the retain flag associated with the specified command for
+     * publication.
+     *
+     * @param name the name of the command for which to retrieve the publication
+     * retain flag
+     * @return the publication retain flag if found, or "false".
+     */
+    public String getCommandPubRetain(String name) {
+        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.retain", "false");
+        return commandRepository.findByName(name).map(CommandEntity::getPublicationRetain).map(String::valueOf).orElse("false");
     }
 
-    public String getCommandPubDataType(String command) {
-        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.data.type", MediaType.TEXT_PLAIN_VALUE);
+    /**
+     * Retrieves the publication data type associated with the specified
+     * command.
+     *
+     * @param name the name of the command for which to retrieve the publication
+     * data type
+     * @return the publication data type if found, or an empty string.
+     */
+    public String getCommandPubDataType(String name) {
+        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.data.type", MediaType.TEXT_PLAIN_VALUE);
+        return commandRepository.findByName(name).map(CommandEntity::getPublicationDataType).orElse("");
     }
 
-    public String getCommandPath(String command) {
-        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "path", "");
+    /**
+     * Retrieves the command path associated with the specified command.
+     *
+     * @param name the name of the command for which to retrieve the path path
+     * @return the command path if found, or an empty string.
+     */
+    public String getCommandPath(String name) {
+        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "path", "");
+        return commandRepository.findByName(name).map(CommandEntity::getPath).orElse("");
     }
 
-    public String getCommandArguments(String command) {
-        return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "arguments", "");
+    /**
+     * Retrieves the arguments associated with the specified command.
+     *
+     * @param name the name of the command for which to retrieve arguments
+     * @return the arguments if found, or an empty string.
+     */
+    public String getCommandArguments(String name) {
+        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "arguments", "");
+        return commandRepository.findByName(name).map(CommandEntity::getArguments).orElse("");
     }
 
     /**
@@ -392,7 +511,14 @@ public class AppProperties {
      * returns empty list if no components are found for the topic.
      */
     public List<String> getComponentNumbersByTopic(String topic) {
-        return topicsAndComponents.getOrDefault(topic, emptyArray);
+        //return topicsAndComponents.getOrDefault(topic, emptyArray);
+        List<String> componentNumbers = new ArrayList<>();
+        List<ComponentEntity> components = componentRepository.findBySubscriptionTopic(topic);
+        components.forEach(component -> {
+            componentNumbers.add(String.valueOf(component.getNumber()));
+        });
+
+        return componentNumbers;
     }
 
     /**
@@ -482,5 +608,93 @@ public class AppProperties {
     public String getComponentProviderArgs(String name) {
 //        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].provider.args", "");
         return componentRepository.findByName(name).map(ComponentEntity::getProviderArgs).orElse("");
+    }
+
+    /**
+     * Creates a list of dashboards based on the configuration properties
+     * defined in the database. Each dashboard can contain multiple cards, which
+     * are defined in the configuration.
+     *
+     * @return a list of dashboards created from configuration. If no dashboards
+     * are defined, an empty list is returned.
+     */
+    public List<Dashboard> getDashboards() {
+        List<Dashboard> dashboards = new ArrayList<>();
+
+        String dashboardPathname = env.getProperty("dashboard-template-path", "");
+        if (StringUtils.isEmpty(dashboardPathname)) {
+            logger.info("No value defined for dashboard template pathname.");
+            return dashboards;
+        }
+
+        String cardPathname = env.getProperty("card-template-path", "");
+        if (StringUtils.isEmpty(cardPathname)) {
+            logger.info("No value defined for card template pathname.");
+            return dashboards;
+        }
+
+        List<DashboardEntity> dashboardEntities = dashboardRepository.findAll();
+        dashboardEntities.forEach(dashboardEntity -> {
+            List<Card> cards = new ArrayList<>();
+            List<CardEntity> cardEntities = cardRepository.findByDashboardNumber(dashboardEntity.getNumber());
+            cardEntities.forEach(cardEntity -> {
+                Card card = new CardImpl(String.valueOf(cardEntity.getNumber()), cardEntity.getName(), cardPathname, cardEntity.getSubscriptionDataName());
+                cards.add(card);
+                logger.info("Card={} has been created and added to card list.", card.getName());
+            });
+            logger.info("Create card list with size={}.", cards.size());
+            Dashboard dashboard = new DashboardImpl(String.valueOf(dashboardEntity.getNumber()), dashboardEntity.getName(), cards, dashboardPathname);
+            dashboards.add(dashboard);
+            logger.info("Dashboard={} has been created and added to dashboard list.", dashboard.getName());
+        });
+
+        logger.info("Create dashbord list with size={}.", dashboards.size());
+
+        return dashboards;
+    }
+
+    /**
+     * Creates a list of Mqtt topic subscriptions.
+     *
+     * @return a list of Mqtt topic subscriptions.
+     */
+    public List<MqttTopicSubscription> getSubscriptions() {
+        List<MqttTopicSubscription> subscriptions = new ArrayList<>();
+
+        List<CardEntity> cardEntities = cardRepository.findAll();
+        cardEntities.forEach(cardEntity -> {
+            subscriptions.add(new MqttTopicSubscription(cardEntity.getSubscriptionTopic(), convertToMqttQos(cardEntity.getSubscriptionQos())));
+        });
+
+        List<CommandEntity> commandEntities = commandRepository.findAll();
+        commandEntities.forEach(commandEntity -> {
+            subscriptions.add(new MqttTopicSubscription(commandEntity.getSubscriptionTopic(), convertToMqttQos(commandEntity.getSubscriptionQos())));
+        });
+
+        List<ComponentEntity> componentEntities = componentRepository.findAll();
+        componentEntities.forEach(componentEntity -> {
+            subscriptions.add(new MqttTopicSubscription(componentEntity.getSubscriptionTopic(), convertToMqttQos(componentEntity.getSubscriptionQos())));
+        });
+
+        return subscriptions;
+    }
+
+    /**
+     * Convert the given qos value from string to MqttQos enum instance. If the
+     * qos value is invalid, it defaults to qos level 0.
+     *
+     * @param qosString The qos value as a string. Must not be null.
+     * @return The qos level as a MqttQos enum value.
+     */
+    private MqttQoS convertToMqttQos(String qosString) {		//TODO move to mqtt package as static
+        MqttQoS qos;
+        try {
+            qos = MqttQoS.valueOf(qosString);
+        } catch (IllegalArgumentException ex) {
+            logger.error("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
+            qos = MqttQoS.AT_MOST_ONCE;
+        }
+
+        return qos;
     }
 }

@@ -74,6 +74,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.boot.CommandLineRunner;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 
 /**
  *
@@ -129,7 +130,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
     private boolean autoConnect;
 
     @Autowired
-    List<MqttTopicSubscription> subscriptions;
+    private AppProperties appProperties;
+
+//    @Autowired
+//    List<MqttTopicSubscription> subscriptions;
 
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
@@ -175,7 +179,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
                 connected.set(true);
                 logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
                 //perform post-connection operations here
-                HmMq2tImpl.this.subscribe(this.subscriptions);
+                HmMq2tImpl.this.subscribe(appProperties.getSubscriptions());
                 reconnectAttempts = 0;
                 this.startRetransmitTask();
             }

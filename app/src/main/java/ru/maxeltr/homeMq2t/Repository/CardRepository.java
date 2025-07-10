@@ -36,6 +36,11 @@ public interface CardRepository extends JpaRepository<CardEntity, Long> {
 
     List<CardEntity> findBySubscriptionTopic(String subscriptionTopic);
 
+    List<CardEntity> findByDashboardNumber(Integer number);
+
+    @Override
+    List<CardEntity> findAll();
+
     @Override
     Optional<CardEntity> findById(Long id);
 

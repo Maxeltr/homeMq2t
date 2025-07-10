@@ -43,16 +43,16 @@ public class MqttSettingsEntity {
     private String mq2tPassword;
     private String mq2tUsername;
     private String clientId;
-    private boolean hasUsername;
-    private boolean hasPassword;
+    private Boolean hasUsername;
+    private Boolean hasPassword;
     private String willQos;
-    private boolean willRetain;
-    private boolean willFlag;
-    private boolean cleanSession;
-    private boolean autoConnect;
+    private Boolean willRetain;
+    private Boolean willFlag;
+    private Boolean cleanSession;
+    private Boolean autoConnect;
     private String willTopic;
     private String willMessage;
-    private boolean reconnect;
+    private Boolean reconnect;
 
     public long getId() {
         return id;

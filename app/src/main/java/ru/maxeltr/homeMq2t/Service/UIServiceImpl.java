@@ -67,8 +67,8 @@ public class UIServiceImpl implements UIService {
     @Autowired
     private OutputUIController uiController;
 
-    @Autowired
-    private List<Dashboard> dashboards;
+//    @Autowired
+//    private List<Dashboard> dashboards;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
@@ -149,17 +149,19 @@ public class UIServiceImpl implements UIService {
     }
 
     private String getStartDashboard() {
-        if (this.dashboards == null || this.dashboards.isEmpty()) {
-            logger.info("Dashboard list is empty or null.");
-            return "<div style=\"color:red;\">No dashboards available.</div>";
-        }
+//        if (this.dashboards == null || this.dashboards.isEmpty()) {
+//            logger.info("Dashboard list is empty or null.");
+//            return "<div style=\"color:red;\">No dashboards available.</div>";
+//        }
+//
+//        if (this.dashboards.get(0).getCards().isEmpty()) {
+//            logger.info("Card list is empty.");
+//            return "<div style=\"color:red;\">No cards available.</div>";
+//        }
+//
+//        return this.dashboards.get(0).getHtml();
 
-        if (this.dashboards.get(0).getCards().isEmpty()) {
-            logger.info("Card list is empty.");
-            return "<div style=\"color:red;\">No cards available.</div>";
-        }
-
-        return this.dashboards.get(0).getHtml();
+        return appProperties.getDashboards().get(0).getHtml();
     }
 
     /**

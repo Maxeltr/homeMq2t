@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -51,8 +52,8 @@ public class DashboardImpl implements Dashboard {
 
     //private final String pathname = File.separator + "Static" + File.separator + "dashboard.html";
     private String pathname;
-	
-	private String dashboardNumber = "";
+
+    private String dashboardNumber = "";
 
     static final String CARD_ELEMENT_ID = "cards";
 
@@ -63,19 +64,19 @@ public class DashboardImpl implements Dashboard {
     private final Document view;
 
     public DashboardImpl(String dashboardNumber, String name, List<Card> dashboardCards, String pathname) {
-		this.dashboardNumber = Objects.requireNonNullElse(dashboardNumber, "");
+        this.dashboardNumber = Objects.requireNonNullElse(dashboardNumber, "");
         this.name = Objects.requireNonNullElse(name, "");
-        this.dashboardCards = dashboardCards;
+        this.dashboardCards = Objects.requireNonNullElse(dashboardCards, new ArrayList<>());
         this.pathname = pathname;
         this.view = this.getViewTemplate();
 
     }
 
-	@Override
+    @Override
     public String getDashboardNumber() {
         return this.dashboardNumber;
     }
-	
+
     @Override
     public String getName() {
         return this.name;

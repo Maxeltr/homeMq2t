@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
@@ -32,6 +33,9 @@ public interface DashboardRepository extends JpaRepository<DashboardEntity, Long
     Optional<DashboardEntity> findByNumber(int number);
 
     Optional<DashboardEntity> findByName(String name);
+
+    @Override
+    List<DashboardEntity> findAll();
 
     @Override
     Optional<DashboardEntity> findById(Long id);

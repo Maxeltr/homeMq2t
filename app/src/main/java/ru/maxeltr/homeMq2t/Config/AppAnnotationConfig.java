@@ -25,16 +25,11 @@ package ru.maxeltr.homeMq2t.Config;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.netty.handler.codec.mqtt.MqttQoS;
-import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.io.File;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.ServiceLoader;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,10 +43,6 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
-import ru.maxeltr.homeMq2t.Model.Card;
-import ru.maxeltr.homeMq2t.Model.CardImpl;
-import ru.maxeltr.homeMq2t.Model.Dashboard;
-import ru.maxeltr.homeMq2t.Model.DashboardImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
@@ -99,9 +90,6 @@ public class AppAnnotationConfig {
         }
         logger.info("Java home={}", System.getenv("JAVA_HOME"));
         logger.info("OS name={}", System.getProperty("os.name"));
-
-        logger.info("cardRepository={}", cardRepository.findByNumber(1).get());
-        logger.info("dashboardRepository={}", dashboardRepository.findByNumber(0).get());
 
         return new AppProperties();
     }
@@ -193,36 +181,36 @@ public class AppAnnotationConfig {
      * @throw IllegalArgumentException if a card topic is not defined for a
      * card.
      */
-    @Bean
-    public Map<String, List<String>> topicsAndCards() {
-        Map<String, List<String>> map = new HashMap<>();
-        int i = 0;
-        logger.info("Starting to collect topics and their corresponding card numbers.");
-        while (true) {
-            String card = env.getProperty(String.format("card[%d].name", i), "");
-            if (StringUtils.isEmpty(card)) {
-                break;
-            }
-
-            String cardTopic = env.getProperty(String.format("card[%d].subscription.topic", i), "");
-            if (StringUtils.isEmpty(cardTopic)) {
-                logger.warn("No topic defined for subscription of card={}", i);
-                i++;
-                continue;
-            }
-
-            List<String> cardNumbers = map.getOrDefault(cardTopic, new ArrayList<>());
-            cardNumbers.add(String.valueOf(i));
-
-            map.put(cardTopic, cardNumbers);
-            logger.info("Add topic={} and card numbers={}.", cardTopic, cardNumbers);
-            ++i;
-        }
-
-        logger.info("Topics and cards collection completed. Found {} topics.", map.size());
-
-        return map;
-    }
+//    @Bean
+//    public Map<String, List<String>> topicsAndCards() {
+//        Map<String, List<String>> map = new HashMap<>();
+//        int i = 0;
+//        logger.info("Starting to collect topics and their corresponding card numbers.");
+//        while (true) {
+//            String card = env.getProperty(String.format("card[%d].name", i), "");
+//            if (StringUtils.isEmpty(card)) {
+//                break;
+//            }
+//
+//            String cardTopic = env.getProperty(String.format("card[%d].subscription.topic", i), "");
+//            if (StringUtils.isEmpty(cardTopic)) {
+//                logger.warn("No topic defined for subscription of card={}", i);
+//                i++;
+//                continue;
+//            }
+//
+//            List<String> cardNumbers = map.getOrDefault(cardTopic, new ArrayList<>());
+//            cardNumbers.add(String.valueOf(i));
+//
+//            map.put(cardTopic, cardNumbers);
+//            logger.info("Add topic={} and card numbers={}.", cardTopic, cardNumbers);
+//            ++i;
+//        }
+//
+//        logger.info("Topics and cards collection completed. Found {} topics.", map.size());
+//
+//        return map;
+//    }
 
     /**
      * Retrives a mapping of card names to their corresponding numbers.
@@ -238,22 +226,22 @@ public class AppAnnotationConfig {
      * @return a map where the key is the card name and the value is the index
      * of the card.
      */
-    @Bean
-    public Map<String, String> cardsAndNumbers() {
-        Map<String, String> map = new HashMap<>();
-        int i = 0;
-        String cardName;
-        logger.info("Starting to collect cards and their corresponding card numbers.");
-        while (StringUtils.isNotEmpty(cardName = env.getProperty(String.format("card[%d].name", i), ""))) {
-            map.put(cardName, String.valueOf(i));
-            logger.info("Add card={} with number={}.", cardName, i);
-            ++i;
-        }
-
-        logger.info("Cards and numbers collection completed. Found {} cards.", map.size());
-
-        return map;
-    }
+//    @Bean
+//    public Map<String, String> cardsAndNumbers() {
+//        Map<String, String> map = new HashMap<>();
+//        int i = 0;
+//        String cardName;
+//        logger.info("Starting to collect cards and their corresponding card numbers.");
+//        while (StringUtils.isNotEmpty(cardName = env.getProperty(String.format("card[%d].name", i), ""))) {
+//            map.put(cardName, String.valueOf(i));
+//            logger.info("Add card={} with number={}.", cardName, i);
+//            ++i;
+//        }
+//
+//        logger.info("Cards and numbers collection completed. Found {} cards.", map.size());
+//
+//        return map;
+//    }
 
     /**
      * Retrives a mapping of command topics to their corresponding command
@@ -271,36 +259,36 @@ public class AppAnnotationConfig {
      * @return a map where the key is the command topic and the value is a list
      * of command numbers assotiated with that topic.
      */
-    @Bean
-    public Map<String, List<String>> topicsAndCommands() {
-        Map<String, List<String>> map = new HashMap<>();
-        int i = 0;
-        logger.info("Starting to collect topics and their corresponding command numbers.");
-        while (true) {
-            String command = env.getProperty(String.format("command[%d].name", i), "");
-            if (StringUtils.isEmpty(command)) {
-                break;
-            }
-
-            String commandTopic = env.getProperty(String.format("command[%d].subscription.topic", i), "");
-            if (StringUtils.isEmpty(commandTopic)) {
-                logger.warn("No topic defined for subscription of command={}", i);
-                i++;
-                continue;
-            }
-
-            List<String> commandNumbers = map.getOrDefault(commandTopic, new ArrayList<>());
-            commandNumbers.add(String.valueOf(i));
-
-            map.put(commandTopic, commandNumbers);
-            logger.info("Add topic={} and commands numbers={}.", commandTopic, commandNumbers);
-            ++i;
-        }
-
-        logger.info("Topics and commands collection completed. Found {} topics.", map.size());
-
-        return map;
-    }
+//    @Bean
+//    public Map<String, List<String>> topicsAndCommands() {
+//        Map<String, List<String>> map = new HashMap<>();
+//        int i = 0;
+//        logger.info("Starting to collect topics and their corresponding command numbers.");
+//        while (true) {
+//            String command = env.getProperty(String.format("command[%d].name", i), "");
+//            if (StringUtils.isEmpty(command)) {
+//                break;
+//            }
+//
+//            String commandTopic = env.getProperty(String.format("command[%d].subscription.topic", i), "");
+//            if (StringUtils.isEmpty(commandTopic)) {
+//                logger.warn("No topic defined for subscription of command={}", i);
+//                i++;
+//                continue;
+//            }
+//
+//            List<String> commandNumbers = map.getOrDefault(commandTopic, new ArrayList<>());
+//            commandNumbers.add(String.valueOf(i));
+//
+//            map.put(commandTopic, commandNumbers);
+//            logger.info("Add topic={} and commands numbers={}.", commandTopic, commandNumbers);
+//            ++i;
+//        }
+//
+//        logger.info("Topics and commands collection completed. Found {} topics.", map.size());
+//
+//        return map;
+//    }
 
     /**
      * Retrives a mapping of command names to their corresponding numbers.
@@ -316,22 +304,22 @@ public class AppAnnotationConfig {
      * @return a map where the key is the command name and the value is the
      * index of the command.
      */
-    @Bean
-    public Map<String, String> commandsAndNumbers() {
-        Map<String, String> map = new HashMap<>();
-        int i = 0;
-        String commandName;
-        logger.info("Starting to collect commands and their corresponding command numbers.");
-        while (StringUtils.isNotEmpty(commandName = env.getProperty(String.format("command[%d].name", i), ""))) {
-            map.put(commandName, String.valueOf(i));
-            logger.info("Add command={} with number={}.", commandName, i);
-            ++i;
-        }
-
-        logger.info("Commands and numbers collection completed. Found {} commands.", map.size());
-
-        return map;
-    }
+//    @Bean
+//    public Map<String, String> commandsAndNumbers() {
+//        Map<String, String> map = new HashMap<>();
+//        int i = 0;
+//        String commandName;
+//        logger.info("Starting to collect commands and their corresponding command numbers.");
+//        while (StringUtils.isNotEmpty(commandName = env.getProperty(String.format("command[%d].name", i), ""))) {
+//            map.put(commandName, String.valueOf(i));
+//            logger.info("Add command={} with number={}.", commandName, i);
+//            ++i;
+//        }
+//
+//        logger.info("Commands and numbers collection completed. Found {} commands.", map.size());
+//
+//        return map;
+//    }
 
     /**
      * Retrives a mapping of component topics to their corresponding component
@@ -349,36 +337,36 @@ public class AppAnnotationConfig {
      * @return a map where the key is the component topic and the value is a
      * list of component numbers assotiated with that topic.
      */
-    @Bean
-    public Map<String, List<String>> topicsAndComponents() {
-        Map<String, List<String>> map = new HashMap<>();
-        int i = 0;
-        logger.info("Starting to collect topics and their corresponding component numbers.");
-        while (true) {
-            String component = env.getProperty(String.format("component[%d].name", i), "");
-            if (StringUtils.isEmpty(component)) {
-                break;
-            }
-
-            String componentTopic = env.getProperty(String.format("component[%d].subscription.topic", i), "");
-            if (StringUtils.isEmpty(componentTopic)) {
-                logger.warn("No topic defined for subscription of the component={}", i);
-                i++;
-                continue;
-            }
-
-            List<String> componentNumbers = map.getOrDefault(componentTopic, new ArrayList<>());
-            componentNumbers.add(String.valueOf(i));
-
-            map.put(componentTopic, componentNumbers);
-            logger.info("Add topic={} and component numbers={}.", componentTopic, componentNumbers);
-            ++i;
-        }
-
-        logger.info("Topics and components collection completed. Found {} topics.", map.size());
-
-        return map;
-    }
+//    @Bean
+//    public Map<String, List<String>> topicsAndComponents() {
+//        Map<String, List<String>> map = new HashMap<>();
+//        int i = 0;
+//        logger.info("Starting to collect topics and their corresponding component numbers.");
+//        while (true) {
+//            String component = env.getProperty(String.format("component[%d].name", i), "");
+//            if (StringUtils.isEmpty(component)) {
+//                break;
+//            }
+//
+//            String componentTopic = env.getProperty(String.format("component[%d].subscription.topic", i), "");
+//            if (StringUtils.isEmpty(componentTopic)) {
+//                logger.warn("No topic defined for subscription of the component={}", i);
+//                i++;
+//                continue;
+//            }
+//
+//            List<String> componentNumbers = map.getOrDefault(componentTopic, new ArrayList<>());
+//            componentNumbers.add(String.valueOf(i));
+//
+//            map.put(componentTopic, componentNumbers);
+//            logger.info("Add topic={} and component numbers={}.", componentTopic, componentNumbers);
+//            ++i;
+//        }
+//
+//        logger.info("Topics and components collection completed. Found {} topics.", map.size());
+//
+//        return map;
+//    }
 
     /**
      * Retrives a mapping of component names to their corresponding numbers.
@@ -394,43 +382,43 @@ public class AppAnnotationConfig {
      * @return a map where the key is the component name and the value is the
      * index of the component.
      */
-    @Bean
-    public Map<String, String> componentsAndNumbers() {
-        Map<String, String> map = new HashMap<>();
-        int i = 0;
-        String componentName;
-        logger.info("Starting to collect components and their corresponding component numbers.");
-        while (StringUtils.isNotEmpty(componentName = env.getProperty(String.format("component[%d].name", i), ""))) {
-            map.put(componentName, String.valueOf(i));
-            logger.info("Add component={} with number={}.", componentName, i);
-            ++i;
-        }
+//    @Bean
+//    public Map<String, String> componentsAndNumbers() {
+//        Map<String, String> map = new HashMap<>();
+//        int i = 0;
+//        String componentName;
+//        logger.info("Starting to collect components and their corresponding component numbers.");
+//        while (StringUtils.isNotEmpty(componentName = env.getProperty(String.format("component[%d].name", i), ""))) {
+//            map.put(componentName, String.valueOf(i));
+//            logger.info("Add component={} with number={}.", componentName, i);
+//            ++i;
+//        }
+//
+//        logger.info("Components and numbers collection completed. Found {} components.", map.size());
+//
+//        return map;
+//    }
 
-        logger.info("Components and numbers collection completed. Found {} components.", map.size());
-
-        return map;
-    }
-
-    @Bean(name = "startupTasks")
-    public Map<String, String> startupTasksAndNumbers() {
-        Map<String, String> map = new HashMap<>();
-        int i = 0;
-        String taskName;
-        logger.info("Starting to collect startup tasks and their corresponding task numbers.");
-        while (true) {
-            taskName = env.getProperty(String.format("startup.task[%d].name", i), "");
-            if (StringUtils.isEmpty(taskName)) {
-                break;
-            }
-            map.put(taskName, String.valueOf(i));
-            logger.info("Add startup task={} with number={}.", taskName, i);
-            ++i;
-        }
-
-        logger.info("Startup tasks and numbers collection completed. Found {} task.", map.size());
-
-        return map;
-    }
+//    @Bean(name = "startupTasks")
+//    public Map<String, String> startupTasksAndNumbers() {
+//        Map<String, String> map = new HashMap<>();
+//        int i = 0;
+//        String taskName;
+//        logger.info("Starting to collect startup tasks and their corresponding task numbers.");
+//        while (true) {
+//            taskName = env.getProperty(String.format("startup.task[%d].name", i), "");
+//            if (StringUtils.isEmpty(taskName)) {
+//                break;
+//            }
+//            map.put(taskName, String.valueOf(i));
+//            logger.info("Add startup task={} with number={}.", taskName, i);
+//            ++i;
+//        }
+//
+//        logger.info("Startup tasks and numbers collection completed. Found {} task.", map.size());
+//
+//        return map;
+//    }
 
     /**
      * Creates a list of dashboards based on the configuration properties
@@ -442,62 +430,62 @@ public class AppAnnotationConfig {
      * @return a list of dashboards created from configuration. If no dashboards
      * are defined, an empty list is returned.
      */
-    @Bean
-    public List<Dashboard> dashboards(AppProperties appProperties) {
-        int i = 0;
-        List<Dashboard> dashboards = new ArrayList<>();
-
-        String dashboardPathname = env.getProperty("dashboard-template-path", "");
-        if (StringUtils.isEmpty(dashboardPathname)) {
-            logger.info("No value defined for dashboard template pathname.");
-            return dashboards;
-        }
-
-        String cardPathname = env.getProperty("card-template-path", "");
-        if (StringUtils.isEmpty(cardPathname)) {
-            logger.info("No value defined for card template pathname.");
-            return dashboards;
-        }
-
-        while (StringUtils.isNotEmpty(env.getProperty("dashboard[" + i + "].name", ""))) {
-            List<String> listOfCards = (List<String>) env.getProperty("dashboard[" + i + "].cards", List.class);
-            logger.info("Dashboard={} has cards={}", i, listOfCards);
-            if (listOfCards == null || listOfCards.isEmpty()) {
-                logger.info("No cards defined for dashboard number={}", i);
-                i++;
-                continue;   //Move to the next dashboard
-            }
-
-            List<Card> cards = new ArrayList<>();
-            for (String cardNumber : listOfCards) {
-                String cardName = env.getProperty("card[" + cardNumber + "].name", "");
-                if (StringUtils.isEmpty(cardName)) {
-                    logger.info("No name defined for card={}", cardNumber);
-                    continue;   //Move to the next card
-                }
-                Card card = new CardImpl(cardNumber, cardName, cardPathname, appProperties);
-                cards.add(card);
-                logger.info("Card={} has been created and added to card list.", card.getName());
-            }
-
-            String dashboardName = env.getProperty("dashboard[" + i + "].name", "");
-            if (StringUtils.isEmpty(dashboardName)) {
-                logger.info("No name defined for dashboard={}", i);
-                i++;
-                continue;   //Move to the next dashboard
-            }
-
-            Dashboard dashboard = new DashboardImpl(String.valueOf(i), dashboardName, cards, dashboardPathname);
-            dashboards.add(dashboard);
-
-            logger.info("Dashboard={} has been created and added to dashboard list.", dashboard.getName());
-            i++;
-        }
-
-        logger.info("Create dashbord list with size={}.", dashboards.size());
-
-        return dashboards;
-    }
+//    @Bean
+//    public List<Dashboard> dashboards(AppProperties appProperties) {
+//        int i = 0;
+//        List<Dashboard> dashboards = new ArrayList<>();
+//
+//        String dashboardPathname = env.getProperty("dashboard-template-path", "");
+//        if (StringUtils.isEmpty(dashboardPathname)) {
+//            logger.info("No value defined for dashboard template pathname.");
+//            return dashboards;
+//        }
+//
+//        String cardPathname = env.getProperty("card-template-path", "");
+//        if (StringUtils.isEmpty(cardPathname)) {
+//            logger.info("No value defined for card template pathname.");
+//            return dashboards;
+//        }
+//
+//        while (StringUtils.isNotEmpty(env.getProperty("dashboard[" + i + "].name", ""))) {
+//            List<String> listOfCards = (List<String>) env.getProperty("dashboard[" + i + "].cards", List.class);
+//            logger.info("Dashboard={} has cards={}", i, listOfCards);
+//            if (listOfCards == null || listOfCards.isEmpty()) {
+//                logger.info("No cards defined for dashboard number={}", i);
+//                i++;
+//                continue;   //Move to the next dashboard
+//            }
+//
+//            List<Card> cards = new ArrayList<>();
+//            for (String cardNumber : listOfCards) {
+//                String cardName = env.getProperty("card[" + cardNumber + "].name", "");
+//                if (StringUtils.isEmpty(cardName)) {
+//                    logger.info("No name defined for card={}", cardNumber);
+//                    continue;   //Move to the next card
+//                }
+//                Card card = new CardImpl(cardNumber, cardName, cardPathname, appProperties);
+//                cards.add(card);
+//                logger.info("Card={} has been created and added to card list.", card.getName());
+//            }
+//
+//            String dashboardName = env.getProperty("dashboard[" + i + "].name", "");
+//            if (StringUtils.isEmpty(dashboardName)) {
+//                logger.info("No name defined for dashboard={}", i);
+//                i++;
+//                continue;   //Move to the next dashboard
+//            }
+//
+//            Dashboard dashboard = new DashboardImpl(String.valueOf(i), dashboardName, cards, dashboardPathname);
+//            dashboards.add(dashboard);
+//
+//            logger.info("Dashboard={} has been created and added to dashboard list.", dashboard.getName());
+//            i++;
+//        }
+//
+//        logger.info("Create dashbord list with size={}.", dashboards.size());
+//
+//        return dashboards;
+//    }
 
     /**
      * Adds Mqtt topic subscriptions for the specified prefix.
@@ -505,44 +493,44 @@ public class AppAnnotationConfig {
      * @param subscriptions the list to which subscriptions will be added.
      * @param prefix the prefix for retrieving subscription properties.
      */
-    private void addSubscriptions(List<MqttTopicSubscription> subscriptions, String prefix) {
-        int i = 0;
-        MqttQoS topicQos;
-        while (StringUtils.isNotEmpty(env.getProperty(String.format("%s[%d].name", prefix, i), ""))) {
-            String topic = env.getProperty(String.format("%s[%d].subscription.topic", prefix, i), "");
-            if (StringUtils.isEmpty(topic)) {
-                logger.warn("Topic for {} subscription={} is not defined", prefix, i);
-                i++;
-                continue;
-            }
-
-            try {
-                topicQos = MqttQoS.valueOf(env.getProperty(String.format("%s[%d].subscription.qos", prefix, i), MqttQoS.AT_MOST_ONCE.toString()));
-            } catch (IllegalArgumentException ex) {
-                logger.error("Invalid QoS value for {} subscription={}: {}. Set QoS=0.", prefix, i, ex.getMessage());
-                topicQos = MqttQoS.valueOf(0);
-            }
-
-            subscriptions.add(new MqttTopicSubscription(topic, topicQos));
-            i++;
-        }
-    }
+//    private void addSubscriptions(List<MqttTopicSubscription> subscriptions, String prefix) {
+//        int i = 0;
+//        MqttQoS topicQos;
+//        while (StringUtils.isNotEmpty(env.getProperty(String.format("%s[%d].name", prefix, i), ""))) {
+//            String topic = env.getProperty(String.format("%s[%d].subscription.topic", prefix, i), "");
+//            if (StringUtils.isEmpty(topic)) {
+//                logger.warn("Topic for {} subscription={} is not defined", prefix, i);
+//                i++;
+//                continue;
+//            }
+//
+//            try {
+//                topicQos = MqttQoS.valueOf(env.getProperty(String.format("%s[%d].subscription.qos", prefix, i), MqttQoS.AT_MOST_ONCE.toString()));
+//            } catch (IllegalArgumentException ex) {
+//                logger.error("Invalid QoS value for {} subscription={}: {}. Set QoS=0.", prefix, i, ex.getMessage());
+//                topicQos = MqttQoS.valueOf(0);
+//            }
+//
+//            subscriptions.add(new MqttTopicSubscription(topic, topicQos));
+//            i++;
+//        }
+//    }
 
     /**
      * Creates a list of Mqtt topic subscriptions.
      *
      * @return a list of Mqtt topic subscriptions.
      */
-    @Bean
-    public List<MqttTopicSubscription> subscriptions() {
-        List<MqttTopicSubscription> subscriptions = new ArrayList<>();
-
-        this.addSubscriptions(subscriptions, "card");
-        this.addSubscriptions(subscriptions, "command");
-        this.addSubscriptions(subscriptions, "component");
-
-        return subscriptions;
-    }
+//    @Bean
+//    public List<MqttTopicSubscription> subscriptions() {
+//        List<MqttTopicSubscription> subscriptions = new ArrayList<>();
+//
+//        this.addSubscriptions(subscriptions, "card");
+//        this.addSubscriptions(subscriptions, "command");
+//        this.addSubscriptions(subscriptions, "component");
+//
+//        return subscriptions;
+//    }
 
     @Bean
     public ObjectMapper getObjectMapper() {

@@ -90,20 +90,23 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private AppProperties appProperties;
 
-    @Autowired
-    @Qualifier("startupTasks")
-    private Map<String, String> startupTasksAndNumbers;
-
+//    @Autowired
+//    @Qualifier("startupTasks")
+//    private Map<String, String> startupTasksAndNumbers;
     @Value("${wait-disconnect-while-shutdown:1000}")
     private int waitDisconnect;
 
     @PostConstruct
     public void postConstruct() {
         this.setMediator();
-        for (String task : startupTasksAndNumbers.keySet()) {
-            logger.info("Start task={}", task);
-            this.commandService.execute(this.appProperties.getStartupTaskPath(task), this.appProperties.getStartupTaskArguments(task));
-        }
+//        for (String task : startupTasksAndNumbers.keySet()) {
+//            logger.info("Start task={}", task);
+//            this.commandService.execute(this.appProperties.getStartupTaskPath(task), this.appProperties.getStartupTaskArguments(task));
+//        }
+
+        appProperties.getAllStartupTasks().forEach(
+                startupTask -> this.commandService.execute(startupTask.getPath(), startupTask.getArguments())
+        );
     }
 
     public void setMediator() {
