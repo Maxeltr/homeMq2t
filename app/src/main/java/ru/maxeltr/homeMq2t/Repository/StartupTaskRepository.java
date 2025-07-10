@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.maxeltr.homeMq2t.Entity.StartupTaskEntity;
@@ -32,6 +33,9 @@ public interface StartupTaskRepository extends JpaRepository<StartupTaskEntity, 
     Optional<StartupTaskEntity> findByNumber(int number);
 
     Optional<StartupTaskEntity> findByName(String name);
+
+    @Override
+    List<StartupTaskEntity> findAll();
 
     @Override
     Optional<StartupTaskEntity> findById(Long id);

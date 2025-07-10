@@ -213,7 +213,7 @@ public class ComponentServiceImpl implements ComponentService {
         mq2tCallbackComponent.setCallback(
                 data -> {
                     if (data instanceof String dataStr) {
-                        onDataReceived(dataStr);
+                        onDataReceived(dataStr);    //TODO use closure to cath mq2tCallbackComponent like in else branch. remove requre to have name in json. And del getComponentNameFromJson
                     } else {
                         logger.warn("Invalid data type received from provider={}.", mq2tCallbackComponent.getName());
                     }

@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
@@ -32,6 +33,11 @@ public interface ComponentRepository extends JpaRepository<ComponentEntity, Long
     Optional<ComponentEntity> findByNumber(int number);
 
     Optional<ComponentEntity> findByName(String name);
+
+    List<ComponentEntity> findBySubscriptionTopic(String subscriptionTopic);
+
+    @Override
+    List<ComponentEntity> findAll();
 
     @Override
     Optional<ComponentEntity> findById(Long id);

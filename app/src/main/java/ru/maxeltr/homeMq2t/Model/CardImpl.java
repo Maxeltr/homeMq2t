@@ -56,18 +56,18 @@ public class CardImpl implements Card {
 
     private final Document view;
 
-    private AppProperties appProperties;
+    private String cardSubDataName;
 
 //    public CardImpl(String name, String pathname) {
 //        this.name = Objects.requireNonNullElse(name, "");
 //        this.view = this.getViewTemplate();
 //        this.pathname = pathname;
 //    }
-    public CardImpl(String cardNumber, String name, String pathname, AppProperties appProperties) {
+    public CardImpl(String cardNumber, String name, String pathname, String cardSubDataName) {
         this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
         this.name = Objects.requireNonNullElse(name, "");
         this.pathname = pathname;
-        this.appProperties = appProperties;
+        this.cardSubDataName = Objects.requireNonNullElse(cardSubDataName, "");
 
         this.view = this.getViewTemplate();
     }
@@ -131,7 +131,7 @@ public class CardImpl implements Card {
 
         el = document.getElementById("card1-text");
         if (el != null) {
-            el.text(this.appProperties.getCardSubDataName(this.cardNumber));
+            el.text(this.cardSubDataName);
             el.attr("id", this.getCardNumber() + "-text");
         }
 
