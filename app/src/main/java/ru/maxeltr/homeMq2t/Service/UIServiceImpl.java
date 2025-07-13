@@ -45,7 +45,10 @@ import ru.maxeltr.homeMq2t.Model.Msg;
 import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Model.CardSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
@@ -87,17 +90,61 @@ public class UIServiceImpl implements UIService {
 
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
-            msg.data(this.createJsonResponse("fail"));
+            msg.data(this.createJsonConnectResponse("fail"));
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed.");
-            msg.data(this.createJsonResponse("fail"));
+            msg.data(this.createJsonConnectResponse("fail"));
         } else {
             logger.info("Connection established successfully.");
-            msg.data(this.createJsonResponse("ok"));
+            msg.data(this.createJsonConnectResponse("ok"));
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         this.display(msg, "");
+    }
+
+    @Override
+    public void editCardSettings(Msg.Builder msg) {
+        logger.info("Do edit settings.");
+
+        msg.type(MediaType.APPLICATION_JSON_VALUE);
+
+        Optional<CardSettingsImpl> cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
+        if (cardSettingsOpt.isPresent()) {
+            msg.data(this.createJsonEditCardSettingsResponse(msg.getId(), "ok"));
+        } else {
+            msg.data(this.createJsonEditCardSettingsResponse(msg.getId(), "fail"));
+        }
+
+        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+        this.display(msg, "");
+    }
+
+    private String createJsonEditCardSettingsResponse(String number, String status) {
+        String errorCaption = "<div style=\"color:red;\">Error .</div>";     //TODO come up with error descripton
+        String unknownStatusCaption = "<div style=\"color:red;\">Unknknown status.</div>";
+
+        Optional<CardSettingsImpl> cardSettingsOpt = this.appProperties.getCardSettings(number);
+
+        String dashboard = switch (status) {
+            case "ok" ->
+                cardSettingsOpt.get().getHtml();
+            case "fail" ->
+                errorCaption;
+            default ->
+                errorCaption;
+        };
+
+
+        String data = "{\"name\": \"onEditCardSettings\", \"status\": \""
+                + status
+                + "\", \"type\": \"text/html;base64\", \"data\": \""
+                + Base64.getEncoder().encodeToString(dashboard.getBytes())
+                + "\"}";
+
+        logger.debug("Send ui data={}.", data);
+
+        return data;
     }
 
     /**
@@ -109,7 +156,7 @@ public class UIServiceImpl implements UIService {
      * @return a Json string representing the connection status and the html
      * data of start dashboard.
      */
-    private String createJsonResponse(String status) {
+    private String createJsonConnectResponse(String status) {
         String errorCaption = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>";
         String unknownStatusCaption = "<div style=\"color:red;\">Unknknown status of the connection.</div>";
 

@@ -37,6 +37,10 @@ function createCommand(id) {
     //stompClient.send("/app/connected", {}, JSON.stringify({'id': "connectsfgdsfgsdfg"}));
 }
 
+function editSettings(id) {
+    stompClient.send("/app/editSettings", {}, JSON.stringify({'id': id}));
+}
+
 function showImage(message, cardNumber) {
     var image = new Image();
     image.src = 'data:image/jpeg;base64,' + message.data;
@@ -124,6 +128,21 @@ function showData(message, cardNumber) {
                 }
 
                 return;
+            } else if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONEDITCARDSETTINGS') {
+                if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
+                    data = payload.hasOwnProperty("data") ? atob(payload.data) : "<div style=\"color:red;\">Error to show dashboard. No data available.</div>";
+                } else {
+                    console.log("Error. Incorrect payload type. Require text/html;base64 for message 'onEditCardSettings'");
+                    data = "<div style=\"color:red;\">Error. Incorrect payload type. Require text/html;base64 for message 'onEditCardSettings'.</div>";
+                }
+                
+                el = document.getElementById('dashboard');
+                if (el !== null) {
+                    el.innerHTML = data;
+                } else {
+                    console.log("Error. No dashboard available.");
+                }
+                
             }
 
             if (payload.hasOwnProperty("name")) {
@@ -189,6 +208,11 @@ $(function () {
         createCommand(arg);
     });
 
+    $(document).on("click", "#editSettings", function () {
+        var arg = $(this).val();
+        editSettings(arg);
+    });
+    
 
 });
 

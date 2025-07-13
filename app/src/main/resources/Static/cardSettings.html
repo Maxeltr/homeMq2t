@@ -1,0 +1,74 @@
+<div class="card text-center text-white bg-secondary shadow-sm" id="settingsCard">
+    <div class="card-body">
+        <h5 class="card-title">Edit Webcam Settings</h5>
+        <form id="settingsForm">
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="settingsCard-name" value="oPi photo webcam">
+            </div>
+            <div class="mb-3">
+                <label for="subscriptionTopic" class="form-label">Subscription Topic</label>
+                <input type="text" class="form-control" id="settingsCard-subscriptionTopic" value="dch/opi1/usbwebcam">
+            </div>
+            <div class="mb-3">
+                <label for="subscriptionQos" class="form-label">Subscription QoS</label>
+                <select class="form-select" id="settingsCard-subscriptionQos">
+                    <option value="AT_MOST_ONCE" selected>AT_MOST_ONCE</option>
+                    <option value="AT_LEAST_ONCE">AT_LEAST_ONCE</option>
+                    <option value="EXACTLY_ONCE">EXACTLY_ONCE</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="subscriptionDataName" class="form-label">Subscription Data Name</label>
+                <input type="text" class="form-control" id="settingsCard-subscriptionDataName" value="usb webcam opi1">
+            </div>
+            <div class="mb-3">
+                <label for="subscriptionDataType" class="form-label">Subscription Data Type</label>
+                <input type="text" class="form-control" id="settingsCard-subscriptionDataType" value="image/jpeg">
+            </div>
+            <div class="mb-3">
+                <label for="displayDataJsonPath" class="form-label">Display Data JSON Path</label>
+                <input type="text" class="form-control" id="settingsCard-displayDataJsonPath" value="">
+            </div>
+            <div class="mb-3">
+                <label for="publicationTopic" class="form-label">Publication Topic</label>
+                <input type="text" class="form-control" id="settingsCard-publicationTopic" value="dch/opi1/usbwebcam/update">
+            </div>
+            <div class="mb-3">
+                <label for="publicationQos" class="form-label">Publication QoS</label>
+                <select class="form-select" id="settingsCard-publicationQos">
+                    <option value="AT_MOST_ONCE" selected>AT_MOST_ONCE</option>
+                    <option value="AT_LEAST_ONCE">AT_LEAST_ONCE</option>
+                    <option value="EXACTLY_ONCE">EXACTLY_ONCE</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="publicationRetain" class="form-label">Publication Retain</label>
+                <select class="form-select" id="settingsCard-publicationRetain">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="publicationData" class="form-label">Publication Data</label>
+                <input type="text" class="form-control" id="settingsCard-publicationData" value="usbwebcam photo">
+            </div>
+            <div class="mb-3">
+                <label for="publicationDataType" class="form-label">Publication Data Type</label>
+                <input type="text" class="form-control" id="settingsCard-publicationDataType" value="text/plain">
+            </div>
+            <div class="mb-3">
+                <label for="localTaskPath" class="form-label">Local Task Path</label>
+                <input type="text" class="form-control" id="settingsCard-localTaskPath" value="">
+            </div>
+            <div class="mb-3">
+                <label for="localTaskArguments" class="form-label">Local Task Arguments</label>
+                <input type="text" class="form-control" id="settingsCard-localTaskArguments" value="">
+            </div>
+            <div class="mb-3">
+                <label for="localTaskDataType" class="form-label">Local Task Data Type</label>
+                <input type="text" class="form-control" id="settingsCard-localTaskDataType" value="">
+            </div>
+        </form>
+    </div>
+</div>

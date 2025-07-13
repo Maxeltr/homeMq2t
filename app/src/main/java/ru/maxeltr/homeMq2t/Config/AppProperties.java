@@ -48,6 +48,7 @@ import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.Card;
 import ru.maxeltr.homeMq2t.Model.CardImpl;
+import ru.maxeltr.homeMq2t.Model.CardSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.DashboardImpl;
 import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
 
@@ -246,6 +247,26 @@ public class AppProperties {
     public String getCardName(String number) {
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getName).orElse("");
     }
+
+    public Optional<CardEntity> getCard(String number) {
+        return safeParseInt(number).flatMap(cardRepository::findByNumber);
+    }
+
+    public Optional<CardSettingsImpl> getCardSettings(String number) {        //TODO create interface
+        String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
+        if (StringUtils.isEmpty(cardSettingsPathname)) {
+            logger.info("No value defined for card settings template pathname.");
+            return Optional.empty();
+        }
+
+        Optional<CardEntity> cardEntity = safeParseInt(number).flatMap(cardRepository::findByNumber);
+        if (cardEntity.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new CardSettingsImpl(number, cardSettingsPathname, cardEntity.get()));
+    }
+
 
     /**
      * Retrieves the card number associated with the specified name.
