@@ -132,9 +132,6 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
     @Autowired
     private AppProperties appProperties;
 
-//    @Autowired
-//    List<MqttTopicSubscription> subscriptions;
-
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
     private final Map<String, MqttTopicSubscription> subscribedTopics = Collections.synchronizedMap(new LinkedHashMap<>());

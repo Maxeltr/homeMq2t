@@ -44,6 +44,7 @@ import ru.maxeltr.homeMq2t.Repository.ComponentRepository;
 import ru.maxeltr.homeMq2t.Repository.StartupTaskRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.Card;
 import ru.maxeltr.homeMq2t.Model.CardImpl;
@@ -60,28 +61,6 @@ public class AppProperties {
     private Environment env;
 
     private final static String ERROR_TOPIC = "mq2t/error";
-
-//    @Autowired
-//    private Map<String, List<String>> topicsAndCards;
-//
-//    @Autowired
-//    private Map<String, List<String>> topicsAndCommands;
-//
-//    @Autowired
-//    private Map<String, List<String>> topicsAndComponents;
-//
-//    @Autowired
-//    private Map<String, String> commandsAndNumbers;
-//
-//    @Autowired
-//    private Map<String, String> componentsAndNumbers;
-//
-//    @Autowired
-//    private Map<String, String> cardsAndNumbers;
-//
-//    @Autowired
-//    @Qualifier("startupTasks")
-//    private Map<String, String> startupTasksAndNumbers;
 
     @Autowired
     private CardRepository cardRepository;
@@ -113,7 +92,6 @@ public class AppProperties {
      * @return the startup task number if found, or an empty string.
      */
     public String getStartupTaskNumber(String name) {
-        //return startupTasksAndNumbers.getOrDefault(taskName, "");
         return startupTaskRepository.findByName(name).map(StartupTaskEntity::getNumber).map(String::valueOf).orElse("");
     }
 
@@ -125,7 +103,6 @@ public class AppProperties {
      * @return the startup task arguments if found, or an empty string.
      */
     public String getStartupTaskArguments(String name) {
-        //return env.getProperty("startup.task[" + startupTasksAndNumbers.get(taskName) + "]." + "arguments", "");
         return startupTaskRepository.findByName(name).map(StartupTaskEntity::getArguments).orElse("");
     }
 
@@ -137,7 +114,6 @@ public class AppProperties {
      * @return the startup task path if found, or an empty string.
      */
     public String getStartupTaskPath(String name) {
-        //return env.getProperty("startup.task[" + startupTasksAndNumbers.get(taskName) + "]." + "path", "");
         return startupTaskRepository.findByName(name).map(StartupTaskEntity::getPath).orElse("");
     }
 
@@ -154,7 +130,6 @@ public class AppProperties {
      * returns empty list if no command numbers are found for the topic.
      */
     public List<String> getCommandNumbersByTopic(String topic) {
-        //return topicsAndCommands.getOrDefault(topic, emptyArray);
         List<String> commandNumbers = new ArrayList<>();
         List<CommandEntity> commands = commandRepository.findBySubscriptionTopic(topic);
         commands.forEach(command -> {
@@ -172,7 +147,6 @@ public class AppProperties {
      * @return the publication topic if found, or an empty string.
      */
     public String getCommandPubTopic(String name) {
-        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.topic", "");
         return commandRepository.findByName(name).map(CommandEntity::getPublicationTopic).orElse("");
     }
 
@@ -185,8 +159,7 @@ public class AppProperties {
      * @return the publication QoS level if found, or "AT_MOST_ONCE".
      */
     public String getCommandPubQos(String name) {
-        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.qos", "EXACTLY_ONCE");
-        return commandRepository.findByName(name).map(CommandEntity::getPublicationQos).orElse("");
+        return commandRepository.findByName(name).map(CommandEntity::getPublicationQos).orElse("AT_MOST_ONCE");
     }
 
     /**
@@ -198,7 +171,6 @@ public class AppProperties {
      * @return the publication retain flag if found, or "false".
      */
     public String getCommandPubRetain(String name) {
-        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.retain", "false");
         return commandRepository.findByName(name).map(CommandEntity::getPublicationRetain).map(String::valueOf).orElse("false");
     }
 
@@ -211,8 +183,7 @@ public class AppProperties {
      * @return the publication data type if found, or an empty string.
      */
     public String getCommandPubDataType(String name) {
-        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "publication.data.type", MediaType.TEXT_PLAIN_VALUE);
-        return commandRepository.findByName(name).map(CommandEntity::getPublicationDataType).orElse("");
+        return commandRepository.findByName(name).map(CommandEntity::getPublicationDataType).orElse(MediaType.TEXT_PLAIN_VALUE);
     }
 
     /**
@@ -222,7 +193,6 @@ public class AppProperties {
      * @return the command path if found, or an empty string.
      */
     public String getCommandPath(String name) {
-        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "path", "");
         return commandRepository.findByName(name).map(CommandEntity::getPath).orElse("");
     }
 
@@ -233,7 +203,6 @@ public class AppProperties {
      * @return the arguments if found, or an empty string.
      */
     public String getCommandArguments(String name) {
-        //return env.getProperty("command[" + commandsAndNumbers.get(command) + "]." + "arguments", "");
         return commandRepository.findByName(name).map(CommandEntity::getArguments).orElse("");
     }
 
@@ -249,8 +218,6 @@ public class AppProperties {
      * empty list if no cards are found for the topic.
      */
     public List<String> getCardNumbersByTopic(String topic) {
-        //return topicsAndCards.getOrDefault(topic, emptyArray);
-
         List<String> cardNumbers = new ArrayList<>();
         List<CardEntity> cards = cardRepository.findBySubscriptionTopic(topic);
         cards.forEach(card -> {
@@ -277,9 +244,6 @@ public class AppProperties {
      * returns an empty string if card name is not found.
      */
     public String getCardName(String number) {
-        //return env.getProperty("card[" + id + "].name", "");
-
-        //return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getName).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getName).orElse("");
     }
 
@@ -290,8 +254,6 @@ public class AppProperties {
      * @return the card number if found, or an empty string.
      */
     public String getCardNumber(String name) {
-        //return cardsAndNumbers.getOrDefault(name, "");
-
         return cardRepository.findByName(name).map(CardEntity::getNumber).map(String::valueOf).orElse("");
     }
 
@@ -304,7 +266,6 @@ public class AppProperties {
      * @return the subscription topic if found, or an empty string.
      */
     public String getCardSubTopic(String number) {
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getSubscriptionTopic).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionTopic).orElse("");
     }
 
@@ -317,7 +278,6 @@ public class AppProperties {
      * @return the subscription QoS level if found, or "AT_MOST_ONCE".
      */
     public String getCardSubQos(String number) {
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getSubscriptionQos).orElse("AT_MOST_ONCE");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionQos).orElse("AT_MOST_ONCE");
     }
 
@@ -330,15 +290,6 @@ public class AppProperties {
      * @return the subscription data name if found, or an empty string.
      */
     public String getCardSubDataName(String number) {
-        //return env.getProperty("card[" + id + "].subscription.data.name", "");
-
-        //return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getSubscriptionDataName).orElse("");
-//        return Optional.ofNullable(number)
-//                .filter(StringUtils::isNotBlank)
-//                .map(Integer::valueOf)
-//                .flatMap(cardRepository::findByNumber)
-//                .map(CardEntity::getSubscriptionDataName)
-//                .orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionDataName).orElse("");
     }
 
@@ -351,9 +302,6 @@ public class AppProperties {
      * @return the subscription data type if found, or an empty string.
      */
     public String getCardSubDataType(String number) {
-        //return env.getProperty("card[" + id + "].subscription.data.type", "");
-
-        //return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getSubscriptionDataType).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionDataType).orElse("");
     }
 
@@ -366,9 +314,6 @@ public class AppProperties {
      * @return the jsonpath expression if found, or an empty string.
      */
     public String getCardJsonPathExpression(String number) {
-        //return env.getProperty("card[" + id + "].display.data.jsonpath", "");
-
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getDisplayDataJsonpath).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getDisplayDataJsonpath).orElse("");
     }
 
@@ -381,9 +326,6 @@ public class AppProperties {
      * @return the publication topic if found, or an empty string.
      */
     public String getCardPubTopic(String number) {
-        //return env.getProperty("card[" + id + "].publication.topic", "");
-
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationTopic).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationTopic).orElse("");
     }
 
@@ -396,9 +338,6 @@ public class AppProperties {
      * @return the publication QoS level if found, or "AT_MOST_ONCE".
      */
     public String getCardPubQos(String number) {
-        //return env.getProperty("card[" + id + "].publication.qos", "AT_MOST_ONCE");
-
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationQos).orElse("AT_MOST_ONCE");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationQos).orElse("AT_MOST_ONCE");
     }
 
@@ -411,7 +350,6 @@ public class AppProperties {
      * @return the publication retain flag if found, or "false".
      */
     public String getCardPubRetain(String number) {
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationRetain).map(String::valueOf).orElse("false");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationRetain).map(String::valueOf).orElse("false");
     }
 
@@ -423,9 +361,6 @@ public class AppProperties {
      * @return the publication data if found, or an empty string.
      */
     public String getCardPubData(String number) {
-        //return env.getProperty("card[" + id + "].publication.data", "");
-
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationData).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationData).orElse("");
     }
 
@@ -438,9 +373,6 @@ public class AppProperties {
      * @return the publication data type if found, or an empty string.
      */
     public String getCardPubDataType(String number) {
-        //return env.getProperty("card[" + id + "].publication.data.type", "");
-
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getPublicationDataType).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationDataType).orElse("");
     }
 
@@ -452,7 +384,6 @@ public class AppProperties {
      * @return the local task path if found, or an empty string.
      */
     public String getCardLocalTaskPath(String number) {
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getLocalTaskPath).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getLocalTaskPath).orElse("");
     }
 
@@ -465,9 +396,6 @@ public class AppProperties {
      * @return the local task arguments if found, or an empty string.
      */
     public String getCardLocalTaskArguments(String number) {
-        //return env.getProperty("card[" + id + "].local.task.arguments", "");
-
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getLocalTaskArguments).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getLocalTaskArguments).orElse("");
     }
 
@@ -480,9 +408,6 @@ public class AppProperties {
      * @return the local task data type if found, or an empty string.
      */
     public String getCardLocalTaskDataType(String number) {
-        //return env.getProperty("card[" + id + "].local.task.data.type", "");
-
-//        return cardRepository.findByNumber(Integer.valueOf(number)).map(CardEntity::getLocalTaskDataType).orElse("");
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getLocalTaskDataType).orElse("");
     }
 
@@ -494,7 +419,6 @@ public class AppProperties {
      * returns an empty string if component name is not found.
      */
     public String getComponentName(String number) {
-//        return env.getProperty("component[" + id + "].name", "");
         return safeParseInt(number).flatMap(componentRepository::findByNumber).map(ComponentEntity::getName).orElse("");
     }
 
@@ -511,7 +435,6 @@ public class AppProperties {
      * returns empty list if no components are found for the topic.
      */
     public List<String> getComponentNumbersByTopic(String topic) {
-        //return topicsAndComponents.getOrDefault(topic, emptyArray);
         List<String> componentNumbers = new ArrayList<>();
         List<ComponentEntity> components = componentRepository.findBySubscriptionTopic(topic);
         components.forEach(component -> {
@@ -530,7 +453,6 @@ public class AppProperties {
      * @return the publication topic if found, or an empty string.
      */
     public String getComponentPubTopic(String name) {
-//        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.topic", "");
         return componentRepository.findByName(name).map(ComponentEntity::getPublicationTopic).orElse("");
     }
 
@@ -543,8 +465,7 @@ public class AppProperties {
      * @return the publication QoS level if found, or "AT_MOST_ONCE".
      */
     public String getComponentPubQos(String name) {
-//        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.qos", "AT_MOST_ONCE");
-        return componentRepository.findByName(name).map(ComponentEntity::getPublicationQos).orElse("");
+        return componentRepository.findByName(name).map(ComponentEntity::getPublicationQos).orElse("AT_MOST_ONCE");
     }
 
     /**
@@ -556,7 +477,6 @@ public class AppProperties {
      * @return the publication retain flag if found, or "false".
      */
     public String getComponentPubRetain(String name) {
-//        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.retain", "false");
         return componentRepository.findByName(name).map(ComponentEntity::getPublicationRetain).map(String::valueOf).orElse("false");
     }
 
@@ -569,8 +489,7 @@ public class AppProperties {
      * @return the publication data type if found, or an empty string.
      */
     public String getComponentPubDataType(String name) {
-//        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.data.type", MediaType.TEXT_PLAIN_VALUE);
-        return componentRepository.findByName(name).map(ComponentEntity::getPublicationDataType).orElse("");
+        return componentRepository.findByName(name).map(ComponentEntity::getPublicationDataType).orElse(MediaType.TEXT_PLAIN_VALUE);
     }
 
     /**
@@ -582,7 +501,6 @@ public class AppProperties {
      * @return the local card number if found, or an empty string.
      */
     public String getComponentPubLocalCard(String name) {
-//        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].publication.local.card", "");
         return componentRepository.findByName(name).map(ComponentEntity::getPublicationLocalCardId).orElse("");
     }
 
@@ -594,7 +512,6 @@ public class AppProperties {
      * @return the provider name if found, or an empty string.
      */
     public String getComponentProvider(String name) {
-//        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].provider", "");
         return componentRepository.findByName(name).map(ComponentEntity::getProvider).orElse("");
     }
 
@@ -606,7 +523,6 @@ public class AppProperties {
      * @return the provider arguments if found, or an empty string.
      */
     public String getComponentProviderArgs(String name) {
-//        return env.getProperty("component[" + componentsAndNumbers.get(component) + "].provider.args", "");
         return componentRepository.findByName(name).map(ComponentEntity::getProviderArgs).orElse("");
     }
 
