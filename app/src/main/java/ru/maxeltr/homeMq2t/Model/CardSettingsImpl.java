@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2025 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,53 +36,34 @@ import org.jsoup.nodes.Element;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
+import ru.maxeltr.homeMq2t.Entity.CardEntity;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class CardImpl implements Card {
+public class CardSettingsImpl {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CardImpl.class);
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CardSettingsImpl.class);
 
     static final int MAX_CHAR_TO_PRINT = 256;
 
-    //private final String pathname = File.separator + "Static" + File.separator + "card.html";
-    private String pathname;
-
-    private String cardNumber = "";
-
-    private String name = "";
+    private final String pathname;
 
     private final Document view;
 
-    private String cardSubDataName;
+    private final CardEntity cardEntity;
 
-//    public CardImpl(String name, String pathname) {
-//        this.name = Objects.requireNonNullElse(name, "");
-//        this.view = this.getViewTemplate();
-//        this.pathname = pathname;
-//    }
-    public CardImpl(String cardNumber, String name, String pathname, String cardSubDataName) {
-        this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
-        this.name = Objects.requireNonNullElse(name, "");
+    private String cardNumber = "";
+
+    public CardSettingsImpl(String cardNumber, String pathname, CardEntity cardEntity) {
+        this.cardNumber = Objects.requireNonNull(cardNumber);
+        this.cardEntity = cardEntity;
         this.pathname = pathname;
-        this.cardSubDataName = Objects.requireNonNullElse(cardSubDataName, "");
 
         this.view = this.getViewTemplate();
     }
 
-    @Override
-    public String getCardNumber() {
-        return this.cardNumber;
-    }
-
-    @Override
-    public String getName() {
-        return this.name;
-    }
-
-    @Override
     public String getHtml() {
         return this.view.body().html();
     }
@@ -97,56 +78,91 @@ public class CardImpl implements Card {
         return document;
     }
 
+    public String getCardNumber() {
+        return this.cardNumber;
+    }
+
     private void configureTemplate(Document document) {
-        Element el = document.getElementById("card1");
+        Element el = document.getElementById("settingsCard");
         if (el != null) {
             el.attr("id", this.getCardNumber());
         }
 
-        el = document.getElementById("editSettings");
+        el = document.getElementById("settingsCard-name");
         if (el != null) {
-            el.attr("value", this.getCardNumber());
+            el.attr("id", this.getCardNumber() + "-name");
         }
 
-        el = document.getElementById("card1-payload");
+        el = document.getElementById("settingsCard-subscriptionTopic");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-payload");
+            el.attr("id", this.getCardNumber() + "-subscriptionTopic");
         }
 
-        el = document.getElementById("card1-save");
+        el = document.getElementById("settingsCard-subscriptionQos");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-save");
+            el.attr("id", this.getCardNumber() + "-subscriptionQos");
         }
 
-        el = document.getElementById("card1-timestamp");
+        el = document.getElementById("settingsCard-subscriptionDataName");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-timestamp");
+            el.attr("id", this.getCardNumber() + "-subscriptionDataName");
         }
 
-        el = document.getElementById("sendCommand");
+        el = document.getElementById("settingsCard-subscriptionDataType");
         if (el != null) {
-            el.attr("value", this.getCardNumber());
+            el.attr("id", this.getCardNumber() + "-subscriptionDataType");
         }
 
-        el = document.getElementById("card1-save");
+        el = document.getElementById("settingsCard-displayDataJsonPath");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-save");
+            el.attr("id", this.getCardNumber() + "-displayDataJsonPath");
         }
 
-        el = document.getElementById("card1-text");
+        el = document.getElementById("settingsCard-publicationTopic");
         if (el != null) {
-            el.text(this.cardSubDataName);
-            el.attr("id", this.getCardNumber() + "-text");
+            el.attr("id", this.getCardNumber() + "-publicationTopic");
         }
 
-        el = document.getElementById("card1-status");
+        el = document.getElementById("settingsCard-publicationQos");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-status");
+            el.attr("id", this.getCardNumber() + "-publicationQos");
         }
+
+        el = document.getElementById("settingsCard-publicationRetain");
+        if (el != null) {
+            el.attr("id", this.getCardNumber() + "-publicationRetain");
+        }
+
+        el = document.getElementById("settingsCard-publicationData");
+        if (el != null) {
+            el.attr("id", this.getCardNumber() + "-publicationData");
+        }
+
+        el = document.getElementById("settingsCard-publicationDataType");
+        if (el != null) {
+            el.attr("id", this.getCardNumber() + "-publicationDataType");
+        }
+
+        el = document.getElementById("settingsCard-localTaskPath");
+        if (el != null) {
+            el.attr("id", this.getCardNumber() + "-localTaskPath");
+        }
+
+        el = document.getElementById("settingsCard-localTaskArguments");
+        if (el != null) {
+            el.attr("id", this.getCardNumber() + "-localTaskArguments");
+        }
+
+        el = document.getElementById("settingsCard-localTaskDataType");
+        if (el != null) {
+            el.attr("id", this.getCardNumber() + "-localTaskDataType");
+        }
+
+
 
         el = document.select(".card-title").first();
         if (el != null) {
-            el.text(this.getName());
+            el.text("Settings for card " + this.getCardNumber());
         }
     }
 
@@ -157,29 +173,24 @@ public class CardImpl implements Card {
         File initialFile = new File(path);
 
         if (!initialFile.exists()) {
-            logger.error("Card template file not found: {}", path);
+            logger.error("Card settings template file not found: {}", path);
             return Optional.empty();
         }
 
         try (InputStream is = new FileInputStream(initialFile)) {
             doc = Jsoup.parse(is, "utf-8", "");
         } catch (IOException ex) {
-            logger.error("Error reading or parsing card template.", ex);
+            logger.error("Error reading or parsing card settings template file.", ex);
         }
 
         return Optional.ofNullable(doc);
     }
 
-//    private Document getTemplateFromResource() throws IOException {
-//        //InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
-//        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathname);
-//        return Jsoup.parse(is, "utf-8", "");
-//    }
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("CardImpl{")
-                .append("name=").append(this.name)
+        sb.append(CardSettingsImpl.class.getCanonicalName())
+                .append("name=").append("Settings of card number=").append(this.getCardNumber())
                 .append(", view=");
         String strView = this.view.toString();
         if (strView.length() > MAX_CHAR_TO_PRINT) {

@@ -45,4 +45,6 @@ public interface UIService {
     void setMediator(ServiceMediator mediator);
 
     void shutdownApp();
+
+    void editCardSettings(Msg.Builder msg);
 }
