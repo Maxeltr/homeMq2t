@@ -27,11 +27,9 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.CommandEntity;
@@ -46,8 +44,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
-import ru.maxeltr.homeMq2t.Model.Card;
 import ru.maxeltr.homeMq2t.Model.CardImpl;
+import ru.maxeltr.homeMq2t.Model.CardModel;
 import ru.maxeltr.homeMq2t.Model.CardSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.DashboardImpl;
 import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
@@ -248,11 +246,11 @@ public class AppProperties {
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getName).orElse("");
     }
 
-    public Optional<CardEntity> getCard(String number) {
+    public Optional<CardEntity> getCardEntity(String number) {
         return safeParseInt(number).flatMap(cardRepository::findByNumber);
     }
 
-    public Optional<CardSettingsImpl> getCardSettings(String number) {        //TODO create interface
+    public Optional<CardModel> getCardSettings(String number) {
         String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
             logger.info("No value defined for card settings template pathname.");
@@ -264,7 +262,7 @@ public class AppProperties {
             return Optional.empty();
         }
 
-        return Optional.of(new CardSettingsImpl(number, cardSettingsPathname, cardEntity.get()));
+        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname));
     }
 
 
@@ -572,10 +570,10 @@ public class AppProperties {
 
         List<DashboardEntity> dashboardEntities = dashboardRepository.findAll();
         dashboardEntities.forEach(dashboardEntity -> {
-            List<Card> cards = new ArrayList<>();
+            List<CardModel> cards = new ArrayList<>();
             List<CardEntity> cardEntities = cardRepository.findByDashboardNumber(dashboardEntity.getNumber());
             cardEntities.forEach(cardEntity -> {
-                Card card = new CardImpl(String.valueOf(cardEntity.getNumber()), cardEntity.getName(), cardPathname, cardEntity.getSubscriptionDataName());
+                CardModel card = new CardImpl(cardEntity, cardPathname);
                 cards.add(card);
                 logger.info("Card={} has been created and added to card list.", card.getName());
             });

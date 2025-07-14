@@ -25,118 +25,88 @@ package ru.maxeltr.homeMq2t.Model;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import ru.maxeltr.homeMq2t.Entity.CardEntity;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class DashboardImpl implements Dashboard {
+public abstract class CardModel {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DashboardImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(CardModel.class);
 
     static final int MAX_CHAR_TO_PRINT = 256;
 
-    //private final String pathname = File.separator + "Static" + File.separator + "dashboard.html";
-    private String pathname;
-
-    private String dashboardNumber = "";
-
-    static final String CARD_ELEMENT_ID = "cards";
-
-    private final List<CardModel> dashboardCards;
-
-    private String name = "";
+    private final String pathname;
 
     private final Document view;
 
-    public DashboardImpl(String dashboardNumber, String name, List<CardModel> dashboardCards, String pathname) {
-        this.dashboardNumber = Objects.requireNonNullElse(dashboardNumber, "");
-        this.name = Objects.requireNonNullElse(name, "");
-        this.dashboardCards = Objects.requireNonNullElse(dashboardCards, new ArrayList<>());
+    private final CardEntity cardEntity;
+
+    public CardModel(CardEntity cardEntity, String pathname) {
+        this.cardEntity = cardEntity;
         this.pathname = pathname;
         this.view = this.getViewTemplate();
-
     }
 
-    @Override
-    public String getDashboardNumber() {
-        return this.dashboardNumber;
+    public String getCardNumber() {
+        return String.valueOf(cardEntity.getNumber());
     }
 
-    @Override
     public String getName() {
-        return this.name;
+        return cardEntity.getName();
     }
 
-    @Override
-    public List<CardModel> getCards() {
-        return this.dashboardCards;
-    }
-
-    @Override
     public String getHtml() {
         return this.view.body().html();
     }
 
+    protected String getPathname() {
+        return pathname;
+    }
+
+    protected Document getView() {
+        return view;
+    }
+
+    protected CardEntity getCardEntity() {
+        return cardEntity;
+    }
+
+    abstract void configureTemplate(Document document);
+
     private Document getViewTemplate() {
         Document document;
+
         document = this.getTemplateFromFile()
-                .orElse(Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get dashboard view template.</h5></div>"));
+                .orElse(Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>"));
         this.configureTemplate(document);
 
         return document;
     }
 
-    private void configureTemplate(Document document) {
-        Element el = document.getElementById(CARD_ELEMENT_ID);
-        if (el != null) {
-            for (CardModel card : this.getCards()) {
-                el.append(card.getHtml());
-            }
-        } else {
-            logger.warn("Element with id={} not found in the document.", CARD_ELEMENT_ID);
-        }
-    }
-
-//    private Document getTemplateFromResource() throws IOException {
-//        //InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
-//        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathname);
-//
-//        if (is == null) {
-//            logger.error("Can not get dashboard from resource. InputStream is null.");
-//        }
-//        Document doc = Jsoup.parse(is, "utf-8", "");
-//        return doc;
-//    }
     private Optional<Document> getTemplateFromFile() {
-        String path = System.getProperty("user.dir") + this.pathname;
+        String path = System.getProperty("user.dir") + this.getPathname();
         logger.info("Load template from={}", path);
         Document doc = null;
         File initialFile = new File(path);
 
         if (!initialFile.exists()) {
-            logger.error("Dashboard template file not found: {}", path);
+            logger.error("Card template file not found: {}", path);
             return Optional.empty();
         }
 
         try (InputStream is = new FileInputStream(initialFile)) {
             doc = Jsoup.parse(is, "utf-8", "");
         } catch (IOException ex) {
-            logger.error("Error reading or parsing dashboard template.", ex);
+            logger.error("Error reading or parsing card template.", ex);
         }
 
         return Optional.ofNullable(doc);
@@ -146,13 +116,8 @@ public class DashboardImpl implements Dashboard {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(this.getClass().getName())
-                .append("name=").append(this.name)
-                .append(", dashboardCards=");
-        for (CardModel card : this.getCards()) {
-            sb.append(card.toString());
-            sb.append(", ");
-        }
-        sb.append("view=");
+                .append("name=").append("Settings of card number=").append(this.getCardNumber())
+                .append(", view=");
         String strView = this.view.toString();
         if (strView.length() > MAX_CHAR_TO_PRINT) {
             sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));

@@ -48,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Model.CardModel;
 import ru.maxeltr.homeMq2t.Model.CardSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
@@ -90,13 +91,13 @@ public class UIServiceImpl implements UIService {
 
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
-            msg.data(this.createJsonConnectResponse("fail"));
+            msg.data(this.createJsonResponse(this.getStartDashboard(), "fail"));
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed.");
-            msg.data(this.createJsonConnectResponse("fail"));
+            msg.data(this.createJsonResponse(this.getStartDashboard(), "fail"));
         } else {
             logger.info("Connection established successfully.");
-            msg.data(this.createJsonConnectResponse("ok"));
+            msg.data(this.createJsonResponse(this.getStartDashboard(), "ok"));
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
@@ -109,76 +110,109 @@ public class UIServiceImpl implements UIService {
 
         msg.type(MediaType.APPLICATION_JSON_VALUE);
 
-        Optional<CardSettingsImpl> cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
+        Optional<CardModel> cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
         if (cardSettingsOpt.isPresent()) {
-            msg.data(this.createJsonEditCardSettingsResponse(msg.getId(), "ok"));
+            logger.info("Settings retrieved successfully. Card={}", msg.getId());
+            msg.data(this.createJsonResponse(cardSettingsOpt.get().getHtml(), "ok"));
         } else {
-            msg.data(this.createJsonEditCardSettingsResponse(msg.getId(), "fail"));
+            logger.warn("Could not get settings for card={}.", msg.getId());
+            msg.data(this.createJsonResponse("", "fail"));
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
         this.display(msg, "");
     }
 
-    private String createJsonEditCardSettingsResponse(String number, String status) {
-        String errorCaption = "<div style=\"color:red;\">Error .</div>";     //TODO come up with error descripton
-        String unknownStatusCaption = "<div style=\"color:red;\">Unknknown status.</div>";
-
-        Optional<CardSettingsImpl> cardSettingsOpt = this.appProperties.getCardSettings(number);
-
-        String dashboard = switch (status) {
-            case "ok" ->
-                cardSettingsOpt.get().getHtml();
-            case "fail" ->
-                errorCaption;
-            default ->
-                errorCaption;
-        };
-
-
-        String data = "{\"name\": \"onEditCardSettings\", \"status\": \""
-                + status
-                + "\", \"type\": \"text/html;base64\", \"data\": \""
-                + Base64.getEncoder().encodeToString(dashboard.getBytes())
-                + "\"}";
-
-        logger.debug("Send ui data={}.", data);
-
-        return data;
-    }
-
     /**
      * Construct a Json response string
      *
-     * @param status of the connection attempt, which can be either "ok" or
-     * "fail".
+     * @param status, which can be either "ok" or "fail".
      *
-     * @return a Json string representing the connection status and the html
-     * data of start dashboard.
+     * @return a Json string representing the html data of dashboard.
      */
-    private String createJsonConnectResponse(String status) {
-        String errorCaption = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>";
-        String unknownStatusCaption = "<div style=\"color:red;\">Unknknown status of the connection.</div>";
+    private String createJsonResponse(String dashboard, String status) {
+        String errorCaption = "<div style=\"color:red;\">There was an error while loading the dashboard. Please check the logs for more details.</div>";
+        String unknownStatusCaption = "<div style=\"color:red;\">The last action completed with an undefined status. Please check the logs for more details.</div>";
 
-        String dashboard = switch (status) {
+        String form = switch (status) {
             case "ok" ->
-                this.getStartDashboard();
+                dashboard;
             case "fail" ->
-                errorCaption + this.getStartDashboard();
+                errorCaption + dashboard;
             default ->
-                unknownStatusCaption + this.getStartDashboard();
+                unknownStatusCaption + dashboard;
         };
 
         String data = "{\"name\": \"onConnect\", \"status\": \""
                 + status
                 + "\", \"type\": \"text/html;base64\", \"data\": \""
-                + Base64.getEncoder().encodeToString(dashboard.getBytes())
+                + Base64.getEncoder().encodeToString(form.getBytes())
                 + "\"}";
 
         logger.debug("Send ui data={}.", data);
 
         return data;
     }
+//
+//    private String createJsonEditCardSettingsResponse(String number, String status) {
+//        String errorCaption = "<div style=\"color:red;\">Error .</div>";     //TODO come up with error descripton
+//        String unknownStatusCaption = "<div style=\"color:red;\">Unknknown status.</div>";
+//
+//        Optional<CardModel> cardSettingsOpt = this.appProperties.getCardSettings(number);
+//
+//        String dashboard = switch (status) {
+//            case "ok" ->
+//                cardSettingsOpt.get().getHtml();
+//            case "fail" ->
+//                errorCaption;
+//            default ->
+//                errorCaption;
+//        };
+//
+//
+//        String data = "{\"name\": \"onEditCardSettings\", \"status\": \""
+//                + status
+//                + "\", \"type\": \"text/html;base64\", \"data\": \""
+//                + Base64.getEncoder().encodeToString(dashboard.getBytes())
+//                + "\"}";
+//
+//        logger.debug("Send ui data={}.", data);
+//
+//        return data;
+//    }
+//
+//    /**
+//     * Construct a Json response string
+//     *
+//     * @param status of the connection attempt, which can be either "ok" or
+//     * "fail".
+//     *
+//     * @return a Json string representing the connection status and the html
+//     * data of start dashboard.
+//     */
+//    private String createJsonConnectResponse(String status) {
+//        String errorCaption = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>";
+//        String unknownStatusCaption = "<div style=\"color:red;\">Unknknown status of the connection.</div>";
+//
+//        String dashboard = switch (status) {
+//            case "ok" ->
+//                this.getStartDashboard();
+//            case "fail" ->
+//                errorCaption + this.getStartDashboard();
+//            default ->
+//                unknownStatusCaption + this.getStartDashboard();
+//        };
+//
+//        String data = "{\"name\": \"onConnect\", \"status\": \""
+//                + status
+//                + "\", \"type\": \"text/html;base64\", \"data\": \""
+//                + Base64.getEncoder().encodeToString(dashboard.getBytes())
+//                + "\"}";
+//
+//        logger.debug("Send ui data={}.", data);
+//
+//        return data;
+//    }
 
     @Override
     public void disconnect(byte reasonCode) {

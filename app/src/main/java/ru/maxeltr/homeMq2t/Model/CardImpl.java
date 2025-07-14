@@ -23,81 +23,56 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Objects;
-import java.util.Optional;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import ru.maxeltr.homeMq2t.Config.AppProperties;
+import ru.maxeltr.homeMq2t.Entity.CardEntity;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class CardImpl implements Card {
+public class CardImpl extends CardModel {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CardImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(CardModel.class);
 
-    static final int MAX_CHAR_TO_PRINT = 256;
+    public CardImpl(CardEntity cardEntity, String pathname) {
+        super(cardEntity, pathname);
+    }
 
-    //private final String pathname = File.separator + "Static" + File.separator + "card.html";
-    private String pathname;
-
-    private String cardNumber = "";
-
-    private String name = "";
-
-    private final Document view;
-
-    private String cardSubDataName;
-
-//    public CardImpl(String name, String pathname) {
+//    static final int MAX_CHAR_TO_PRINT = 256;
+//
+//    private String pathname;
+//
+//    private String cardNumber = "";
+//
+//    private String name = "";
+//
+//    private final Document view;
+//
+//    private String cardSubDataName;
+//    public CardImpl(String cardNumber, String name, String pathname, String cardSubDataName) {
+//        this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
 //        this.name = Objects.requireNonNullElse(name, "");
-//        this.view = this.getViewTemplate();
 //        this.pathname = pathname;
+//        this.cardSubDataName = Objects.requireNonNullElse(cardSubDataName, "");
+//
+//        this.view = this.getViewTemplate();
 //    }
-    public CardImpl(String cardNumber, String name, String pathname, String cardSubDataName) {
-        this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
-        this.name = Objects.requireNonNullElse(name, "");
-        this.pathname = pathname;
-        this.cardSubDataName = Objects.requireNonNullElse(cardSubDataName, "");
-
-        this.view = this.getViewTemplate();
-    }
-
-    @Override
-    public String getCardNumber() {
-        return this.cardNumber;
-    }
+//    private Document getViewTemplate() {
+//        Document document;
+//
+//        document = this.getTemplateFromFile()
+//                .orElse(Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>"));
+//        this.configureTemplate(document);
+//
+//        return document;
+//    }
 
     @Override
-    public String getName() {
-        return this.name;
-    }
-
-    @Override
-    public String getHtml() {
-        return this.view.body().html();
-    }
-
-    private Document getViewTemplate() {
-        Document document;
-
-        document = this.getTemplateFromFile()
-                .orElse(Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>"));
-        this.configureTemplate(document);
-
-        return document;
-    }
-
-    private void configureTemplate(Document document) {
+    void configureTemplate(Document document) {
         Element el = document.getElementById("card1");
         if (el != null) {
             el.attr("id", this.getCardNumber());
@@ -135,7 +110,7 @@ public class CardImpl implements Card {
 
         el = document.getElementById("card1-text");
         if (el != null) {
-            el.text(this.cardSubDataName);
+            el.text(Objects.requireNonNullElse(this.getCardEntity().getSubscriptionDataName(), ""));
             el.attr("id", this.getCardNumber() + "-text");
         }
 
@@ -150,46 +125,46 @@ public class CardImpl implements Card {
         }
     }
 
-    private Optional<Document> getTemplateFromFile() {
-        String path = System.getProperty("user.dir") + pathname;
-        logger.info("Load template from={}", path);
-        Document doc = null;
-        File initialFile = new File(path);
-
-        if (!initialFile.exists()) {
-            logger.error("Card template file not found: {}", path);
-            return Optional.empty();
-        }
-
-        try (InputStream is = new FileInputStream(initialFile)) {
-            doc = Jsoup.parse(is, "utf-8", "");
-        } catch (IOException ex) {
-            logger.error("Error reading or parsing card template.", ex);
-        }
-
-        return Optional.ofNullable(doc);
-    }
+//    private Optional<Document> getTemplateFromFile() {
+//        String path = System.getProperty("user.dir") + this.getPathname();
+//        logger.info("Load template from={}", path);
+//        Document doc = null;
+//        File initialFile = new File(path);
+//
+//        if (!initialFile.exists()) {
+//            logger.error("Card template file not found: {}", path);
+//            return Optional.empty();
+//        }
+//
+//        try (InputStream is = new FileInputStream(initialFile)) {
+//            doc = Jsoup.parse(is, "utf-8", "");
+//        } catch (IOException ex) {
+//            logger.error("Error reading or parsing card template.", ex);
+//        }
+//
+//        return Optional.ofNullable(doc);
+//    }
 
 //    private Document getTemplateFromResource() throws IOException {
 //        //InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
 //        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathname);
 //        return Jsoup.parse(is, "utf-8", "");
 //    }
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("CardImpl{")
-                .append("name=").append(this.name)
-                .append(", view=");
-        String strView = this.view.toString();
-        if (strView.length() > MAX_CHAR_TO_PRINT) {
-            sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));
-            sb.append("...");
-        } else {
-            sb.append(strView);
-        }
-        sb.append("}");
-
-        return sb.toString();
-    }
+//    @Override
+//    public String toString() {
+//        StringBuilder sb = new StringBuilder();
+//        sb.append("CardImpl{")
+//                .append("name=").append(this.getName())
+//                .append(", view=");
+//        String strView = this.getView().toString();
+//        if (strView.length() > MAX_CHAR_TO_PRINT) {
+//            sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));
+//            sb.append("...");
+//        } else {
+//            sb.append(strView);
+//        }
+//        sb.append("}");
+//
+//        return sb.toString();
+//    }
 }
