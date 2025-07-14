@@ -23,66 +23,26 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Objects;
-import java.util.Optional;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class CardSettingsImpl {
+public class CardSettingsImpl extends CardModel {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CardSettingsImpl.class);
 
-    static final int MAX_CHAR_TO_PRINT = 256;
-
-    private final String pathname;
-
-    private final Document view;
-
-    private final CardEntity cardEntity;
-
-    private String cardNumber = "";
-
-    public CardSettingsImpl(String cardNumber, String pathname, CardEntity cardEntity) {
-        this.cardNumber = Objects.requireNonNull(cardNumber);
-        this.cardEntity = cardEntity;
-        this.pathname = pathname;
-
-        this.view = this.getViewTemplate();
+    public CardSettingsImpl(CardEntity cardEntity, String pathname) {
+        super(cardEntity, pathname);
     }
 
-    public String getHtml() {
-        return this.view.body().html();
-    }
-
-    private Document getViewTemplate() {
-        Document document;
-
-        document = this.getTemplateFromFile()
-                .orElse(Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>"));
-        this.configureTemplate(document);
-
-        return document;
-    }
-
-    public String getCardNumber() {
-        return this.cardNumber;
-    }
-
-    private void configureTemplate(Document document) {
+    @Override
+    void configureTemplate(Document document) {
         Element el = document.getElementById("settingsCard");
         if (el != null) {
             el.attr("id", this.getCardNumber());
@@ -91,71 +51,103 @@ public class CardSettingsImpl {
         el = document.getElementById("settingsCard-name");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-name");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getName(), ""));
         }
 
         el = document.getElementById("settingsCard-subscriptionTopic");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-subscriptionTopic");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionTopic(), ""));
         }
 
         el = document.getElementById("settingsCard-subscriptionQos");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-subscriptionQos");
+            for (Element option : el.getElementsByTag("opiton")) {
+                if (option.val().equals(Objects.requireNonNullElse(this.getCardEntity().getSubscriptionQos(), ""))) {
+                    option.attr("selected", "selected");
+                } else {
+                    option.removeAttr("selected");
+                }
+            }
         }
 
         el = document.getElementById("settingsCard-subscriptionDataName");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-subscriptionDataName");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionDataName(), ""));
         }
 
         el = document.getElementById("settingsCard-subscriptionDataType");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-subscriptionDataType");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionDataType(), ""));
         }
 
         el = document.getElementById("settingsCard-displayDataJsonPath");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-displayDataJsonPath");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getDisplayDataJsonpath(), ""));
         }
 
         el = document.getElementById("settingsCard-publicationTopic");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-publicationTopic");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationTopic(), ""));
         }
 
         el = document.getElementById("settingsCard-publicationQos");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-publicationQos");
+            for (Element option : el.getElementsByTag("opiton")) {
+                if (option.val().equals(Objects.requireNonNullElse(this.getCardEntity().getPublicationQos(), ""))) {
+                    option.attr("selected", "selected");
+                } else {
+                    option.removeAttr("selected");
+                }
+            }
         }
 
         el = document.getElementById("settingsCard-publicationRetain");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-publicationRetain");
+            for (Element option : el.getElementsByTag("opiton")) {
+                if (option.val().equals(String.valueOf(this.getCardEntity().getPublicationRetain()))) {
+                    option.attr("selected", "selected");
+                } else {
+                    option.removeAttr("selected");
+                }
+            }
         }
 
         el = document.getElementById("settingsCard-publicationData");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-publicationData");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationData(), ""));
         }
 
         el = document.getElementById("settingsCard-publicationDataType");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-publicationDataType");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationDataType(), ""));
         }
 
         el = document.getElementById("settingsCard-localTaskPath");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-localTaskPath");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskPath(), ""));
         }
 
         el = document.getElementById("settingsCard-localTaskArguments");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-localTaskArguments");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskArguments(), ""));
         }
 
         el = document.getElementById("settingsCard-localTaskDataType");
         if (el != null) {
             el.attr("id", this.getCardNumber() + "-localTaskDataType");
+            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskDataType(), ""));
         }
 
 
@@ -166,41 +158,4 @@ public class CardSettingsImpl {
         }
     }
 
-    private Optional<Document> getTemplateFromFile() {
-        String path = System.getProperty("user.dir") + pathname;
-        logger.info("Load template from={}", path);
-        Document doc = null;
-        File initialFile = new File(path);
-
-        if (!initialFile.exists()) {
-            logger.error("Card settings template file not found: {}", path);
-            return Optional.empty();
-        }
-
-        try (InputStream is = new FileInputStream(initialFile)) {
-            doc = Jsoup.parse(is, "utf-8", "");
-        } catch (IOException ex) {
-            logger.error("Error reading or parsing card settings template file.", ex);
-        }
-
-        return Optional.ofNullable(doc);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(CardSettingsImpl.class.getCanonicalName())
-                .append("name=").append("Settings of card number=").append(this.getCardNumber())
-                .append(", view=");
-        String strView = this.view.toString();
-        if (strView.length() > MAX_CHAR_TO_PRINT) {
-            sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));
-            sb.append("...");
-        } else {
-            sb.append(strView);
-        }
-        sb.append("}");
-
-        return sb.toString();
-    }
 }

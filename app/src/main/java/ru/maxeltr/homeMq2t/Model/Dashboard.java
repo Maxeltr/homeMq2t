@@ -32,10 +32,10 @@ import java.util.List;
 public interface Dashboard {
 
 	String getDashboardNumber();
-	
+
     String getName();
 
     String getHtml();
 
-    List<Card> getCards();
+    List<CardModel> getCards();
 }
