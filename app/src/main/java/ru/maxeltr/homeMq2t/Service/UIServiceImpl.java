@@ -91,13 +91,13 @@ public class UIServiceImpl implements UIService {
 
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
-            msg.data(this.createJsonResponse(this.getStartDashboard(), "fail"));
+            msg.data(this.createJsonResponse(this.getStartDashboard(), "onConnect", "fail"));
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed.");
-            msg.data(this.createJsonResponse(this.getStartDashboard(), "fail"));
+            msg.data(this.createJsonResponse(this.getStartDashboard(), "onConnect", "fail"));
         } else {
             logger.info("Connection established successfully.");
-            msg.data(this.createJsonResponse(this.getStartDashboard(), "ok"));
+            msg.data(this.createJsonResponse(this.getStartDashboard(), "onConnect", "ok"));
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
@@ -113,10 +113,10 @@ public class UIServiceImpl implements UIService {
         Optional<CardModel> cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
         if (cardSettingsOpt.isPresent()) {
             logger.info("Settings retrieved successfully. Card={}", msg.getId());
-            msg.data(this.createJsonResponse(cardSettingsOpt.get().getHtml(), "ok"));
+            msg.data(this.createJsonResponse(cardSettingsOpt.get().getHtml(), "onEditCardSettings", "ok"));
         } else {
             logger.warn("Could not get settings for card={}.", msg.getId());
-            msg.data(this.createJsonResponse("", "fail"));
+            msg.data(this.createJsonResponse("", "onEditCardSettings", "fail"));
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
@@ -130,7 +130,7 @@ public class UIServiceImpl implements UIService {
      *
      * @return a Json string representing the html data of dashboard.
      */
-    private String createJsonResponse(String dashboard, String status) {
+    private String createJsonResponse(String dashboard, String event, String status) {
         String errorCaption = "<div style=\"color:red;\">There was an error while loading the dashboard. Please check the logs for more details.</div>";
         String unknownStatusCaption = "<div style=\"color:red;\">The last action completed with an undefined status. Please check the logs for more details.</div>";
 
@@ -143,7 +143,7 @@ public class UIServiceImpl implements UIService {
                 unknownStatusCaption + dashboard;
         };
 
-        String data = "{\"name\": \"onConnect\", \"status\": \""
+        String data = "{\"name\": \"" + event + "\", \"status\": \""
                 + status
                 + "\", \"type\": \"text/html;base64\", \"data\": \""
                 + Base64.getEncoder().encodeToString(form.getBytes())

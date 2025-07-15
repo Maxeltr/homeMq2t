@@ -78,4 +78,10 @@ public class InputUIControllerImpl implements InputUIController {
         logger.info("Do edit settings. Msg.Builder was received - {}.", msg);
         uiService.editCardSettings(msg);
     }
+
+    @MessageMapping("/saveCard")
+    public void saveCard(Msg.Builder msg) {
+        logger.info("Do save settings. Msg.Builder was received - {}.", msg);
+
+    }
 }
