@@ -45,26 +45,26 @@ public class CardSettingsImpl extends CardModel {
     void configureTemplate(Document document) {
         Element el = document.getElementById("settingsCard");
         if (el != null) {
-            el.attr("id", this.getCardNumber());
+//            el.attr("id", this.getCardNumber());
         }
 
         el = document.getElementById("settingsCard-name");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-name");
+//            el.attr("id", this.getCardNumber() + "-name");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getName(), ""));
         }
 
         el = document.getElementById("settingsCard-subscriptionTopic");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-subscriptionTopic");
+//            el.attr("id", this.getCardNumber() + "-subscriptionTopic");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionTopic(), ""));
         }
 
         el = document.getElementById("settingsCard-subscriptionQos");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-subscriptionQos");
-            for (Element option : el.getElementsByTag("opiton")) {
-                if (option.val().equals(Objects.requireNonNullElse(this.getCardEntity().getSubscriptionQos(), ""))) {
+//            el.attr("id", this.getCardNumber() + "-subscriptionQos");
+            for (Element option : el.getElementsByTag("option")) {
+                if (option.val().equals(Objects.requireNonNullElse(this.getCardEntity().getSubscriptionQos(), "AT_MOST_ONCE"))) {
                     option.attr("selected", "selected");
                 } else {
                     option.removeAttr("selected");
@@ -74,33 +74,33 @@ public class CardSettingsImpl extends CardModel {
 
         el = document.getElementById("settingsCard-subscriptionDataName");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-subscriptionDataName");
+//            el.attr("id", this.getCardNumber() + "-subscriptionDataName");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionDataName(), ""));
         }
 
         el = document.getElementById("settingsCard-subscriptionDataType");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-subscriptionDataType");
+//            el.attr("id", this.getCardNumber() + "-subscriptionDataType");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionDataType(), ""));
         }
 
         el = document.getElementById("settingsCard-displayDataJsonPath");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-displayDataJsonPath");
+//            el.attr("id", this.getCardNumber() + "-displayDataJsonPath");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getDisplayDataJsonpath(), ""));
         }
 
         el = document.getElementById("settingsCard-publicationTopic");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-publicationTopic");
+//            el.attr("id", this.getCardNumber() + "-publicationTopic");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationTopic(), ""));
         }
 
         el = document.getElementById("settingsCard-publicationQos");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-publicationQos");
-            for (Element option : el.getElementsByTag("opiton")) {
-                if (option.val().equals(Objects.requireNonNullElse(this.getCardEntity().getPublicationQos(), ""))) {
+//            el.attr("id", this.getCardNumber() + "-publicationQos");
+            for (Element option : el.getElementsByTag("option")) {
+                if (option.val().equals(Objects.requireNonNullElse(this.getCardEntity().getPublicationQos(), "AT_MOST_ONCE"))) {
                     option.attr("selected", "selected");
                 } else {
                     option.removeAttr("selected");
@@ -110,8 +110,8 @@ public class CardSettingsImpl extends CardModel {
 
         el = document.getElementById("settingsCard-publicationRetain");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-publicationRetain");
-            for (Element option : el.getElementsByTag("opiton")) {
+//            el.attr("id", this.getCardNumber() + "-publicationRetain");
+            for (Element option : el.getElementsByTag("option")) {
                 if (option.val().equals(String.valueOf(this.getCardEntity().getPublicationRetain()))) {
                     option.attr("selected", "selected");
                 } else {
@@ -122,31 +122,31 @@ public class CardSettingsImpl extends CardModel {
 
         el = document.getElementById("settingsCard-publicationData");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-publicationData");
+//            el.attr("id", this.getCardNumber() + "-publicationData");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationData(), ""));
         }
 
         el = document.getElementById("settingsCard-publicationDataType");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-publicationDataType");
+//            el.attr("id", this.getCardNumber() + "-publicationDataType");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationDataType(), ""));
         }
 
         el = document.getElementById("settingsCard-localTaskPath");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-localTaskPath");
+//            el.attr("id", this.getCardNumber() + "-localTaskPath");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskPath(), ""));
         }
 
         el = document.getElementById("settingsCard-localTaskArguments");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-localTaskArguments");
+//            el.attr("id", this.getCardNumber() + "-localTaskArguments");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskArguments(), ""));
         }
 
         el = document.getElementById("settingsCard-localTaskDataType");
         if (el != null) {
-            el.attr("id", this.getCardNumber() + "-localTaskDataType");
+//            el.attr("id", this.getCardNumber() + "-localTaskDataType");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskDataType(), ""));
         }
 
