@@ -1,4 +1,6 @@
 let stompClient = null;
+let subDataTopic = '/topic/data';
+let connectTopic = '/app/connect';
 
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
@@ -8,22 +10,33 @@ function setConnected(connected) {
 }
 
 function connect() {
+    if (stompClient && stompClient.connected) {
+        console.warn('Already connected');
+        return;
+    }
     let socket = new SockJS('/mq2tClientDashboard');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function (frame) {
         console.log('Connected: ' + frame);
-        stompClient.subscribe('/topic/data', function (message) {
+        setConnected(true);
+        stompClient.subscribe(subDataTopic, function (message) {
             showData(JSON.parse(message.body), message.headers.card);
         });
-        stompClient.send("/app/connect", {}, JSON.stringify({'id': "doConnect"}));
+        stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
     }, error => {
         console.error('STOMP connection error', error);
+        setConnected(false);
     });
 }
 
+function goToDashboard() {
+    stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
+}
+
 function disconnect() {
-    stompClient.send("/app/disconnect", {}, JSON.stringify({'id': "disconnect"}));
     if (stompClient !== null) {
+        stompClient.send("/app/disconnect", {}, JSON.stringify({'id': "disconnect"}));
+        stompClient.unsubscribe(subDataTopic);
         stompClient.disconnect();
     }
     setConnected(false);
@@ -51,10 +64,7 @@ function showImage(message, cardNumber) {
     let image = new Image();
     image.src = 'data:image/jpeg;base64,' + message.data;
 
-    el = document.getElementById(cardNumber + '-payload');
-    if (el !== null) {
-        el.innerHTML = safeHtml('<img src="' + image.src + '" class="img-fluid" alt="...">');
-    }
+    setInnerHtml(cardNumber + '-payload', '<img src="' + image.src + '" class="img-fluid" alt="...">');
 
     let saveButton = document.getElementById(cardNumber + '-save');
     if (saveButton !== null) {
@@ -64,27 +74,18 @@ function showImage(message, cardNumber) {
 }
 
 function showPlainText(message, cardNumber) {
-    el = document.getElementById(cardNumber + '-payload');
-    if (el !== null) {
-        el.innerHTML = safeHtml('<p>' + message.data + '</p>');
-    }
+    setInnerHtml(cardNumber + '-payload', '<p>' + message.data + '</p>');
 }
 
 function showTimestamp(message, cardNumber) {
     if (typeof message.timestamp === 'undefined') {
-        el = document.getElementById(cardNumber + '-timestamp');
-        if (el !== null) {
-            el.innerHTML = 'undefined';
-        }
+        setInnerHtml(cardNumber + '-timestamp', 'undefined');
     } else {
         let date = new Date(parseInt(message.timestamp, 10));
         let hours = date.getHours();
         let minutes = '0' + date.getMinutes();
         let seconds = '0' + date.getSeconds();
-        el = document.getElementById(cardNumber + '-timestamp');
-        if (el !== null) {
-            el.innerHTML = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-        }
+        setInnerHtml(cardNumber + '-timestamp', hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2));
     }
 }
 
@@ -97,10 +98,7 @@ function showBase64(payload) {
         data = "<div style=\"color:red;\">Error. Incorrect payload type. Require text/html;base64.</div>";
     }
 
-    el = document.getElementById('dashboard');
-    if (el !== null) {
-        el.innerHTML = safeHtml(data);	//add
-    } else {
+    if (null === setInnerHtml('dashboard', data)) {
         console.log("Error. No dashboard available.");
     }
 }
@@ -122,69 +120,50 @@ function showData(message, cardNumber) {
                 payload = JSON.parse(message.data);
             } catch (SyntaxError) {
                 console.log('Error. Not valid Json. Shows as plain text.');
-                document.getElementById('errors').innerHTML = "<div style=\"color:red;\">Error. Invalid json. Card=" + safeHtml(cardNumber) + ".</div>";
+                setInnerHtml('errors', "<div style=\"color:red;\">Error. Invalid json. Card=" + cardNumber + ".</div>");
                 showPlainText(message, cardNumber);
                 return;
             }
 
-            if (!payload.hasOwnProperty("name")) {
-                console.log('Error. Property name is not available in json.');
-                document.getElementById('errors').innerHTML = "<div style=\"color:red;\">Error. Property name is not available in json.</div>";
-                return;
-            }
+            if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONCONNECT') {
+                showBase64(payload);
+                console.log("Mqtt connection status - ." + payload.status);
 
-            if (payload.name.toUpperCase() === 'ONCONNECT') {
+            } else if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONEDITCARDSETTINGS') {
                 showBase64(payload);
 
-                if (payload.hasOwnProperty("status")) {
-                    if (payload.status.toUpperCase() === 'OK') {
-                        setConnected(true);
-                    } else {
-                        setConnected(false);
-                    }
-                } else {
-                    console.log("Error. No status available.");
-                }
-
-            } else if (payload.name.toUpperCase() === 'ONEDITCARDSETTINGS') {
-                showBase64(payload);
             } else {
-                el = document.getElementById(cardNumber + '-text');
-                if (el !== null) {
-                    el.innerHTML = safeHtml(payload.name);
-                }
+                setInnerHtml(cardNumber + 'text', payload.name);
+                setInnerHtml(cardNumber + 'status', payload.status);
 
-                if (payload.hasOwnProperty("status")) {
-                    el = document.getElementById(cardNumber + '-status');
-                    if (el !== null) {
-                        el.innerHTML = safeHtml(payload.status);
-                    }
-                }
-
-                el = document.getElementById(cardNumber + '-payload');
-                if (el !== null) {
-                    if (payload.hasOwnProperty("data")) {
-                        el.innerHTML = safeHtml('<p>' + payload.data + '</p>');
-                    } else {
-                        el.innerHTML = safeHtml('<p>' + JSON.stringify(payload) + '</p>');
-                        console.log("Error. No property data for card=" + cardNumber);
-                    }
+                if (payload.hasOwnProperty("data")) {
+                    setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>');
+                } else {
+                    setInnerHtml(cardNumber + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
+                    console.log("Error. No property data for card=" + cardNumber);
                 }
             }
         } else {
             console.log("Error. Incorrect payload type for card=" + cardNumber + ". Message type is " + message.type);
-            document.getElementById('errors').innerHTML = "<div style=\"color:red;\">Error. Incorrect payload type for card=" + safeHtml(cardNumber) + ".</div>";
+            setInnerHtml('errors', "<div style=\"color:red;\">Error. Incorrect payload type for card=" + cardNumber + ".</div>");	
         }
     } else {
         console.log('Error: message type is undefined');
-        document.getElementById('errors').innerHTML = "<div style=\"color:red;\">Error: message type is undefined.</div>";
+        setInnerHtml('errors', "<div style=\"color:red;\">Error: message type is undefined.</div>");	
     }
+}
+
+function setInnerHtml(selector, html) {				
+	let el = document.getElementById(selector);
+	if (el) el.innerHTML = safeHtml(html);
+
+	return el;
 }
 
 function safeHtml(html) {
     return DOMPurify.sanitize(html, {
-        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'p', 'ul', 'li', 'img', 'div', 'button', 'small', 'h5', 'svg', 'path'],
-        ALLOWED_ATTR: ['src', 'alt', 'title', 'class', 'type', 'id', 'value', 'aria-label', 'width', 'height', 'fill', 'viewBox', 'd']
+        ALLOWED_TAGS: ['form', 'label', 'select', 'option', 'input', 'b', 'i', 'em', 'strong', 'p', 'ul', 'li', 'img', 'div', 'button', 'small', 'h5', 'svg', 'path', 'a'],
+        ALLOWED_ATTR: ['selected', 'name', 'src', 'alt', 'title', 'class', 'type', 'id', 'value', 'aria-label', 'width', 'height', 'fill', 'viewBox', 'd', 'style', 'href']
     });
 }
 
@@ -230,11 +209,11 @@ $(function () {
             data[key] = value;
         });
         saveCard(JSON.stringify(data));
-        connect();
+        goToDashboard();
     });
 
     $(document).on("click", "#cancel", function () {
-        connect();
+        goToDashboard();
     });
 });
 

@@ -23,7 +23,6 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
-import com.jayway.jsonpath.InvalidPathException;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.Promise;
@@ -43,13 +42,9 @@ import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import com.jayway.jsonpath.JsonPath;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
-import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Model.CardModel;
-import ru.maxeltr.homeMq2t.Model.CardSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
 /**
@@ -124,11 +119,32 @@ public class UIServiceImpl implements UIService {
     }
 
     /**
-     * Construct a Json response string
+     * Construct a Json-romatted response string containing the given HTML,
+     * event name, and status. The HTML is optionally prefixed with an error or
+     * unknown status message, then Base64 encoded and embedded in the JSON
+     * payload. If the status is "ok", the HTML is included as is. If the status
+     * is "fail", an error message is prepended. For any other status value, an
+     * "undefined status" message is prepended.
      *
-     * @param status, which can be either "ok" or "fail".
+     * <p>
+     * The generated JSON has the following structure
+     * <pre>{@code
+     * {
+     * 		"name": "<event>",
+     * 		"status": "<status>",
+     * 		"type": "<text/html;base64>",
+     * 		"data": "<base64-encoded HTML with opitonal prefix>"
+     * }
+     * }</pre>
+     * </p>
      *
-     * @return a Json string representing the html data of dashboard.
+     * @param dashboard the raw HTML content to include in the response
+     * @param event the name of the event assosiated with this response
+     * @param status the status of the last action, expected values are "ok" or
+     * "fail".
+     *
+     * @return a Json string with the event name, status, content type and
+     * Base64-encoded HTML with optional error or unknown status prefix.
      */
     private String createJsonResponse(String dashboard, String event, String status) {
         String errorCaption = "<div style=\"color:red;\">There was an error while loading the dashboard. Please check the logs for more details.</div>";
@@ -153,66 +169,6 @@ public class UIServiceImpl implements UIService {
 
         return data;
     }
-//
-//    private String createJsonEditCardSettingsResponse(String number, String status) {
-//        String errorCaption = "<div style=\"color:red;\">Error .</div>";     //TODO come up with error descripton
-//        String unknownStatusCaption = "<div style=\"color:red;\">Unknknown status.</div>";
-//
-//        Optional<CardModel> cardSettingsOpt = this.appProperties.getCardSettings(number);
-//
-//        String dashboard = switch (status) {
-//            case "ok" ->
-//                cardSettingsOpt.get().getHtml();
-//            case "fail" ->
-//                errorCaption;
-//            default ->
-//                errorCaption;
-//        };
-//
-//
-//        String data = "{\"name\": \"onEditCardSettings\", \"status\": \""
-//                + status
-//                + "\", \"type\": \"text/html;base64\", \"data\": \""
-//                + Base64.getEncoder().encodeToString(dashboard.getBytes())
-//                + "\"}";
-//
-//        logger.debug("Send ui data={}.", data);
-//
-//        return data;
-//    }
-//
-//    /**
-//     * Construct a Json response string
-//     *
-//     * @param status of the connection attempt, which can be either "ok" or
-//     * "fail".
-//     *
-//     * @return a Json string representing the connection status and the html
-//     * data of start dashboard.
-//     */
-//    private String createJsonConnectResponse(String status) {
-//        String errorCaption = "<div style=\"color:red;\">Connection attempt to remote server was failed.</div>";
-//        String unknownStatusCaption = "<div style=\"color:red;\">Unknknown status of the connection.</div>";
-//
-//        String dashboard = switch (status) {
-//            case "ok" ->
-//                this.getStartDashboard();
-//            case "fail" ->
-//                errorCaption + this.getStartDashboard();
-//            default ->
-//                unknownStatusCaption + this.getStartDashboard();
-//        };
-//
-//        String data = "{\"name\": \"onConnect\", \"status\": \""
-//                + status
-//                + "\", \"type\": \"text/html;base64\", \"data\": \""
-//                + Base64.getEncoder().encodeToString(dashboard.getBytes())
-//                + "\"}";
-//
-//        logger.debug("Send ui data={}.", data);
-//
-//        return data;
-//    }
 
     @Override
     public void disconnect(byte reasonCode) {

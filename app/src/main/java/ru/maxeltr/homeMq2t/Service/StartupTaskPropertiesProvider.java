@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2025 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,17 +23,41 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
-import ru.maxeltr.homeMq2t.Model.Msg;
+import java.util.List;
+import ru.maxeltr.homeMq2t.Entity.StartupTaskEntity;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface CommandService {
+public interface StartupTaskPropertiesProvider {
 
-    public void setMediator(ServiceMediator mediator);
+    public List<StartupTaskEntity> getAllStartupTasks();
 
-    public void execute(Msg.Builder command, String commandNumber);
+    /**
+     * Retrieves the startup task number associated with the specified name.
+     *
+     * @param name the name associated with the startup task
+     * @return the startup task number if found, or an empty string.
+     */
+    public String getStartupTaskNumber(String name);
 
-    public String execute(String commandPath, String arguments);
+    /**
+     * Retrieves the startup task arguments associated with the specified
+     * startup task.
+     *
+     * @param name the name associated with the startup task
+     * @return the startup task arguments if found, or an empty string.
+     */
+    public String getStartupTaskArguments(String name);
+
+    /**
+     * Retrieves the startup task path associated with the specified startup
+     * task.
+     *
+     * @param name the name associated with the startup task
+     * @return the startup task path if found, or an empty string.
+     */
+    public String getStartupTaskPath(String name);
+
 }

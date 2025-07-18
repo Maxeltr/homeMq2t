@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service;
+package ru.maxeltr.homeMq2t.Service.Command;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
 import java.io.BufferedReader;
@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.apache.commons.lang3.StringUtils;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
  *

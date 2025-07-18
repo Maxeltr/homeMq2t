@@ -48,10 +48,8 @@ public class DashboardImpl implements Dashboard {
 
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(DashboardImpl.class);
 
-    static final int MAX_CHAR_TO_PRINT = 256;
-
-    //private final String pathname = File.separator + "Static" + File.separator + "dashboard.html";
-    private String pathname;
+//    static final int MAX_CHAR_TO_PRINT = 256;
+    private final String pathname;
 
     private String dashboardNumber = "";
 
@@ -142,26 +140,26 @@ public class DashboardImpl implements Dashboard {
         return Optional.ofNullable(doc);
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.getClass().getName())
-                .append("name=").append(this.name)
-                .append(", dashboardCards=");
-        for (CardModel card : this.getCards()) {
-            sb.append(card.toString());
-            sb.append(", ");
-        }
-        sb.append("view=");
-        String strView = this.view.toString();
-        if (strView.length() > MAX_CHAR_TO_PRINT) {
-            sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));
-            sb.append("...");
-        } else {
-            sb.append(strView);
-        }
-        sb.append("}");
-
-        return sb.toString();
-    }
+//    @Override
+//    public String toString() {
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(this.getClass().getName())
+//                .append("name=").append(this.name)
+//                .append(", dashboardCards=");
+//        for (CardModel card : this.getCards()) {
+//            sb.append(card.toString());
+//            sb.append(", ");
+//        }
+//        sb.append("view=");
+//        String strView = this.view.toString();
+//        if (strView.length() > MAX_CHAR_TO_PRINT) {
+//            sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));
+//            sb.append("...");
+//        } else {
+//            sb.append(strView);
+//        }
+//        sb.append("}");
+//
+//        return sb.toString();
+//    }
 }
