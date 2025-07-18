@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
+import ru.maxeltr.homeMq2t.Service.Command.CommandService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.Unpooled;
