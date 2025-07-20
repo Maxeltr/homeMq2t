@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -37,6 +38,7 @@ public class CardEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("ID")
     private long id;
 
     private String name;
@@ -44,6 +46,7 @@ public class CardEntity {
     private String subscriptionQos;
     private String subscriptionDataName;
     private String subscriptionDataType;
+    @JsonProperty("displayDataJsonPath")
     private String displayDataJsonpath;
     private String publicationTopic;
     private String publicationQos;

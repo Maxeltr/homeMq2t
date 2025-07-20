@@ -250,6 +250,10 @@ public class AppProperties {
         return safeParseInt(number).flatMap(cardRepository::findByNumber);
     }
 
+    public CardEntity saveCardEntity(CardEntity cardEntity) {
+        return this.cardRepository.save(cardEntity);
+    }
+
     public Optional<CardModel> getCardSettings(String number) {
         String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
