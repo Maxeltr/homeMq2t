@@ -47,4 +47,6 @@ public interface UIService {
     void shutdownApp();
 
     void editCardSettings(Msg.Builder msg);
+
+    public void saveCardSettings(Msg.Builder msg);
 }
