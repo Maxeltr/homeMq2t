@@ -250,6 +250,10 @@ public class AppProperties {
         return safeParseInt(number).flatMap(cardRepository::findByNumber);
     }
 
+    public Optional<DashboardEntity> getDashboardEntity(String number) {
+        return safeParseInt(number).flatMap(dashboardRepository::findByNumber);
+    }
+
     public CardEntity saveCardEntity(CardEntity cardEntity) {
         return this.cardRepository.save(cardEntity);
     }

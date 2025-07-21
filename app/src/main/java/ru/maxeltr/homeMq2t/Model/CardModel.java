@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Objects;
 import java.util.Optional;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -51,8 +52,8 @@ public abstract class CardModel {
     private final CardEntity cardEntity;
 
     public CardModel(CardEntity cardEntity, String pathname) {
-        this.cardEntity = cardEntity;
-        this.pathname = pathname;
+        this.cardEntity = Objects.requireNonNull(cardEntity);
+        this.pathname = Objects.requireNonNull(pathname);
         this.view = this.getViewTemplate();
     }
 
@@ -61,7 +62,7 @@ public abstract class CardModel {
     }
 
     public String getName() {
-        return cardEntity.getName();
+        return Objects.requireNonNullElse(cardEntity.getName(), "");
     }
 
     public String getHtml() {
