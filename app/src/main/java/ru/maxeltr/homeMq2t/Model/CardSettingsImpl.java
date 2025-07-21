@@ -45,14 +45,17 @@ public class CardSettingsImpl extends CardModel {
     void configureTemplate(Document document) {
         Element el = document.getElementById("settingsCard-number");
         if (el != null) {
-//            el.attr("id", this.getCardNumber());
             el.attr("value", this.getCardNumber());
         }
 
         el = document.getElementById("settingsCard-id");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-name");
             el.attr("value", String.valueOf(this.getCardEntity().getId()));
+        }
+
+        el = document.getElementById("settingsCard-dashboardNumber");
+        if (el != null) {
+            el.attr("value", String.valueOf(this.getCardEntity().getDashboard().getNumber()));
         }
 
         el = document.getElementById("settingsCard-name");

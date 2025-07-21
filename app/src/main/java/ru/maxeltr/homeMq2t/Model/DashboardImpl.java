@@ -65,7 +65,7 @@ public class DashboardImpl implements Dashboard {
         this.dashboardNumber = Objects.requireNonNullElse(dashboardNumber, "");
         this.name = Objects.requireNonNullElse(name, "");
         this.dashboardCards = Objects.requireNonNullElse(dashboardCards, new ArrayList<>());
-        this.pathname = pathname;
+        this.pathname = Objects.requireNonNull(pathname);
         this.view = this.getViewTemplate();
 
     }

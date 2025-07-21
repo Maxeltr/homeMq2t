@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -45,7 +46,8 @@ public class DashboardEntity {
     private String name;
     private Integer number;
 
-    @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER)
+    @JsonManagedReference
+    @OneToMany(mappedBy = "dashboard", fetch = FetchType.LAZY)
     private List<CardEntity> cards;
 
     public long getId() {

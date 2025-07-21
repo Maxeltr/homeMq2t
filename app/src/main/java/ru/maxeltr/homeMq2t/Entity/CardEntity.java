@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -40,7 +41,7 @@ public class CardEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonProperty("ID")
     private long id;
-
+    @JsonProperty("NAME")
     private String name;
     private String subscriptionTopic;
     private String subscriptionQos;
@@ -58,6 +59,7 @@ public class CardEntity {
     private String localTaskDataType;
     private Integer number;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "dashboard_id", nullable = false)
     private DashboardEntity dashboard;

@@ -25,6 +25,8 @@ package ru.maxeltr.homeMq2t.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
@@ -46,9 +48,11 @@ import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import com.jayway.jsonpath.JsonPath;
 import java.util.HashMap;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.CardModel;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 
@@ -71,8 +75,8 @@ public class UIServiceImpl implements UIService {
     @Autowired
     private OutputUIController uiController;
 
-    @Autowired
-    private ObjectMapper mapper;
+//    @Autowired
+//    private ObjectMapper mapper;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
@@ -129,11 +133,25 @@ public class UIServiceImpl implements UIService {
     @Override
     public void saveCardSettings(Msg.Builder msg) {
         logger.info("Do save settings.");
+        logger.info("saveCardSettings=={}", msg.getData());
         CardEntity cardEntity;
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        JsonNode root;
+
         try {
+
             cardEntity = mapper.readValue(msg.getData(), CardEntity.class);
-            this.appProperties.saveCardEntity(cardEntity);
-        } catch (JsonProcessingException ex) {
+
+            root = mapper.readTree(msg.getData());
+
+            DashboardEntity dashboardEntity = appProperties.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
+
+            cardEntity.setDashboard(dashboardEntity);
+            ;
+            logger.info("saveCardSettings={}", this.appProperties.saveCardEntity(cardEntity));
+        } catch (JsonProcessingException | NoSuchElementException ex) {
             logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
 
         }
