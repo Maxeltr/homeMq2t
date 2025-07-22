@@ -92,7 +92,7 @@ function showTimestamp(message, cardNumber) {
 function showBase64(payload) {
     let data;
     if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
-        data = payload.hasOwnProperty("data") ? atob(payload.data) : "<div style=\"color:red;\">Error to show dashboard. No data available.</div>";
+        data = payload.hasOwnProperty("data") ? b64ToUtf8(payload.data) : "<div style=\"color:red;\">Error to show dashboard. No data available.</div>";
     } else {
         console.log("Error. Incorrect payload type. Require text/html;base64.");
         data = "<div style=\"color:red;\">Error. Incorrect payload type. Require text/html;base64.</div>";
@@ -101,6 +101,17 @@ function showBase64(payload) {
     if (null === setInnerHtml('dashboard', data)) {
         console.log("Error. No dashboard available.");
     }
+}
+
+function b64ToUtf8(str) {
+  let binary = atob(str);
+
+  let bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new TextDecoder('utf-8').decode(bytes);
 }
 
 function showData(message, cardNumber) {

@@ -47,6 +47,7 @@ import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import com.jayway.jsonpath.JsonPath;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -113,7 +114,7 @@ public class UIServiceImpl implements UIService {
 
     @Override
     public void editCardSettings(Msg.Builder msg) {
-        logger.info("Do edit settings.");
+        logger.debug("Do edit settings {}.", msg);
 
         msg.type(MediaType.APPLICATION_JSON_VALUE);
 
@@ -132,8 +133,8 @@ public class UIServiceImpl implements UIService {
 
     @Override
     public void saveCardSettings(Msg.Builder msg) {
-        logger.info("Do save settings.");
-        logger.info("saveCardSettings=={}", msg.getData());
+        logger.debug("Do save settings {}.", msg);
+
         CardEntity cardEntity;
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -202,7 +203,7 @@ public class UIServiceImpl implements UIService {
         String data = "{\"name\": \"" + event + "\", \"status\": \""
                 + status
                 + "\", \"type\": \"text/html;base64\", \"data\": \""
-                + Base64.getEncoder().encodeToString(form.getBytes())
+                + Base64.getEncoder().encodeToString(form.getBytes(StandardCharsets.UTF_8))
                 + "\"}";
 
         logger.debug("Send ui data={}.", data);
