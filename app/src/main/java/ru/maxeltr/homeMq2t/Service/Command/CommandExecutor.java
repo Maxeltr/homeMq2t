@@ -23,13 +23,17 @@
  */
 package ru.maxeltr.homeMq2t.Service.Command;
 
+import ru.maxeltr.homeMq2t.Model.Msg;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public interface CommandExecutor {
 
-    String execute();
+    void execute(Msg.Builder command, String commandNumber);
+
+    String execute(String commandPath, String arguments);
 
 
 }

@@ -80,7 +80,7 @@ import ru.maxeltr.homeMq2t.Config.AppProperties;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class HmMq2tImpl implements HmMq2t, CommandLineRunner {
+public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate to ConnectionManager, ReconnectionStrategy, PingScheduler, SubscriptionManager, PublishManager
 
     private static final Logger logger = LoggerFactory.getLogger(HmMq2tImpl.class);
 

@@ -13,11 +13,11 @@ CREATE TABLE IF NOT EXISTS card_settings (
     subscription_qos VARCHAR(50),
     subscription_data_name VARCHAR(255),
     subscription_data_type VARCHAR(50),
-    display_data_jsonpath VARCHAR(50),
+    display_data_jsonpath VARCHAR(255),
     publication_topic VARCHAR(255),
     publication_qos VARCHAR(50),
     publication_retain BOOLEAN,
-    publication_data TEXT,
+    publication_data VARCHAR(10000),
     publication_data_type VARCHAR(255),
     local_task_path VARCHAR(255),
     local_task_arguments VARCHAR(255),
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS mqtt_settings (
     clean_session BOOLEAN,
     auto_connect BOOLEAN,
     will_topic VARCHAR(255),
-    will_message TEXT,
+    will_message VARCHAR(10000),
     reconnect BOOLEAN
 );
 
@@ -83,37 +83,7 @@ CREATE TABLE IF NOT EXISTS startup_task_settings (
     number INT
 );
 
-INSERT INTO card (
-    name,
-    subscription_topic,
-    subscription_qos,
-    subscription_data_name,
-    subscription_data_type,
-    display_data_jsonpath,
-    publication_topic,
-    publication_qos,
-    publication_retain,
-    publication_data,
-    publication_data_type,
-    local_task_path,
-    local_task_arguments,
-    local_task_data_type
-) VALUES (
-    'microclimate temperature-in',
-    'test/json',
-    'AT_MOST_ONCE',
-    NULL,  -- subscription.data.name
-    'text/plain',
-    NULL,  -- display.data.jsonpath
-    'test/json',
-    'AT_MOST_ONCE',
-    FALSE,  -- publication.retain
-    '{"name":"Иван","age":30,"city":"Москва","hobbies":["чтение","путешествия","спорт"],"isStudent":false}',  -- publication.data
-    'application/json',
-    NULL,  -- local.task.path
-    NULL,  -- local.task.arguments
-    NULL   -- local.task.data.type
-);
+
 
 INSERT INTO card_settings (
     name,
@@ -134,7 +104,7 @@ INSERT INTO card_settings (
     dashboard_id  -- Укажите значение для dashboard_id, если необходимо
 ) VALUES (
     'test data 1',
-    NULL,  -- number (пустое значение)
+    0,  -- number (пустое значение)
     'test/json',
     'AT_MOST_ONCE',
     NULL,  -- subscription_data_name (пустое значение)

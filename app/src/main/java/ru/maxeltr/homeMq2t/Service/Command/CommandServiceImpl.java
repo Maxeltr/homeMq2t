@@ -59,11 +59,23 @@ public class CommandServiceImpl implements CommandService {
 
     private ServiceMediator mediator;
 
-    @Autowired
-    private AppProperties appProperties;
+//    @Autowired
+//    private AppProperties appProperties;
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    private CommandParser commandParser;
+
+    @Autowired
+    private CommandExecutor commandExecutor;
+
+    @Autowired
+    private ReplyPublisher replyPublisher;
+
+    @Autowired
+    private CommandPropertiesProvider appProperties;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
