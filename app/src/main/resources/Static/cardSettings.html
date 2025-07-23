@@ -3,7 +3,6 @@
         <h5 class="card-title">Edit Webcam Settings</h5>
         <form id="settingsForm">
             <input type="hidden" id="settingsCard-id" name="ID" value="">
-            <input type="hidden" id="settingsCard-dashboardNumber" name="dashboardNumber" value="">
             <div class="mb-3">
                 <label for="settingsCard-name" class="form-label">Name</label>
                 <input type="text" class="form-control" id="settingsCard-name" name="NAME" value="oPi photo webcam">
@@ -70,6 +69,11 @@
             <div class="mb-3">
                 <label for="settingsCard-localTaskDataType" class="form-label">Local Task Data Type</label>
                 <input type="text" class="form-control" id="settingsCard-localTaskDataType" name="localTaskDataType" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsCard-dashboardNumber" class="form-label">Dashboard</label>
+                <select class="form-select" id="settingsCard-dashboardNumber" name="dashboardNumber">
+                </select>
             </div>
             <input type="hidden" id="settingsCard-number" name="number" value="">
             <button type="submit" class="btn btn-primary" id="cancel" value="1">Cancel</button>	

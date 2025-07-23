@@ -270,7 +270,7 @@ public class AppProperties {
             return Optional.empty();
         }
 
-        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname));
+        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, this.getDashboards()));
     }
 
 

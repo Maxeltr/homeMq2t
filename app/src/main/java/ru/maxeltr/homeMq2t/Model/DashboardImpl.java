@@ -71,7 +71,7 @@ public class DashboardImpl implements Dashboard {
     }
 
     @Override
-    public String getDashboardNumber() {
+    public String getNumber() {
         return this.dashboardNumber;
     }
 
@@ -105,6 +105,7 @@ public class DashboardImpl implements Dashboard {
             for (CardModel card : this.getCards()) {
                 el.append(card.getHtml());
             }
+            el.attr("data-dashboardName", getName());
         } else {
             logger.warn("Element with id={} not found in the document.", CARD_ELEMENT_ID);
         }
