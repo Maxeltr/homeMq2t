@@ -23,15 +23,12 @@
  */
 package ru.maxeltr.homeMq2t.Service.Command;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
-
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface ReplyPublisher {
+public interface ProcessExecutor {
 
-    void sendReply(String data, String commandName, String topic, MqttQoS qos, boolean retain);
-
+    String execute(String commandPath, String arguments);
 
 }

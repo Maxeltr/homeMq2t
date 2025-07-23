@@ -23,13 +23,15 @@
  */
 package ru.maxeltr.homeMq2t.Service.Command;
 
+import ru.maxeltr.homeMq2t.Model.Msg;
+
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public interface CommandParser {
 
-    String parseCommandName();
+    String parseCommandName(Msg msg);
 
 
 }

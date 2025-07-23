@@ -47,14 +47,14 @@ public abstract class CardModel {
 
     private final String pathname;
 
-    private final Document view;
+    //private final Document view;
 
     private final CardEntity cardEntity;
 
     public CardModel(CardEntity cardEntity, String pathname) {
         this.cardEntity = Objects.requireNonNull(cardEntity);
         this.pathname = Objects.requireNonNull(pathname);
-        this.view = this.getViewTemplate();
+        //this.view = this.getViewTemplate();
     }
 
     public String getCardNumber() {
@@ -66,7 +66,7 @@ public abstract class CardModel {
     }
 
     public String getHtml() {
-        return this.view.body().html();
+        return this.getView().body().html();
     }
 
     protected String getPathname() {
@@ -74,7 +74,7 @@ public abstract class CardModel {
     }
 
     protected Document getView() {
-        return view;
+        return this.getViewTemplate();
     }
 
     protected CardEntity getCardEntity() {

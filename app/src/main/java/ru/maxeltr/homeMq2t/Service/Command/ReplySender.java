@@ -23,17 +23,15 @@
  */
 package ru.maxeltr.homeMq2t.Service.Command;
 
-import ru.maxeltr.homeMq2t.Model.Msg;
+import io.netty.handler.codec.mqtt.MqttQoS;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public interface CommandExecutor {
+public interface ReplySender {
 
-    void execute(Msg.Builder command, String commandNumber);
-
-    String execute(String commandPath, String arguments);
+    void sendReply(String data, String commandName);
 
 
 }

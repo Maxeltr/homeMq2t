@@ -51,6 +51,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
@@ -78,7 +79,6 @@ public class UIServiceImpl implements UIService {
 
 //    @Autowired
 //    private ObjectMapper mapper;
-
     @Override
     public void setMediator(ServiceMediator mediator) {
         this.mediator = mediator;
@@ -231,12 +231,14 @@ public class UIServiceImpl implements UIService {
             return "<div style=\"color:red;\">No dashboards available.</div>";
         }
 
-        if (dashboards.get(0).getCards().isEmpty()) {
-            logger.info("Card list is empty.");
-            return "<div style=\"color:red;\">No cards available.</div>";
+        for (Dashboard d : dashboards) {
+            if (d.getCards() != null && !d.getCards().isEmpty()) {
+                return d.getHtml();
+            }
         }
 
-        return dashboards.get(0).getHtml();
+        logger.info("Card list is empty in all dashboards.");
+        return "<div style=\"color:red;\">No cards available.</div>";
     }
 
     /**

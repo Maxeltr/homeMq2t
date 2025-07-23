@@ -23,9 +23,11 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import java.util.List;
 import java.util.Objects;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.parser.Tag;
 import org.slf4j.LoggerFactory;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 
@@ -35,10 +37,13 @@ import ru.maxeltr.homeMq2t.Entity.CardEntity;
  */
 public class CardSettingsImpl extends CardModel {
 
+    private final List<Dashboard> dashboards;
+
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CardSettingsImpl.class);
 
-    public CardSettingsImpl(CardEntity cardEntity, String pathname) {
+    public CardSettingsImpl(CardEntity cardEntity, String pathname, List<Dashboard> dashboards) {
         super(cardEntity, pathname);
+        this.dashboards = dashboards;
     }
 
     @Override
@@ -60,21 +65,18 @@ public class CardSettingsImpl extends CardModel {
 
         el = document.getElementById("settingsCard-name");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-name");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getName(), ""));
         }
 
         el = document.getElementById("settingsCard-subscriptionTopic");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-subscriptionTopic");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionTopic(), ""));
         }
 
         el = document.getElementById("settingsCard-subscriptionQos");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-subscriptionQos");
             for (Element option : el.getElementsByTag("option")) {
-                if (option.val().equals(Objects.requireNonNullElse(this.getCardEntity().getSubscriptionQos(), "AT_MOST_ONCE"))) {
+                if (Objects.requireNonNullElse(this.getCardEntity().getSubscriptionQos(), "").equals(option.val())) {
                     option.attr("selected", "selected");
                 } else {
                     option.removeAttr("selected");
@@ -84,33 +86,28 @@ public class CardSettingsImpl extends CardModel {
 
         el = document.getElementById("settingsCard-subscriptionDataName");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-subscriptionDataName");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionDataName(), ""));
         }
 
         el = document.getElementById("settingsCard-subscriptionDataType");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-subscriptionDataType");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionDataType(), ""));
         }
 
         el = document.getElementById("settingsCard-displayDataJsonPath");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-displayDataJsonPath");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getDisplayDataJsonpath(), ""));
         }
 
         el = document.getElementById("settingsCard-publicationTopic");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-publicationTopic");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationTopic(), ""));
         }
 
         el = document.getElementById("settingsCard-publicationQos");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-publicationQos");
             for (Element option : el.getElementsByTag("option")) {
-                if (option.val().equals(Objects.requireNonNullElse(this.getCardEntity().getPublicationQos(), "AT_MOST_ONCE"))) {
+                if (Objects.requireNonNullElse(this.getCardEntity().getPublicationQos(), "").equals(option.val())) {
                     option.attr("selected", "selected");
                 } else {
                     option.removeAttr("selected");
@@ -120,9 +117,8 @@ public class CardSettingsImpl extends CardModel {
 
         el = document.getElementById("settingsCard-publicationRetain");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-publicationRetain");
             for (Element option : el.getElementsByTag("option")) {
-                if (option.val().equals(String.valueOf(this.getCardEntity().getPublicationRetain()))) {
+                if (String.valueOf(this.getCardEntity().getPublicationRetain()).equals(option.val())) {
                     option.attr("selected", "selected");
                 } else {
                     option.removeAttr("selected");
@@ -132,39 +128,45 @@ public class CardSettingsImpl extends CardModel {
 
         el = document.getElementById("settingsCard-publicationData");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-publicationData");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationData(), ""));
         }
 
         el = document.getElementById("settingsCard-publicationDataType");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-publicationDataType");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationDataType(), ""));
         }
 
         el = document.getElementById("settingsCard-localTaskPath");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-localTaskPath");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskPath(), ""));
         }
 
         el = document.getElementById("settingsCard-localTaskArguments");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-localTaskArguments");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskArguments(), ""));
         }
 
         el = document.getElementById("settingsCard-localTaskDataType");
         if (el != null) {
-//            el.attr("id", this.getCardNumber() + "-localTaskDataType");
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskDataType(), ""));
         }
-
-
 
         el = document.select(".card-title").first();
         if (el != null) {
             el.text("Settings for card " + this.getCardNumber());
+        }
+
+        el = document.getElementById("settingsCard-dashboardNumber");
+        if (el != null) {
+            for (Dashboard dashboard : this.dashboards) {
+                Element option = new Element(Tag.valueOf("option"), "").attr("value", String.valueOf(dashboard.getNumber())).text(dashboard.getName());
+                if (String.valueOf(this.getCardEntity().getDashboard().getNumber()).equals(option.val())) {
+                    option.attr("selected", "selected");
+                } else {
+                    option.removeAttr("selected");
+                }
+                el.appendChild(option);
+            }
         }
     }
 

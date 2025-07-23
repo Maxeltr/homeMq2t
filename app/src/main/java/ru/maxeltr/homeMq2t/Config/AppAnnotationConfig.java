@@ -60,6 +60,12 @@ import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
 //import ru.maxeltr.homeMq2t.Service.Mq2tCallbackComponent;
 import ru.maxeltr.mq2tLib.Mq2tComponent;
 import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
+import ru.maxeltr.homeMq2t.Service.Command.CommandParser;
+import ru.maxeltr.homeMq2t.Service.Command.CommandParserImpl;
+import ru.maxeltr.homeMq2t.Service.Command.ProcessExecutor;
+import ru.maxeltr.homeMq2t.Service.Command.ProcessExecutorImpl;
+import ru.maxeltr.homeMq2t.Service.Command.ReplySender;
+import ru.maxeltr.homeMq2t.Service.Command.ReplySenderImpl;
 
 /**
  *
@@ -183,5 +189,20 @@ public class AppAnnotationConfig {
         Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("polling-sensors-delay", "10000")));
         PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
         return periodicTrigger;
+    }
+
+    @Bean
+    public ReplySender getReplySender() {
+        return new ReplySenderImpl();
+    }
+
+    @Bean
+    public ProcessExecutor getProcessExecutor() {
+        return new ProcessExecutorImpl();
+    }
+
+    @Bean
+    public CommandParser getCommandParser() {
+        return new CommandParserImpl();
     }
 }

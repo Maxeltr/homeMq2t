@@ -1,14 +1,14 @@
 
 CREATE TABLE IF NOT EXISTS dashboard_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
-    number INT
+    name VARCHAR(255) NOT NULL,
+    number INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS card_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
-    number INT,
+    name VARCHAR(255) NOT NULL,
+    number INT NOT NULL,
     subscription_topic VARCHAR(255),
     subscription_qos VARCHAR(50),
     subscription_data_name VARCHAR(255),
@@ -22,13 +22,13 @@ CREATE TABLE IF NOT EXISTS card_settings (
     local_task_path VARCHAR(255),
     local_task_arguments VARCHAR(255),
     local_task_data_type VARCHAR(50),
-    dashboard_id BIGINT,
+    dashboard_id BIGINT NOT NULL,
     FOREIGN KEY (dashboard_id) REFERENCES dashboard_settings(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS command_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
     subscription_topic VARCHAR(255),
     subscription_qos VARCHAR(50),
     publication_topic VARCHAR(255),
@@ -37,12 +37,12 @@ CREATE TABLE IF NOT EXISTS command_settings (
     publication_data_type VARCHAR(50),
     path VARCHAR(255),
     arguments VARCHAR(255),
-    number INT
+    number INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS component_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
     subscription_topic VARCHAR(255),
     subscription_qos VARCHAR(50),
     publication_topic VARCHAR(255),
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS component_settings (
     publication_local_card_id VARCHAR(255),
     provider VARCHAR(255),
     provider_args VARCHAR(255),
-    number INT
+    number INT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS mqtt_settings (
@@ -77,10 +77,10 @@ CREATE TABLE IF NOT EXISTS mqtt_settings (
 
 CREATE TABLE IF NOT EXISTS startup_task_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
+    name VARCHAR(255) NOT NULL,
     path VARCHAR(255),
     arguments VARCHAR(255),
-    number INT
+    number INT NOT NULL
 );
 
 
