@@ -65,8 +65,8 @@ public class ReplySenderImpl implements ReplySender {
 
         String type = this.appProperties.getCommandPubDataType(commandName);
         if (StringUtils.isEmpty(type)) {
-            logger.info("Property type is empty for command={}. Set text/plain.", commandName);
             type = MediaType.TEXT_PLAIN_VALUE;
+            logger.info("Property type is empty for command={}. Set {}.", commandName, type);
         }
 
         Msg.Builder builder = new MsgImpl.MsgBuilder("onExecuteCommand")

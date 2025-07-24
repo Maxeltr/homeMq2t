@@ -26,6 +26,7 @@ package ru.maxeltr.homeMq2t.Config;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -60,6 +61,8 @@ public class AppProperties {
     private Environment env;
 
     private final static String ERROR_TOPIC = "mq2t/error";
+
+    public final static List<String> MEDIA_TYPES = Arrays.asList(MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE, "image/jpeg;base64");
 
     @Autowired
     private CardRepository cardRepository;
@@ -270,9 +273,39 @@ public class AppProperties {
             return Optional.empty();
         }
 
-        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, this.getDashboards()));
+        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, this.getDashboards(), MEDIA_TYPES));
     }
 
+    public Optional<CardModel> getEmptyCardSettings() {
+        String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
+        if (StringUtils.isEmpty(cardSettingsPathname)) {
+            logger.error("No value defined for card settings template pathname.");
+            return Optional.empty();
+        }
+
+        Dashboard startDashboard = this.getDashboards().stream().filter(d -> d.getCards() != null && !d.getCards().isEmpty()).findFirst().orElse(null);
+        if (startDashboard == null) {
+            logger.error("No start dashboards found.");
+            return Optional.empty();
+        }
+
+        Optional<DashboardEntity> startDashboardEntityOpt = safeParseInt(startDashboard.getNumber()).flatMap(dashboardRepository::findByNumber);
+        if (startDashboardEntityOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        CardEntity cardEntity = new CardEntity();
+        cardEntity.setName("default");
+        cardEntity.setSubscriptionQos("AT_MOST_ONCE");	//TODO use MqttQoS
+        cardEntity.setSubscriptionDataType(MediaType.TEXT_PLAIN_VALUE);
+        cardEntity.setPublicationQos("AT_MOST_ONCE");
+        cardEntity.setPublicationRetain(false);
+        cardEntity.setPublicationDataType(MediaType.TEXT_PLAIN_VALUE);
+        cardEntity.setLocalTaskDataType(MediaType.TEXT_PLAIN_VALUE);
+        cardEntity.setDashboard(startDashboardEntityOpt.get());
+
+        return Optional.of(new CardSettingsImpl(cardEntity, cardSettingsPathname, this.getDashboards(), MEDIA_TYPES));
+    }
 
     /**
      * Retrieves the card number associated with the specified name.
