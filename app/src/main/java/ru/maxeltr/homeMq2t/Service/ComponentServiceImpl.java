@@ -458,8 +458,8 @@ public class ComponentServiceImpl implements ComponentService {
     private Msg.Builder createMessage(String componentName, String data) {
         String type = appProperties.getComponentPubDataType(componentName);
         if (StringUtils.isEmpty(type)) {
-            logger.info("Type is empty for component={}. Set text/plain. }.", componentName);
             type = MediaType.TEXT_PLAIN_VALUE;
+            logger.info("Type is empty for component={}. Set {}.", componentName, type);
         }
 
         Msg.Builder builder = new MsgImpl.MsgBuilder()

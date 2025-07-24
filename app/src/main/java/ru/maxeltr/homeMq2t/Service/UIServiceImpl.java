@@ -133,7 +133,7 @@ public class UIServiceImpl implements UIService {
 
     @Override
     public void saveCardSettings(Msg.Builder msg) {
-        logger.debug("Do save settings {}.", msg);
+        logger.debug("Do save settings {}.", msg.getData());
 
         CardEntity cardEntity;
         ObjectMapper mapper = new ObjectMapper();
@@ -150,8 +150,9 @@ public class UIServiceImpl implements UIService {
             DashboardEntity dashboardEntity = appProperties.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
 
             cardEntity.setDashboard(dashboardEntity);
-            ;
-            logger.info("saveCardSettings={}", this.appProperties.saveCardEntity(cardEntity));
+
+            var entity = this.appProperties.saveCardEntity(cardEntity);
+            logger.info("Saved card settings {}.", entity);
         } catch (JsonProcessingException | NoSuchElementException ex) {
             logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
 
@@ -274,8 +275,8 @@ public class UIServiceImpl implements UIService {
 
         String type = this.appProperties.getCardPubDataType(msg.getId());
         if (StringUtils.isEmpty(type)) {
-            logger.info("Type is empty for card={}. Set text/plain.", msg.getId());
             type = MediaType.TEXT_PLAIN_VALUE;
+            logger.info("Type is empty for card={}. Set {}.", msg.getId(), type);
         }
 
         msg.type(type);

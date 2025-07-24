@@ -39,11 +39,14 @@ public class CardSettingsImpl extends CardModel {
 
     private final List<Dashboard> dashboards;
 
+    private final List<String> mediaTypes;
+
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(CardSettingsImpl.class);
 
-    public CardSettingsImpl(CardEntity cardEntity, String pathname, List<Dashboard> dashboards) {
+    public CardSettingsImpl(CardEntity cardEntity, String pathname, List<Dashboard> dashboards, List<String> mediaTypes) {
         super(cardEntity, pathname);
         this.dashboards = dashboards;
+        this.mediaTypes = mediaTypes;
     }
 
     @Override
@@ -91,7 +94,13 @@ public class CardSettingsImpl extends CardModel {
 
         el = document.getElementById("settingsCard-subscriptionDataType");
         if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getSubscriptionDataType(), ""));
+            for (String mediaType : mediaTypes) {
+                Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
+                if (this.getCardEntity().getSubscriptionDataType().equals(option.val())) {
+                    option.attr("selected", "selected");
+                }
+                el.appendChild(option);
+            }
         }
 
         el = document.getElementById("settingsCard-displayDataJsonPath");
@@ -133,7 +142,13 @@ public class CardSettingsImpl extends CardModel {
 
         el = document.getElementById("settingsCard-publicationDataType");
         if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getPublicationDataType(), ""));
+            for (String mediaType : mediaTypes) {
+                Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
+                if (this.getCardEntity().getPublicationDataType().equals(option.val())) {
+                    option.attr("selected", "selected");
+                }
+                el.appendChild(option);
+            }
         }
 
         el = document.getElementById("settingsCard-localTaskPath");
@@ -146,9 +161,15 @@ public class CardSettingsImpl extends CardModel {
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskArguments(), ""));
         }
 
-        el = document.getElementById("settingsCard-localTaskDataType");
+        el = document.getElementById("settingsCard-localTaskDataType");	//add
         if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskDataType(), ""));
+            for (String mediaType : mediaTypes) {
+                Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
+                if (this.getCardEntity().getLocalTaskDataType().equals(option.val())) {
+                    option.attr("selected", "selected");
+                }
+                el.appendChild(option);
+            }
         }
 
         el = document.select(".card-title").first();
@@ -162,8 +183,6 @@ public class CardSettingsImpl extends CardModel {
                 Element option = new Element(Tag.valueOf("option"), "").attr("value", String.valueOf(dashboard.getNumber())).text(dashboard.getName());
                 if (String.valueOf(this.getCardEntity().getDashboard().getNumber()).equals(option.val())) {
                     option.attr("selected", "selected");
-                } else {
-                    option.removeAttr("selected");
                 }
                 el.appendChild(option);
             }
