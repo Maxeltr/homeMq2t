@@ -96,7 +96,7 @@ public class CardSettingsImpl extends CardModel {
         if (el != null) {
             for (String mediaType : mediaTypes) {
                 Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
-                if (this.getCardEntity().getSubscriptionDataType().equals(option.val())) {
+                if (Objects.requireNonNullElse(this.getCardEntity().getSubscriptionDataType(), "").equals(option.val())) {
                     option.attr("selected", "selected");
                 }
                 el.appendChild(option);
@@ -144,7 +144,7 @@ public class CardSettingsImpl extends CardModel {
         if (el != null) {
             for (String mediaType : mediaTypes) {
                 Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
-                if (this.getCardEntity().getPublicationDataType().equals(option.val())) {
+                if (Objects.requireNonNullElse(this.getCardEntity().getPublicationDataType(), "").equals(option.val())) {
                     option.attr("selected", "selected");
                 }
                 el.appendChild(option);
@@ -165,7 +165,7 @@ public class CardSettingsImpl extends CardModel {
         if (el != null) {
             for (String mediaType : mediaTypes) {
                 Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
-                if (this.getCardEntity().getLocalTaskDataType().equals(option.val())) {
+                if (Objects.requireNonNullElse(this.getCardEntity().getLocalTaskDataType(), "").equals(option.val())) {
                     option.attr("selected", "selected");
                 }
                 el.appendChild(option);
