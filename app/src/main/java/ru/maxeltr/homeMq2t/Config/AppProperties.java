@@ -639,17 +639,26 @@ public class AppProperties {
 
         List<CardEntity> cardEntities = cardRepository.findAll();
         cardEntities.forEach(cardEntity -> {
-            subscriptions.add(new MqttTopicSubscription(cardEntity.getSubscriptionTopic(), convertToMqttQos(cardEntity.getSubscriptionQos())));
+            if (StringUtils.isNotBlank(cardEntity.getSubscriptionTopic())) {
+                subscriptions.add(new MqttTopicSubscription(cardEntity.getSubscriptionTopic(), convertToMqttQos(cardEntity.getSubscriptionQos())));
+                logger.info("Add subscription={} with qos={} to subscription list.", cardEntity.getSubscriptionTopic(), cardEntity.getSubscriptionQos());
+            }
         });
 
         List<CommandEntity> commandEntities = commandRepository.findAll();
         commandEntities.forEach(commandEntity -> {
-            subscriptions.add(new MqttTopicSubscription(commandEntity.getSubscriptionTopic(), convertToMqttQos(commandEntity.getSubscriptionQos())));
+            if (StringUtils.isNotBlank(commandEntity.getSubscriptionTopic())) {
+                subscriptions.add(new MqttTopicSubscription(commandEntity.getSubscriptionTopic(), convertToMqttQos(commandEntity.getSubscriptionQos())));
+                logger.info("Add subscription={} with qos={} to subscription list.", commandEntity.getSubscriptionTopic(), commandEntity.getSubscriptionQos());
+            }
         });
 
         List<ComponentEntity> componentEntities = componentRepository.findAll();
         componentEntities.forEach(componentEntity -> {
-            subscriptions.add(new MqttTopicSubscription(componentEntity.getSubscriptionTopic(), convertToMqttQos(componentEntity.getSubscriptionQos())));
+            if (StringUtils.isNotBlank(componentEntity.getSubscriptionTopic())) {
+                subscriptions.add(new MqttTopicSubscription(componentEntity.getSubscriptionTopic(), convertToMqttQos(componentEntity.getSubscriptionQos())));
+                logger.info("Add subscription={} with qos={} to subscription list.", componentEntity.getSubscriptionTopic(), componentEntity.getSubscriptionQos());
+            }
         });
 
         return subscriptions;
