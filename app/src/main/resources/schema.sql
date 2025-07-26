@@ -1,14 +1,19 @@
+CREATE SEQUENCE IF NOT EXISTS number_seq START WITH 1 INCREMENT BY 1;
+
+CREATE SEQUENCE IF NOT EXISTS dashboard_number_seq
+  START WITH 1
+  INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS dashboard_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    number INT NOT NULL
+    number BIGINT DEFAULT NEXT VALUE FOR dashboard_number_seq NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS card_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    number INT NOT NULL,
+    number BIGINT DEFAULT NEXT VALUE FOR number_seq NOT NULL,
     subscription_topic VARCHAR(255),
     subscription_qos VARCHAR(50),
     subscription_data_name VARCHAR(255),
@@ -83,41 +88,51 @@ CREATE TABLE IF NOT EXISTS startup_task_settings (
     number INT NOT NULL
 );
 
+INSERT INTO dashboard_settings (name)
+SELECT 'Start dashboard'
+WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings);
+VALUES
+  ('Start dashboard');
 
 
-INSERT INTO card_settings (
-    name,
-    number,
-    subscription_topic,
-    subscription_qos,
-    subscription_data_name,
-    subscription_data_type,
-    display_data_jsonpath,
-    publication_topic,
-    publication_qos,
-    publication_retain,
-    publication_data,
-    publication_data_type,
-    local_task_path,
-    local_task_arguments,
-    local_task_data_type,
-    dashboard_id  -- Укажите значение для dashboard_id, если необходимо
-) VALUES (
-    'test data 1',
-    0,  -- number (пустое значение)
-    'test/json',
-    'AT_MOST_ONCE',
-    NULL,  -- subscription_data_name (пустое значение)
-    'text/plain',
-    NULL,  -- display_data_jsonpath (пустое значение)
-    'test/json',
-    'AT_MOST_ONCE',
-    FALSE,  -- publication_retain
-    '{"name":"Иван","age":30,"city":"Москва","hobbies":["чтение","путешествия","спорт"],"isStudent":false}',  -- publication_data
-    'application/json',
-    NULL,  -- local_task_path (пустое значение)
-    NULL,  -- local_task_arguments (пустое значение)
-    NULL,  -- local_task_data_type (пустое значение)
-    2   -- dashboard_id (пустое значение или укажите конкретный id, если необходимо)
-);
+
+-- INSERT INTO card_settings (
+--     name,
+--     subscription_topic,
+--     subscription_qos,
+--     subscription_data_name,
+--     subscription_data_type,
+--     display_data_jsonpath,
+--     publication_topic,
+--     publication_qos,
+--     publication_retain,
+--     publication_data,
+--     publication_data_type,
+--     local_task_path,
+--     local_task_arguments,
+--     local_task_data_type,
+--     dashboard_id  
+-- ) VALUES (
+--     'Тестовая карточка',  --card name
+--     'sensors/temperature',  --subscription_topic
+--     'AT_MOST_ONCE',
+--     'Current temperature',  -- subscription_data_name (пустое значение)
+--     'application/json',
+--     '$.temperature',  -- display_data_jsonpath (пустое значение)
+--     'sensors/temperature',  -- publication_topic
+--     'AT_MOST_ONCE',
+--     FALSE,  -- publication_retain
+--     '{
+--        "deviceId":"device-001",
+--        "timestamp":"2025-07-26T12:00:00Z",
+--        "temperature":23.5,
+--        "humidity":45.2,
+--        "status":"OK"
+--     }',  -- publication_data
+--     'application/json',
+--     NULL,  -- local_task_path (пустое значение)
+--     NULL,  -- local_task_arguments (пустое значение)
+--     NULL,  -- local_task_data_type (пустое значение)
+--     1   -- dashboard_id 
+-- );
 

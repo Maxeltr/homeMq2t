@@ -211,6 +211,11 @@ $(function () {
         const arg = $(this).val();
         editSettings(arg);
     });
+    
+    $(document).on("click", "#addCard", function () {
+        const arg = $(this).val();
+        editSettings(arg);
+    });
 
     $(document).on("click", "#saveCard", function () {
         let el = document.getElementById('settingsForm');

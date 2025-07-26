@@ -118,7 +118,14 @@ public class UIServiceImpl implements UIService {
 
         msg.type(MediaType.APPLICATION_JSON_VALUE);
 
-        Optional<CardModel> cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
+        Optional<CardModel> cardSettingsOpt;
+        if (StringUtils.isNotBlank(msg.getId())) {
+            cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
+        } else {
+            cardSettingsOpt = this.appProperties.getEmptyCardSettings();
+            logger.debug("New card was created. Card={}", cardSettingsOpt.get());
+        }
+
         if (cardSettingsOpt.isPresent()) {
             logger.info("Settings retrieved successfully. Card={}", msg.getId());
             msg.data(this.createJsonResponse(cardSettingsOpt.get().getHtml(), "onEditCardSettings", "ok"));
@@ -232,14 +239,12 @@ public class UIServiceImpl implements UIService {
             return "<div style=\"color:red;\">No dashboards available.</div>";
         }
 
-        for (Dashboard d : dashboards) {
-            if (d.getCards() != null && !d.getCards().isEmpty()) {
-                return d.getHtml();
-            }
-        }
-
-        logger.info("Card list is empty in all dashboards.");
-        return "<div style=\"color:red;\">No cards available.</div>";
+        //for (Dashboard d : dashboards) {
+            //if (d.getCards() != null && !d.getCards().isEmpty()) {
+                //return d.getHtml();
+            //}
+        //}
+        return dashboards.stream().findFirst().get().getHtml();
     }
 
     /**

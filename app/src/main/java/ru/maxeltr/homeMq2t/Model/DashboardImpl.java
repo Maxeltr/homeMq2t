@@ -53,7 +53,7 @@ public class DashboardImpl implements Dashboard {
 
     private String dashboardNumber = "";
 
-    static final String CARD_ELEMENT_ID = "cards";
+    static final String CARD_ELEMENT_ID = "dashboard-cards";
 
     private final List<CardModel> dashboardCards;
 

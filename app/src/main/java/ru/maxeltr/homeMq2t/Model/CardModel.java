@@ -58,7 +58,7 @@ public abstract class CardModel {
     }
 
     public String getCardNumber() {
-        return String.valueOf(cardEntity.getNumber());
+        return cardEntity.getNumber() != null ? String.valueOf(cardEntity.getNumber()) : "";
     }
 
     public String getName() {

@@ -64,7 +64,7 @@ public class CardEntity {
     @JoinColumn(name = "dashboard_id", nullable = false)
     private DashboardEntity dashboard;
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
@@ -136,7 +136,7 @@ public class CardEntity {
         this.publicationQos = publicationQos;
     }
 
-    public boolean getPublicationRetain() {
+    public Boolean getPublicationRetain() {
         return publicationRetain;
     }
 
@@ -184,7 +184,7 @@ public class CardEntity {
         this.localTaskDataType = localTaskDataType;
     }
 
-    public int getNumber() {
+    public Integer getNumber() {
         return number;
     }
 

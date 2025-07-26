@@ -283,7 +283,7 @@ public class AppProperties {
             return Optional.empty();
         }
 
-        Dashboard startDashboard = this.getDashboards().stream().filter(d -> d.getCards() != null && !d.getCards().isEmpty()).findFirst().orElse(null);
+        Dashboard startDashboard = this.getDashboards().stream().findFirst().orElse(null);
         if (startDashboard == null) {
             logger.error("No start dashboards found.");
             return Optional.empty();
@@ -616,7 +616,7 @@ public class AppProperties {
             cardEntities.forEach(cardEntity -> {
                 CardModel card = new CardImpl(cardEntity, cardPathname);
                 cards.add(card);
-                logger.info("Card={} has been created and added to card list.", card.getName());
+                logger.info("Card={} has been created and added to card list. Number={}", card.getName(), card.getCardNumber());
             });
             logger.info("Create card list with size={}.", cards.size());
             Dashboard dashboard = new DashboardImpl(String.valueOf(dashboardEntity.getNumber()), dashboardEntity.getName(), cards, dashboardPathname);
