@@ -144,8 +144,8 @@ function showData(message, cardNumber) {
                 showBase64(payload);
 
             } else {
-                setInnerHtml(cardNumber + 'text', payload.name);
-                setInnerHtml(cardNumber + 'status', payload.status);
+                setInnerHtml(cardNumber + '-text', payload.name);
+                setInnerHtml(cardNumber + '-status', payload.status);
 
                 if (payload.hasOwnProperty("data")) {
                     setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>');
