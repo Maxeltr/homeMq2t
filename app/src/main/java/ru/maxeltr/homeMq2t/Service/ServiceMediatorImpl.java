@@ -99,7 +99,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
         this.setMediator();
 
         appProperties.getAllStartupTasks().forEach(
-                startupTask -> this.commandService.execute(startupTask.getPath(), startupTask.getArguments())
+                startupTask -> {
+                    try {
+                        this.commandService.execute(startupTask.getPath(), startupTask.getArguments());
+                    } catch (Exception ex) {
+                        logger.warn("Could not execute start task.", ex);
+                    }
+                }
         );
     }
 

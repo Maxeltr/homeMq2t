@@ -276,6 +276,10 @@ public class AppProperties {
         return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, this.getDashboards(), MEDIA_TYPES));
     }
 
+    public Optional<Dashboard> getStartDashboard() {
+        return this.getDashboards().stream().findFirst();
+    }
+
     public Optional<CardModel> getEmptyCardSettings() {
         String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
@@ -283,13 +287,13 @@ public class AppProperties {
             return Optional.empty();
         }
 
-        Dashboard startDashboard = this.getDashboards().stream().findFirst().orElse(null);
-        if (startDashboard == null) {
+        Optional<Dashboard> startDashboardOpt = this.getStartDashboard();
+        if (startDashboardOpt == null) {
             logger.error("No start dashboards found.");
             return Optional.empty();
         }
 
-        Optional<DashboardEntity> startDashboardEntityOpt = safeParseInt(startDashboard.getNumber()).flatMap(dashboardRepository::findByNumber);
+        Optional<DashboardEntity> startDashboardEntityOpt = safeParseInt(startDashboardOpt.get().getNumber()).flatMap(dashboardRepository::findByNumber);
         if (startDashboardEntityOpt.isEmpty()) {
             return Optional.empty();
         }
