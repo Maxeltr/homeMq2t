@@ -151,7 +151,7 @@ public class AppAnnotationConfig {
     @Bean
     public ObjectMapper getObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);    	//add how to deny change
         return mapper;
     }
 
