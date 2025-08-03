@@ -31,7 +31,7 @@ import java.util.List;
  */
 public interface Dashboard {
 
-	String getNumber();
+    String getNumber();
 
     String getName();
 

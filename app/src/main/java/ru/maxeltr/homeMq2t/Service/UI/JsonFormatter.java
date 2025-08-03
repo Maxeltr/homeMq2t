@@ -23,8 +23,6 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
-import ru.maxeltr.homeMq2t.Model.Msg;
-
 /**
  *
  * @author Dev
