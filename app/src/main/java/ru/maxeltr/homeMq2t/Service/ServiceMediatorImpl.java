@@ -58,6 +58,7 @@ import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
+import ru.maxeltr.homeMq2t.Service.UI.UIService;
 
 /**
  *

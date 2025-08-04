@@ -27,7 +27,7 @@ package ru.maxeltr.homeMq2t.Service.UI;
  *
  * @author Dev
  */
-public interface JsonFormatter {
+public interface Base64HtmlJsonFormatter {
 
     /**
      * Construct a Json-romatted response string containing the given HTML,

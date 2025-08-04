@@ -25,6 +25,7 @@ package ru.maxeltr.homeMq2t.Entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -57,6 +58,7 @@ public class CardEntity {
     private String localTaskPath;
     private String localTaskArguments;
     private String localTaskDataType;
+    @Column(name = "number", insertable = false)
     private Integer number;
 
     @JsonBackReference

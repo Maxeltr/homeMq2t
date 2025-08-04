@@ -30,7 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.stereotype.Controller;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Service.UIService;
+import ru.maxeltr.homeMq2t.Service.UI.UIService;
 import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 
 /**
@@ -76,7 +76,7 @@ public class InputUIControllerImpl implements InputUIController {
     @MessageMapping("/editSettings")
     public void editSettings(Msg.Builder msg) {
         logger.info("Do edit settings. Msg.Builder was received - {}.", msg);
-        uiService.editCardSettings(msg);
+        uiService.displayCardSettings(msg);
     }
 
     @MessageMapping("/saveCard")

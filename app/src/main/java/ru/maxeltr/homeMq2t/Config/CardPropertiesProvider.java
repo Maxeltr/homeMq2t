@@ -21,10 +21,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service;
+package ru.maxeltr.homeMq2t.Config;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
-import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.List;
 import java.util.Optional;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
