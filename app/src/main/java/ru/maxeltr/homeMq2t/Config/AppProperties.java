@@ -55,7 +55,7 @@ import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class AppProperties {
+public class AppProperties implements UIPropertiesProvider, CardPropertiesProvider, CommandPropertiesProvider, ComponentPropertiesProvider, StartupTaskPropertiesProvider {
 
     @Autowired
     private Environment env;

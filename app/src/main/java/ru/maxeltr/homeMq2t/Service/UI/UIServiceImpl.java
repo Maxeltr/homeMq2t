@@ -33,6 +33,7 @@ import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
@@ -43,6 +44,7 @@ public class UIServiceImpl implements UIService {
     private ServiceMediator mediator;
 
     @Autowired
+    @Qualifier("getUIPropertiesProvider")
     private UIPropertiesProvider appProperties;
 
     @Autowired
@@ -64,7 +66,7 @@ public class UIServiceImpl implements UIService {
     private HtmlSanitizer htmlSanitizer;
 
     @Autowired
-    private JsonFormatter jsonFormatter;
+    private Base64HtmlJsonFormatter jsonFormatter;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
@@ -83,7 +85,7 @@ public class UIServiceImpl implements UIService {
     }
 
     @Override
-    public void getCardSettings(Msg.Builder msg) {
+    public void displayCardSettings(Msg.Builder msg) {
         logger.info("Do edit settings {}.", msg);
         this.display(this.dashboardItemManager.getCardSettings(msg), "");
     }

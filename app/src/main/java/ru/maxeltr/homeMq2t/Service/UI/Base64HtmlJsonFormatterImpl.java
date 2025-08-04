@@ -29,21 +29,23 @@ import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
-public class JsonFormatterImpl implements JsonFormatter {
+public class Base64HtmlJsonFormatterImpl implements Base64HtmlJsonFormatter {
 
-    private static final Logger logger = LoggerFactory.getLogger(JsonFormatterImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(Base64HtmlJsonFormatterImpl.class);
 
     @Autowired
     @Lazy               //TODO
     private ServiceMediator mediator;
 
     @Autowired
+    @Qualifier("getUIPropertiesProvider")
     private UIPropertiesProvider appProperties;
 
     private static String BASE64_HTML_MEDIA_TYPE = "text/html;base64";

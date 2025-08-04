@@ -32,7 +32,7 @@ public interface UIService {
 
     public void connect();
 
-    public void getCardSettings(Msg.Builder msg);
+    public void displayCardSettings(Msg.Builder msg);
 
     public void saveCardSettings(Msg.Builder msg);
 

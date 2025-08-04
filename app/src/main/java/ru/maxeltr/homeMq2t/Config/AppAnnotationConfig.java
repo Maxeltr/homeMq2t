@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.EnableAsync;
@@ -55,8 +56,8 @@ import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ComponentService;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
-import ru.maxeltr.homeMq2t.Service.UIService;
-import ru.maxeltr.homeMq2t.Service.UIServiceImpl;
+import ru.maxeltr.homeMq2t.Service.UI.UIService;
+import ru.maxeltr.homeMq2t.Service.UI.UIServiceImpl;
 //import ru.maxeltr.homeMq2t.Service.Mq2tCallbackComponent;
 import ru.maxeltr.mq2tLib.Mq2tComponent;
 import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
@@ -66,6 +67,18 @@ import ru.maxeltr.homeMq2t.Service.Command.ProcessExecutor;
 import ru.maxeltr.homeMq2t.Service.Command.ProcessExecutorImpl;
 import ru.maxeltr.homeMq2t.Service.Command.ReplySender;
 import ru.maxeltr.homeMq2t.Service.Command.ReplySenderImpl;
+import ru.maxeltr.homeMq2t.Service.UI.ConnectManager;
+import ru.maxeltr.homeMq2t.Service.UI.ConnectManagerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.DashboardItemManager;
+import ru.maxeltr.homeMq2t.Service.UI.DashboardItemManagerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizer;
+import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.Base64HtmlJsonFormatterImpl;
+import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManager;
+import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManagerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.PublishManager;
+import ru.maxeltr.homeMq2t.Service.UI.PublishManagerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.Base64HtmlJsonFormatter;
 
 /**
  *
@@ -82,6 +95,7 @@ public class AppAnnotationConfig {
     private Environment env;
 
     @Bean
+    @Primary
     public AppProperties getAppProperty() {
         logger.info("Current user dir={}", System.getProperty("user.dir"));
         String[] classpathes = System.getProperty("java.class.path").split(File.pathSeparator);
@@ -151,7 +165,7 @@ public class AppAnnotationConfig {
     @Bean
     public ObjectMapper getObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);    	//add how to deny change
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);    	//TODO how to deny change
         return mapper;
     }
 
@@ -204,5 +218,60 @@ public class AppAnnotationConfig {
     @Bean
     public CommandParser getCommandParser() {
         return new CommandParserImpl();
+    }
+
+    @Bean
+    public ConnectManager getConnectManager() {
+        return new ConnectManagerImpl();
+    }
+
+    @Bean
+    public DashboardItemManager getDashboardItemManager() {
+        return new DashboardItemManagerImpl();
+    }
+
+    @Bean
+    public HtmlSanitizer getHtmlSanitizer() {
+        return new HtmlSanitizerImpl();
+    }
+
+    @Bean
+    public Base64HtmlJsonFormatter getJsonCreator() {
+        return new Base64HtmlJsonFormatterImpl();
+    }
+
+    @Bean
+    public LocalTaskManager getLocalTaskManager() {
+        return new LocalTaskManagerImpl();
+    }
+
+    @Bean
+    public PublishManager getPublishManager() {
+        return new PublishManagerImpl();
+    }
+
+    @Bean
+    public UIPropertiesProvider getUIPropertiesProvider() {
+        return getAppProperty();
+    }
+
+    @Bean
+    public CardPropertiesProvider getCardPropertiesProvider() {
+        return getAppProperty();
+    }
+
+    @Bean
+    public CommandPropertiesProvider getCommandPropertiesProvider() {
+        return getAppProperty();
+    }
+
+    @Bean
+    public ComponentPropertiesProvider getComponentPropertiesProvider() {
+        return getAppProperty();
+    }
+
+    @Bean
+    public StartupTaskPropertiesProvider getStartupTaskPropertiesProvider() {
+        return getAppProperty();
     }
 }
