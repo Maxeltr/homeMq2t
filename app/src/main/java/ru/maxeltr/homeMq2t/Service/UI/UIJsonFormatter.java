@@ -23,11 +23,13 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import ru.maxeltr.homeMq2t.Model.Status;
+
 /**
  *
  * @author Dev
  */
-public interface Base64HtmlJsonFormatter {
+public interface UIJsonFormatter {
 
     /**
      * Construct a Json-romatted response string containing the given HTML,
@@ -57,7 +59,7 @@ public interface Base64HtmlJsonFormatter {
      * @return a Json string with the event name, status, content type and
      * Base64-encoded HTML with optional error or unknown status prefix.
      */
-    public String createJson(String data, String event, String status);
+    public String createJson(String data, String event, Status status);
 
     public String createJson(String msg, String jsonPathExpression);
 

@@ -26,9 +26,14 @@ package ru.maxeltr.homeMq2t.Config;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.ServiceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +83,7 @@ import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManager;
 import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.PublishManager;
 import ru.maxeltr.homeMq2t.Service.UI.PublishManagerImpl;
-import ru.maxeltr.homeMq2t.Service.UI.Base64HtmlJsonFormatter;
+import ru.maxeltr.homeMq2t.Service.UI.UIJsonFormatter;
 
 /**
  *
@@ -103,7 +108,33 @@ public class AppAnnotationConfig {
             logger.info("Classpath={}", classpath);
         }
         logger.info("Java home={}", System.getenv("JAVA_HOME"));
+        logger.info("Java version={}", System.getProperty("java.version"));
+        logger.info("Java vendor={}", System.getProperty("java.vendor"));
+        logger.info("Java VM name={}", System.getProperty("java.vm.name"));
         logger.info("OS name={}", System.getProperty("os.name"));
+        logger.info("OS architecture={}", System.getProperty("os.arch"));
+
+        Runtime runtime = Runtime.getRuntime();
+        logger.info("Available memory={}", runtime.freeMemory());
+        logger.info("Total memory={}", runtime.totalMemory());
+        logger.info("Max heap size={}", String.valueOf(runtime.maxMemory()));
+
+        File root = new File("/");
+        logger.info("Free space on root={}", root.getFreeSpace());
+
+        logger.info("Default locale={}", Locale.getDefault());
+        logger.info("Environment variables={}", env);
+
+        Enumeration<NetworkInterface> networkInterfaces;
+        try {
+            networkInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements()) {
+                NetworkInterface ni = networkInterfaces.nextElement();
+                logger.info("Network interface: {}, IP adressea: {}", ni.getName(), Collections.list(ni.getInetAddresses()));
+            }
+        } catch (SocketException ex) {
+            logger.info("Could not get network interfaces {}", ex);
+        }
 
         return new AppProperties();
     }
@@ -164,9 +195,7 @@ public class AppAnnotationConfig {
 
     @Bean
     public ObjectMapper getObjectMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, true);    	//TODO how to deny change
-        return mapper;
+        return new ImmutableObjectMapper();
     }
 
     @Bean
@@ -236,7 +265,7 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public Base64HtmlJsonFormatter getJsonCreator() {
+    public UIJsonFormatter getJsonCreator() {
         return new Base64HtmlJsonFormatterImpl();
     }
 

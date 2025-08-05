@@ -24,6 +24,7 @@
 package ru.maxeltr.homeMq2t.Entity;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -33,7 +34,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.hibernate.engine.internal.Cascade;
 
 @Entity
 @Table(name = "dashboard_settings")
@@ -44,6 +44,7 @@ public class DashboardEntity {
     private long id;
 
     private String name;
+    @Column(name = "number", insertable = false)
     private Integer number;
 
     @JsonManagedReference

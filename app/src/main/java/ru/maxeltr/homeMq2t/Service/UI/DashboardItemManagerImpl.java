@@ -35,14 +35,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.CardModel;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import ru.maxeltr.homeMq2t.Model.Status;
 
 public class DashboardItemManagerImpl implements DashboardItemManager {
 
@@ -53,7 +52,7 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
     private UIPropertiesProvider appProperties;
 
     @Autowired
-    private Base64HtmlJsonFormatter jsonFormatter;
+    private UIJsonFormatter jsonFormatter;
 
     private final ObjectMapper mapper;
 
@@ -76,10 +75,10 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
 
         if (cardSettingsOpt.isPresent()) {
             logger.info("Settings retrieved successfully. Card={}", msg.getId());
-            msg.data(this.jsonFormatter.createJson(cardSettingsOpt.get().getHtml(), "onEditCardSettings", "ok"));
+            msg.data(this.jsonFormatter.createJson(cardSettingsOpt.get().getHtml(), "onEditCardSettings", Status.OK));
         } else {
             logger.warn("Could not get settings for card={}.", msg.getId());
-            msg.data(this.jsonFormatter.createJson("", "onEditCardSettings", "fail"));
+            msg.data(this.jsonFormatter.createJson("", "onEditCardSettings", Status.FAIL));
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
