@@ -1,4 +1,3 @@
-CREATE SEQUENCE IF NOT EXISTS number_seq START WITH 1 INCREMENT BY 1;
 
 CREATE SEQUENCE IF NOT EXISTS dashboard_number_seq
   START WITH 1
@@ -10,10 +9,12 @@ CREATE TABLE IF NOT EXISTS dashboard_settings (
     number BIGINT DEFAULT NEXT VALUE FOR dashboard_number_seq NOT NULL
 );
 
+CREATE SEQUENCE IF NOT EXISTS card_number_seq START WITH 1 INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS card_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    number BIGINT DEFAULT NEXT VALUE FOR number_seq NOT NULL,
+    number BIGINT DEFAULT NEXT VALUE FOR card_number_seq NOT NULL,
     subscription_topic VARCHAR(255),
     subscription_qos VARCHAR(50),
     subscription_data_name VARCHAR(255),
@@ -31,6 +32,8 @@ CREATE TABLE IF NOT EXISTS card_settings (
     FOREIGN KEY (dashboard_id) REFERENCES dashboard_settings(id) ON DELETE CASCADE
 );
 
+CREATE SEQUENCE IF NOT EXISTS command_number_seq START WITH 1 INCREMENT BY 1;	
+
 CREATE TABLE IF NOT EXISTS command_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -42,8 +45,10 @@ CREATE TABLE IF NOT EXISTS command_settings (
     publication_data_type VARCHAR(50),
     path VARCHAR(255),
     arguments VARCHAR(255),
-    number INT NOT NULL
+    number BIGINT DEFAULT NEXT VALUE FOR command_number_seq NOT NULL	
 );
+
+CREATE SEQUENCE IF NOT EXISTS component_number_seq START WITH 1 INCREMENT BY 1;	
 
 CREATE TABLE IF NOT EXISTS component_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -57,7 +62,17 @@ CREATE TABLE IF NOT EXISTS component_settings (
     publication_local_card_id VARCHAR(255),
     provider VARCHAR(255),
     provider_args VARCHAR(255),
-    number INT NOT NULL
+    number BIGINT DEFAULT NEXT VALUE FOR component_number_seq NOT NULL	
+);
+
+CREATE SEQUENCE IF NOT EXISTS startup_task_number_seq START WITH 1 INCREMENT BY 1;	
+
+CREATE TABLE IF NOT EXISTS startup_task_settings (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    path VARCHAR(255),
+    arguments VARCHAR(255),
+    number BIGINT DEFAULT NEXT VALUE FOR startup_task_number_seq NOT NULL	
 );
 
 CREATE TABLE IF NOT EXISTS mqtt_settings (
@@ -80,21 +95,11 @@ CREATE TABLE IF NOT EXISTS mqtt_settings (
     reconnect BOOLEAN
 );
 
-CREATE TABLE IF NOT EXISTS startup_task_settings (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    path VARCHAR(255),
-    arguments VARCHAR(255),
-    number INT NOT NULL
-);
-
 INSERT INTO dashboard_settings (name)
 SELECT 'Start dashboard'
 WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings);
 VALUES
   ('Start dashboard');
-
-
 
 -- INSERT INTO card_settings (
 --     name,

@@ -80,3 +80,7 @@ bootRun {
         }
     }
 }
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs += ['-Xlint:unchecked']
+}

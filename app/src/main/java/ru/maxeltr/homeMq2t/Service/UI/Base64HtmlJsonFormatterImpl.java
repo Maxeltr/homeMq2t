@@ -23,32 +23,32 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
-import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
-import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import ru.maxeltr.homeMq2t.Model.Status;
 
-public class Base64HtmlJsonFormatterImpl implements Base64HtmlJsonFormatter {
+public class Base64HtmlJsonFormatterImpl implements UIJsonFormatter {
 
     private static final Logger logger = LoggerFactory.getLogger(Base64HtmlJsonFormatterImpl.class);
 
     @Autowired
-    @Lazy               //TODO
-    private ServiceMediator mediator;
+    private ObjectMapper mapper;
 
-    @Autowired
-    @Qualifier("getUIPropertiesProvider")
-    private UIPropertiesProvider appProperties;
+    private static final String MEDIA_TYPE_BASE64_HTML = "text/html;base64";
 
-    private static String BASE64_HTML_MEDIA_TYPE = "text/html;base64";
+    private static final String ERROR_CAPTION = "<div style=\"color:red;\">There was an error while loading the dashboard. Please check the logs for more details.</div>";	//add
+
+    private static final String UNKNOWN_STATUS_CAPTION = "<div style=\"color:red;\">The last action completed with an undefined status. Please check the logs for more details.</div>";		//add
+
+    private static final String ERROR_JSON_PROCESSING = "{\"name\": \"\", \"status\": \"fail\", \"type\": \"" + MediaType.TEXT_PLAIN_VALUE + "\", \"data\": \"Could not serialize json.\"}";	//add
 
     /**
      * Construct a Json-romatted response string containing the given HTML,
@@ -78,31 +78,19 @@ public class Base64HtmlJsonFormatterImpl implements Base64HtmlJsonFormatter {
      * @return a Json string with the event name, status, content type and
      * Base64-encoded HTML with optional error or unknown status prefix.
      */
-    public String createJson(String dashboard, String event, String status) {
-        String errorCaption = "<div style=\"color:red;\">There was an error while loading the dashboard. Please check the logs for more details.</div>";
-        String unknownStatusCaption = "<div style=\"color:red;\">The last action completed with an undefined status. Please check the logs for more details.</div>";
+    @Override
+    public String createJson(String dashboard, String event, Status status) {
 
         String form = switch (status) {
-            case "ok" ->
+            case OK ->
                 dashboard;
-            case "fail" ->
-                errorCaption + dashboard;
-            default ->
-                unknownStatusCaption + dashboard;
+            case FAIL ->
+                ERROR_CAPTION + dashboard;
+            case UNKNOWN ->
+                UNKNOWN_STATUS_CAPTION + dashboard;
         };
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"name\": \"")
-                .append(event)
-                .append("\", \"status\": \"")
-                .append(status)
-                .append("\", \"type\": \"")
-                .append(BASE64_HTML_MEDIA_TYPE)
-                .append("\", \"data\": \"")
-                .append(Base64.getEncoder().encodeToString(form.getBytes(StandardCharsets.UTF_8)))
-                .append("\"}");
-
-        return sb.toString();
+        return buildJson(event, status.getValue(), MEDIA_TYPE_BASE64_HTML, Base64.getEncoder().encodeToString(form.getBytes(StandardCharsets.UTF_8)));
     }
 
     @Override
@@ -112,18 +100,26 @@ public class Base64HtmlJsonFormatterImpl implements Base64HtmlJsonFormatter {
         String dataName = this.parseJson(msg, "name");
         String status = this.parseJson(msg, "status");
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("{\"name\": \"")
-                .append(dataName)
-                .append("\", \"status\": \"")
-                .append(status)
-                .append("\", \"type\": \"")
-                .append(MediaType.TEXT_PLAIN_VALUE)
-                .append("\", \"data\": \"")
-                .append(parsedValue)
-                .append("\"}");
+        return buildJson(dataName, status, MediaType.TEXT_PLAIN_VALUE, parsedValue);
+    }
 
-        return sb.toString();
+    private String buildJson(String name, String status, String type, String data) {
+
+        ObjectNode root = mapper.createObjectNode();
+        root.put("name", name);
+        root.put("status", status);
+        root.put("type", type);
+        root.put("data", data);
+
+        String result;
+        try {
+            result = mapper.writeValueAsString(root);
+        } catch (JsonProcessingException ex) {
+            logger.error("Could not serialize json.", ex);
+            result = ERROR_JSON_PROCESSING;
+        }
+
+        return result;
     }
 
     private String parseJson(String json, String jsonPathExpression) {

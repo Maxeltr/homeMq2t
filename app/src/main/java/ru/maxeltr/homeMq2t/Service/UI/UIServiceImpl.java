@@ -66,7 +66,7 @@ public class UIServiceImpl implements UIService {
     private HtmlSanitizer htmlSanitizer;
 
     @Autowired
-    private Base64HtmlJsonFormatter jsonFormatter;
+    private UIJsonFormatter jsonFormatter;
 
     @Override
     public void setMediator(ServiceMediator mediator) {

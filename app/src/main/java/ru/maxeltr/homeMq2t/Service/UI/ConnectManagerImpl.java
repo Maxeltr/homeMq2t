@@ -37,6 +37,7 @@ import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
+import ru.maxeltr.homeMq2t.Model.Status;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
@@ -55,7 +56,7 @@ public class ConnectManagerImpl implements ConnectManager {
     private ServiceMediator mediator;
 
     @Autowired
-    private Base64HtmlJsonFormatter jsonFormatter;
+    private UIJsonFormatter jsonFormatter;
 
     @Autowired
     @Qualifier("getUIPropertiesProvider")
@@ -70,13 +71,13 @@ public class ConnectManagerImpl implements ConnectManager {
         String dashboardHtml = this.appProperties.getStartDashboard().map(Dashboard::getHtml).orElse("");
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
-            msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", "fail"));
+            msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", Status.FAIL));
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed.");
-            msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", "fail"));
+            msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", Status.FAIL));
         } else {
             logger.info("Connection established successfully.");
-            msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", "ok"));
+            msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", Status.OK));
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
