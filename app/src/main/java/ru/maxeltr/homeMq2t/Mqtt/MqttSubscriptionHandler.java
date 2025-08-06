@@ -82,7 +82,7 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
     private void handleSubAck(Channel channel, MqttSubAckMessage message) {
 		int id = message.variableHeader().messageId();
         logger.info("Received SUBACK for subscription with id={}.", id);
-        Promise<MqttSubAckMessage> future = (Promise<MqttSubAckMessage>) this.mqttAckMediator.getFuture(id);
+        Promise<MqttSubAckMessage> future = this.mqttAckMediator.getFuture(id);
         if (future == null) {
             logger.warn("There is no stored future of SUBSCRIBE message for SUBACK message id={}. May be it was acknowledged already.", id);
             return;
@@ -93,7 +93,7 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
     private void handleUnsuback(MqttUnsubAckMessage message) {
 		int id = message.variableHeader().messageId();
         logger.info("Received UNSUBACK for subscription with id={}.", id);
-        Promise<MqttUnsubAckMessage> future = (Promise<MqttUnsubAckMessage>) this.mqttAckMediator.getFuture(id);
+        Promise<MqttUnsubAckMessage> future = this.mqttAckMediator.getFuture(id);
         if (future == null) {
             logger.warn("There is no stored future of UNSUBSCRIBE message for UNSUBACK message id={}. May be it was acknowledged already.", id);
             return;

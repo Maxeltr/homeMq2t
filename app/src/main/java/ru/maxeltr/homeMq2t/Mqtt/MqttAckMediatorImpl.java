@@ -48,16 +48,20 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     private final Map<Integer, MqttMessage> messages = new LinkedHashMap<>();
 
     @Override
-    public Promise<? extends MqttMessage> getFuture(int key) {
+    public <T extends MqttMessage> Promise<T> getFuture(int key) {
         synchronized (this) {
-            return this.futures.get(key);
+            @SuppressWarnings("unchecked")
+            var future = (Promise<T>) this.futures.get(key);
+            return future;
         }
     }
 
     @Override
-    public MqttMessage getMessage(int key) {
+    public <T extends MqttMessage> T getMessage(int key) {
         synchronized (this) {
-            return this.messages.get(key);
+            @SuppressWarnings("unchecked")
+            var message = (T) this.messages.get(key);
+            return message;
         }
     }
 
@@ -69,7 +73,7 @@ public class MqttAckMediatorImpl implements MqttAckMediator {
     }
 
     @Override
-    public void add(int key, Promise<? extends MqttMessage> future, MqttMessage message) {
+    public <T extends MqttMessage> void add(int key, Promise<? extends T> future, T message) {
         synchronized (this) {
             int futuresSize = futures.size();
             int messagesSize = messages.size();

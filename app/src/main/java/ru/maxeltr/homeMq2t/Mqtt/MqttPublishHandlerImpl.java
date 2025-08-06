@@ -36,6 +36,7 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
+import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +91,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                         pubAckMessage.fixedHeader().qosLevel(),
                         pubAckMessage.fixedHeader().isRetain()
                 );
-                Promise future = (Promise<MqttPublishMessage>) this.mqttAckMediator.getFuture(id);
+                Promise<MqttPubAckMessage> future = this.mqttAckMediator.getFuture(id);
                 if (future == null) {
                     logger.warn("There is no stored future of PUBLISH message for PUBACK message id={}. May be it was acknowledged already. ", id);
                     return;
@@ -119,7 +120,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                         pubRelMessage.fixedHeader().qosLevel(),
                         pubRelMessage.fixedHeader().isRetain()
                 );
-                Promise pubRelFuture = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(pubRelId);
+                Promise<MqttMessage> pubRelFuture = this.mqttAckMediator.getFuture(pubRelId);
                 if (pubRelFuture == null) {
                     logger.warn("There is no stored future of PUBLISH message for PUBREL message id={}. May be it was acknowledged already.", pubRelId);
                     return;
@@ -148,7 +149,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
             logger.warn("Error. There is no stored PUBREL message for received PUBCOMP id={}.", id);
             return;
         }
-        Promise future = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(id);
+        Promise<MqttMessage> future = this.mqttAckMediator.getFuture(id);
         if (future == null) {
             logger.warn("There is no stored future of PUBREL message for PUBCOMP message id={}. May be it was acknowledged already.", id);
             return;
@@ -163,7 +164,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
             logger.warn("Error. There is no stored publish message for received PUBREC message id={}.", id);
             return;
         }
-        Promise future = (Promise<MqttMessage>) this.mqttAckMediator.getFuture(id);
+        Promise<MqttMessage> future = this.mqttAckMediator.getFuture(id);
         if (future == null) {
             logger.warn("There is no stored future of PUBLISH message for PUBREC message id={}.May be it was acknowledged already.", id);
             return;
@@ -232,7 +233,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                     ReferenceCountUtil.retain(message);
                     Promise<? extends MqttMessage> publishFuture = channel.eventLoop().newPromise();
                     this.mqttAckMediator.add(message.variableHeader().packetId(), publishFuture, message);
-                    publishFuture.addListener((FutureListener) (Future f) -> {
+                    publishFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
                         MqttPublishHandlerImpl.this.handlePubRel(channel, (MqttMessage) f.get());
                     });
                     logger.info("Publish message with QoS2 id={} has been stored.", message.variableHeader().packetId());
