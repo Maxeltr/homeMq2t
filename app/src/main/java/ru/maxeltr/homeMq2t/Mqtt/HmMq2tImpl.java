@@ -54,7 +54,7 @@ import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubscribePayload;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.FutureListener;
+import io.netty.util.concurrent.GenericFutureListener;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -96,8 +96,6 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
     @Autowired
     private MqttAckMediator mqttAckMediator;
-
-    private ServiceMediator serviceMediator;
 
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
@@ -266,6 +264,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         return Optional.ofNullable(((MqttPingScheduleHandler) channel.pipeline().get("mqttPingHandler")));
     }
 
+    @Override
     public boolean isConnected() {
         return connected.get();
     }
@@ -340,7 +339,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
         Promise<MqttSubAckMessage> subscribeFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, subscribeFuture, message);
-        subscribeFuture.addListener((FutureListener) (Future f) -> {
+        subscribeFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
             HmMq2tImpl.this.handleSubAckMessage((MqttSubAckMessage) f.get());
         });
 
@@ -419,9 +418,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
 
-        Promise<? extends MqttMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
+        Promise<MqttPubAckMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, publishFuture, message);
-        publishFuture.addListener((FutureListener) (Future f) -> {
+        publishFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
             HmMq2tImpl.this.handlePubAckMessage((MqttPubAckMessage) f.get());
         });
 
@@ -455,9 +454,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
 
-        Promise<? extends MqttMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
+        Promise<MqttPublishMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, publishFuture, message);
-        publishFuture.addListener((FutureListener) (Future f) -> {
+        publishFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
             HmMq2tImpl.this.handlePubRecMessage((MqttMessage) f.get());
         });
 
@@ -493,7 +492,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
         Promise<? extends MqttMessage> pubRelFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, pubRelFuture, pubrelMessage);
-        pubRelFuture.addListener((FutureListener) (Future f) -> {
+        pubRelFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
             HmMq2tImpl.this.handlePubCompMessage((MqttMessage) f.get());
         });
 
@@ -562,7 +561,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
         Promise<MqttUnsubAckMessage> unSubscribeFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, unSubscribeFuture, unSubscribeMessage);
-        unSubscribeFuture.addListener((FutureListener) (Future f) -> {
+        unSubscribeFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
             HmMq2tImpl.this.handleUnSubAckMessage((MqttUnsubAckMessage) f.get());
         });
 
@@ -591,7 +590,6 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
     @Override
     public void setMediator(ServiceMediator serviceMediator) {
-        this.serviceMediator = serviceMediator;
     }
 
     public String getSubscribedTopicAndQosAsString() {

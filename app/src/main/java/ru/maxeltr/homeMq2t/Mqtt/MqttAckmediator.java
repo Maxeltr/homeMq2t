@@ -33,7 +33,7 @@ import io.netty.util.concurrent.Promise;
  */
 public interface MqttAckMediator extends Iterable<MqttMessage> {
 
-    public void add(int key, Promise<? extends MqttMessage> future, MqttMessage message);
+    public <T extends MqttMessage> void add(int key, Promise<? extends T> future, T message);
 
     public void remove(int key);
 
@@ -43,9 +43,9 @@ public interface MqttAckMediator extends Iterable<MqttMessage> {
 
     public boolean isContainId(int key);
 
-    public Promise<? extends MqttMessage> getFuture(int key);
+    public <T extends MqttMessage> Promise<T> getFuture(int key);
 
     public <T extends MqttMessage> T getMessage(int key);
-    
+
     public void clear();
 }
