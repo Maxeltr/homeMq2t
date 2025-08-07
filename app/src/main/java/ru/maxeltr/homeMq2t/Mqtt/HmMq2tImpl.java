@@ -339,8 +339,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
         Promise<MqttSubAckMessage> subscribeFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, subscribeFuture, message);
-        subscribeFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
-            HmMq2tImpl.this.handleSubAckMessage((MqttSubAckMessage) f.get());
+        subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
+            HmMq2tImpl.this.handleSubAckMessage(f.get());
         });
 
         ReferenceCountUtil.retain(message); //TODO is it nessesary?
@@ -420,8 +420,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
         Promise<MqttPubAckMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, publishFuture, message);
-        publishFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
-            HmMq2tImpl.this.handlePubAckMessage((MqttPubAckMessage) f.get());
+        publishFuture.addListener((Promise<MqttPubAckMessage> f) -> {
+            HmMq2tImpl.this.handlePubAckMessage(f.get());
         });
 
         ReferenceCountUtil.retain(message); //TODO is it nessesary?
@@ -454,10 +454,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
 
-        Promise<MqttPublishMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
+        Promise<MqttMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, publishFuture, message);
-        publishFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
-            HmMq2tImpl.this.handlePubRecMessage((MqttMessage) f.get());
+        publishFuture.addListener((Promise<MqttMessage> f) -> {
+            HmMq2tImpl.this.handlePubRecMessage(f.get());
         });
 
         ReferenceCountUtil.retain(message); //TODO is it nessesary?
@@ -490,10 +490,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
         MqttMessage pubrelMessage = new MqttMessage(fixedHeader, variableHeader);
 
-        Promise<? extends MqttMessage> pubRelFuture = new DefaultPromise<>(this.workerGroup.next());
+        Promise<MqttMessage> pubRelFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, pubRelFuture, pubrelMessage);
-        pubRelFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
-            HmMq2tImpl.this.handlePubCompMessage((MqttMessage) f.get());
+        pubRelFuture.addListener((Promise<MqttMessage> f) -> {
+            HmMq2tImpl.this.handlePubCompMessage(f.get());
         });
 
         ReferenceCountUtil.retain(pubrelMessage); //TODO is it nessesary?
@@ -561,8 +561,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
         Promise<MqttUnsubAckMessage> unSubscribeFuture = new DefaultPromise<>(this.workerGroup.next());
         this.mqttAckMediator.add(id, unSubscribeFuture, unSubscribeMessage);
-        unSubscribeFuture.addListener((GenericFutureListener<? extends Future<? super MqttMessage>>) f -> {
-            HmMq2tImpl.this.handleUnSubAckMessage((MqttUnsubAckMessage) f.get());
+        unSubscribeFuture.addListener((Promise<MqttUnsubAckMessage> f) -> {
+            HmMq2tImpl.this.handleUnSubAckMessage(f.get());
         });
 
         ReferenceCountUtil.retain(unSubscribeMessage); //TODO is it nessesary?
