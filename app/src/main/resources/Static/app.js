@@ -104,14 +104,14 @@ function showBase64(payload) {
 }
 
 function b64ToUtf8(str) {
-  let binary = atob(str);
+    let binary = atob(str);
 
-  let bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
+    let bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
 
-  return new TextDecoder('utf-8').decode(bytes);
+    return new TextDecoder('utf-8').decode(bytes);
 }
 
 function showData(message, cardNumber) {
@@ -156,19 +156,20 @@ function showData(message, cardNumber) {
             }
         } else {
             console.log("Error. Incorrect payload type for card=" + cardNumber + ". Message type is " + message.type);
-            setInnerHtml('errors', "<div style=\"color:red;\">Error. Incorrect payload type for card=" + cardNumber + ".</div>");	
+            setInnerHtml('errors', "<div style=\"color:red;\">Error. Incorrect payload type for card=" + cardNumber + ".</div>");
         }
     } else {
         console.log('Error: message type is undefined');
-        setInnerHtml('errors', "<div style=\"color:red;\">Error: message type is undefined.</div>");	
+        setInnerHtml('errors', "<div style=\"color:red;\">Error: message type is undefined.</div>");
     }
 }
 
-function setInnerHtml(selector, html) {				
-	let el = document.getElementById(selector);
-	if (el) el.innerHTML = safeHtml(html);
+function setInnerHtml(selector, html) {
+    let el = document.getElementById(selector);
+    if (el)
+        el.innerHTML = safeHtml(html);
 
-	return el;
+    return el;
 }
 
 function safeHtml(html) {
@@ -211,7 +212,7 @@ $(function () {
         const arg = $(this).val();
         editSettings(arg);
     });
-    
+
     $(document).on("click", "#addCard", function () {
         const arg = $(this).val();
         editSettings(arg);
@@ -231,6 +232,14 @@ $(function () {
     $(document).on("click", "#cancel", function () {
         goToDashboard();
     });
+
+    $(document).on("click", "#deleteCard", function () {
+        if (!confirm('Delete card?')) {
+            return;
+        }
+        deleteDashboardCard();
+    });
+
 });
 
 
