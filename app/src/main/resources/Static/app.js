@@ -30,7 +30,20 @@ function connect() {
 }
 
 function goToDashboard() {
-    stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
+    //stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
+    stompClient.unsubscribe(subDataTopic);
+    stompClient.disconnect();
+    setConnected(false);
+    setTimeout(() => {
+        connect();
+    }, 800);
+//    if (stompClient && stompClient.connected) {
+//        console.warn('doConnect');
+//        stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
+//    } else {
+//        console.warn('connect()');
+//        connect();
+//    }
 }
 
 function disconnect() {
@@ -229,10 +242,10 @@ $(function () {
         formData.forEach((value, key) => {
             data[key] = value;
         });
-        
+
         return data;
     }
-    
+
     $(document).on("click", "#saveCard", function () {
         saveCard(JSON.stringify(getFormData()));
         goToDashboard();
@@ -247,6 +260,7 @@ $(function () {
             return;
         }
         deleteDashboardCard(JSON.stringify(getFormData()));
+        goToDashboard();
     });
 
 });
