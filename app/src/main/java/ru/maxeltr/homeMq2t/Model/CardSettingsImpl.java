@@ -161,7 +161,7 @@ public class CardSettingsImpl extends CardModel {
             el.attr("value", Objects.requireNonNullElse(this.getCardEntity().getLocalTaskArguments(), ""));
         }
 
-        el = document.getElementById("settingsCard-localTaskDataType");	//add
+        el = document.getElementById("settingsCard-localTaskDataType");
         if (el != null) {
             for (String mediaType : mediaTypes) {
                 Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);

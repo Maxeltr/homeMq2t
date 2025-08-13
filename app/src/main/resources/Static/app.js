@@ -60,6 +60,10 @@ function saveCard(data) {
     stompClient.send("/app/saveCard", {}, JSON.stringify({'data': data}));
 }
 
+function deleteDashboardCard(data) {
+    stompClient.send("/app/deleteCard", {}, JSON.stringify({'data': data}));
+}
+
 function showImage(message, cardNumber) {
     let image = new Image();
     image.src = 'data:image/jpeg;base64,' + message.data;
@@ -218,14 +222,19 @@ $(function () {
         editSettings(arg);
     });
 
-    $(document).on("click", "#saveCard", function () {
+    function getFormData() {
         let el = document.getElementById('settingsForm');
         let formData = new FormData(el);
         let data = {};
         formData.forEach((value, key) => {
             data[key] = value;
         });
-        saveCard(JSON.stringify(data));
+        
+        return data;
+    }
+    
+    $(document).on("click", "#saveCard", function () {
+        saveCard(JSON.stringify(getFormData()));
         goToDashboard();
     });
 
@@ -237,7 +246,7 @@ $(function () {
         if (!confirm('Delete card?')) {
             return;
         }
-        deleteDashboardCard();
+        deleteDashboardCard(JSON.stringify(getFormData()));
     });
 
 });
