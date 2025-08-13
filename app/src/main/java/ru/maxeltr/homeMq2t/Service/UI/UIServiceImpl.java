@@ -98,6 +98,13 @@ public class UIServiceImpl implements UIService {
     }
 
     @Override
+    public void deleteCard(Msg.Builder msg) {
+        logger.info("Do delete card {}.", msg.getData());
+        this.dashboardItemManager.deleteCard(msg);
+
+    }
+
+    @Override
     public void disconnect(byte reasonCode) {
         logger.info("Do disconnect with reason code {}.", reasonCode);
         this.connectManager.disconnect(reasonCode);

@@ -31,6 +31,8 @@ public interface DashboardItemManager {
 
     public void saveCardSettings(Msg.Builder msg);
 
+    public void deleteCard(Msg.Builder msg);
+
 //    public Msg.Builder getCommandSettings(Msg.Builder msg);
 //
 //    public void saveCommandSettings(Msg.Builder msg);

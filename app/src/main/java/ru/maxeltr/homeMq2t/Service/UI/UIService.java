@@ -36,6 +36,8 @@ public interface UIService {
 
     public void saveCardSettings(Msg.Builder msg);
 
+    public void deleteCard(Msg.Builder msg);
+
     public void disconnect(byte reasonCode);
 
     public void shutdownApp();

@@ -29,6 +29,7 @@ import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.CardModel;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
+import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
  *
@@ -63,6 +64,8 @@ public interface UIPropertiesProvider {
     public Optional<DashboardEntity> getDashboardEntity(String number);
 
     public CardEntity saveCardEntity(CardEntity cardEntity);
+
+    public void deleteCard(String id);
 
     public Optional<CardModel> getCardSettings(String number);
 

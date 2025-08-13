@@ -104,4 +104,19 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
         }
     }
 
+    @Override
+    public void deleteCard(Msg.Builder msg) {
+        JsonNode root;
+
+        try {
+            root = mapper.readTree(msg.getData());
+            String id = root.path("ID").asText();
+            this.appProperties.deleteCard(id);
+            logger.debug("Deletetd card {}.", msg);
+        } catch (JsonProcessingException | NoSuchElementException ex) {
+            logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
+
+        }
+    }
+
 }

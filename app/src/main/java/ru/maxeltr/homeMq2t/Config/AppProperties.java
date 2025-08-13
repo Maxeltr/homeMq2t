@@ -204,6 +204,7 @@ public class AppProperties implements UIPropertiesProvider, CardPropertiesProvid
      * @param name the name of the command for which to retrieve arguments
      * @return the arguments if found, or an empty string.
      */
+    @Override
     public String getCommandArguments(String name) {
         return commandRepository.findByName(name).map(CommandEntity::getArguments).orElse("");
     }
@@ -245,22 +246,30 @@ public class AppProperties implements UIPropertiesProvider, CardPropertiesProvid
      * @return the name of the card associated with the specified number,
      * returns an empty string if card name is not found.
      */
+    @Override
     public String getCardName(String number) {
         return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getName).orElse("");
     }
 
+    @Override
     public Optional<CardEntity> getCardEntity(String number) {
         return safeParseInt(number).flatMap(cardRepository::findByNumber);
     }
 
+    @Override
     public Optional<DashboardEntity> getDashboardEntity(String number) {
         return safeParseInt(number).flatMap(dashboardRepository::findByNumber);
     }
 
+    @Override
     public CardEntity saveCardEntity(CardEntity cardEntity) {
         return this.cardRepository.save(cardEntity);
     }
 
+    public void deleteCard(String id) {
+        this.cardRepository.deleteById(Long.valueOf(id));
+    }
+    @Override
     public Optional<CardModel> getCardSettings(String number) {
         String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
