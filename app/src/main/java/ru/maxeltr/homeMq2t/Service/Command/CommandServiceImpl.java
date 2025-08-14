@@ -70,14 +70,14 @@ public class CommandServiceImpl implements CommandService {
      * associated parameters, executes the command and send the result to the
      * specified Mqtt topic.
      *
-     * @param builder containing the data to be processed. Must not be null.
+     * @param msg containing the data to be processed. Must not be null.
      * @param commandNumber A unique identifier for the command being executed.
      * Must not be null.
      */
     @Async("processExecutor")
     @Override
-    public void execute(Msg.Builder builder, String commandNumber) {
-        String command = this.commandParser.parseCommandName(builder.build());
+    public void execute(Msg msg, String commandNumber) {
+        String command = this.commandParser.parseCommandName(msg);
         if (StringUtils.isEmpty(command)) {
             logger.warn("Command is empty. Command number={}", commandNumber);
             return;

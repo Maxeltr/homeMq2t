@@ -34,7 +34,7 @@ public interface ComponentService {
 
     void setMediator(ServiceMediator mediator);
 
-    void process(Msg.Builder msg, String componentNumber);
+    void process(Msg msg, String componentNumber);
 
     void startSensorStreaming();
 

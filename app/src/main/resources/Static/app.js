@@ -30,20 +30,12 @@ function connect() {
 }
 
 function goToDashboard() {
-    //stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
     stompClient.unsubscribe(subDataTopic);
     stompClient.disconnect();
     setConnected(false);
     setTimeout(() => {
         connect();
     }, 800);
-//    if (stompClient && stompClient.connected) {
-//        console.warn('doConnect');
-//        stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
-//    } else {
-//        console.warn('connect()');
-//        connect();
-//    }
 }
 
 function disconnect() {
@@ -62,11 +54,10 @@ function shutdown() {
 
 function createCommand(id) {
     stompClient.send("/app/publish", {}, JSON.stringify({'id': id}));
-    //stompClient.send("/app/connected", {}, JSON.stringify({'id': "connectsfgdsfgsdfg"}));
 }
 
-function editSettings(id) {
-    stompClient.send("/app/editSettings", {}, JSON.stringify({'id': id}));
+function getCardSettings(id) {
+    stompClient.send("/app/getCardSettings", {}, JSON.stringify({'id': id}));
 }
 
 function saveCard(data) {
@@ -225,18 +216,18 @@ $(function () {
         createCommand(arg);
     });
 
-    $(document).on("click", "#editSettings", function () {
+    $(document).on("click", "#editCardSettings", function () {
         const arg = $(this).val();
-        editSettings(arg);
+        getCardSettings(arg);
     });
 
     $(document).on("click", "#addCard", function () {
         const arg = $(this).val();
-        editSettings(arg);
+        getCardSettings(arg);
     });
 
-    function getFormData() {
-        let el = document.getElementById('settingsForm');
+    function getFormData(name) {
+        let el = document.getElementById(name);
         let formData = new FormData(el);
         let data = {};
         formData.forEach((value, key) => {
@@ -247,7 +238,7 @@ $(function () {
     }
 
     $(document).on("click", "#saveCard", function () {
-        saveCard(JSON.stringify(getFormData()));
+        saveCard(JSON.stringify(getFormData('cardSettingsForm')));
         goToDashboard();
     });
 
@@ -259,7 +250,7 @@ $(function () {
         if (!confirm('Delete card?')) {
             return;
         }
-        deleteDashboardCard(JSON.stringify(getFormData()));
+        deleteDashboardCard(JSON.stringify(getFormData('cardSettingsForm')));
         goToDashboard();
     });
 

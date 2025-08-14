@@ -43,18 +43,13 @@ public abstract class CardModel {
 
     private static final Logger logger = LoggerFactory.getLogger(CardModel.class);
 
-//    static final int MAX_CHAR_TO_PRINT = 256;
-
     private final String pathname;
-
-    //private final Document view;
 
     private final CardEntity cardEntity;
 
     public CardModel(CardEntity cardEntity, String pathname) {
         this.cardEntity = Objects.requireNonNull(cardEntity);
         this.pathname = Objects.requireNonNull(pathname);
-        //this.view = this.getViewTemplate();
     }
 
     public String getCardNumber() {
@@ -112,22 +107,4 @@ public abstract class CardModel {
 
         return Optional.ofNullable(doc);
     }
-
-//    @Override
-//    public String toString() {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append(this.getClass().getName())
-//                .append("name=").append("Settings of card number=").append(this.getCardNumber())
-//                .append(", view=");
-//        String strView = this.view.toString();
-//        if (strView.length() > MAX_CHAR_TO_PRINT) {
-//            sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));
-//            sb.append("...");
-//        } else {
-//            sb.append(strView);
-//        }
-//        sb.append("}");
-//
-//        return sb.toString();
-//    }
 }

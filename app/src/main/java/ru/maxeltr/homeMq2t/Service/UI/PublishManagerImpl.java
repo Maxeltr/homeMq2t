@@ -49,7 +49,7 @@ public class PublishManagerImpl implements PublishManager {
     private UIPropertiesProvider appProperties;
 
     @Override
-    public void publish(Msg.Builder msg) {
+    public void publish(Msg msg) {
         String topic = this.appProperties.getCardPubTopic(msg.getId());
         if (StringUtils.isEmpty(topic)) {
             logger.info("Could not publish. There is no topic for card={}", msg.getId());
@@ -66,13 +66,14 @@ public class PublishManagerImpl implements PublishManager {
             logger.info("Type is empty for card={}. Set {}.", msg.getId(), type);
         }
 
-        msg.type(type);
-        msg.data(this.appProperties.getCardPubData(msg.getId()));
-        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-
         logger.info("Creating publish message for card={}, topic={}, QoS={}, retain={}.", msg.getId(), topic, qos, retain);
 
-        this.mediator.publish(msg.build(), topic, qos, retain);
+        var message = msg.toBuilder()
+                .type(type)
+                .data(this.appProperties.getCardPubData(msg.getId()))
+                .timestamp(String.valueOf(Instant.now().toEpochMilli()));
+
+        this.mediator.publish(message.build(), topic, qos, retain);
     }
 
     /**

@@ -34,7 +34,7 @@ public interface CommandService {
 
     public void setMediator(ServiceMediator mediator);
 
-    public void execute(Msg.Builder command, String commandNumber);
+    public void execute(Msg command, String commandNumber);
 
     public String execute(String commandPath, String arguments);
 }

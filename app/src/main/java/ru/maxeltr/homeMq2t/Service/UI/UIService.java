@@ -32,19 +32,21 @@ public interface UIService {
 
     public void connect();
 
-    public void displayCardSettings(Msg.Builder msg);
+    public void displayCardSettings(Msg msg);
 
-    public void saveCardSettings(Msg.Builder msg);
+    public void displayCommandSettings(Msg msg);
 
-    public void deleteCard(Msg.Builder msg);
+    public void saveCardSettings(Msg msg);
+
+    public void deleteCard(Msg msg);
 
     public void disconnect(byte reasonCode);
 
     public void shutdownApp();
 
-    public void publish(Msg.Builder msg);
+    public void publish(Msg msg);
 
-    public void launch(Msg.Builder msg);
+    public void launch(Msg msg);
 
-    public void display(Msg.Builder builder, String cardNumber);
+    public void display(Msg msg, String cardNumber);
 }

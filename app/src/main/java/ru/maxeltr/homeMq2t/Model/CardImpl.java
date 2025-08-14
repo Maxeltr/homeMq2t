@@ -42,35 +42,6 @@ public class CardImpl extends CardModel {
         super(cardEntity, pathname);
     }
 
-//    static final int MAX_CHAR_TO_PRINT = 256;
-//
-//    private String pathname;
-//
-//    private String cardNumber = "";
-//
-//    private String name = "";
-//
-//    private final Document view;
-//
-//    private String cardSubDataName;
-//    public CardImpl(String cardNumber, String name, String pathname, String cardSubDataName) {
-//        this.cardNumber = Objects.requireNonNullElse(cardNumber, "");
-//        this.name = Objects.requireNonNullElse(name, "");
-//        this.pathname = pathname;
-//        this.cardSubDataName = Objects.requireNonNullElse(cardSubDataName, "");
-//
-//        this.view = this.getViewTemplate();
-//    }
-//    private Document getViewTemplate() {
-//        Document document;
-//
-//        document = this.getTemplateFromFile()
-//                .orElse(Jsoup.parse("<div style=\"color:red;\"><h3>Error</h3><h5>Cannot get card view template.</h5></div>"));
-//        this.configureTemplate(document);
-//
-//        return document;
-//    }
-
     @Override
     void configureTemplate(Document document) {
         Element el = document.getElementById("card1");
@@ -78,7 +49,7 @@ public class CardImpl extends CardModel {
             el.attr("id", this.getCardNumber());
         }
 
-        el = document.getElementById("editSettings");
+        el = document.getElementById("editCardSettings");
         if (el != null) {
             el.attr("value", this.getCardNumber());
         }
@@ -124,47 +95,4 @@ public class CardImpl extends CardModel {
             el.text(this.getName());
         }
     }
-
-//    private Optional<Document> getTemplateFromFile() {
-//        String path = System.getProperty("user.dir") + this.getPathname();
-//        logger.info("Load template from={}", path);
-//        Document doc = null;
-//        File initialFile = new File(path);
-//
-//        if (!initialFile.exists()) {
-//            logger.error("Card template file not found: {}", path);
-//            return Optional.empty();
-//        }
-//
-//        try (InputStream is = new FileInputStream(initialFile)) {
-//            doc = Jsoup.parse(is, "utf-8", "");
-//        } catch (IOException ex) {
-//            logger.error("Error reading or parsing card template.", ex);
-//        }
-//
-//        return Optional.ofNullable(doc);
-//    }
-
-//    private Document getTemplateFromResource() throws IOException {
-//        //InputStream is = DashboardImpl.class.getClassLoader().getResourceAsStream(pathname);
-//        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathname);
-//        return Jsoup.parse(is, "utf-8", "");
-//    }
-//    @Override
-//    public String toString() {
-//        StringBuilder sb = new StringBuilder();
-//        sb.append("CardImpl{")
-//                .append("name=").append(this.getName())
-//                .append(", view=");
-//        String strView = this.getView().toString();
-//        if (strView.length() > MAX_CHAR_TO_PRINT) {
-//            sb.append(strView.substring(0, MAX_CHAR_TO_PRINT));
-//            sb.append("...");
-//        } else {
-//            sb.append(strView);
-//        }
-//        sb.append("}");
-//
-//        return sb.toString();
-//    }
 }

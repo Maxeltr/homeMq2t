@@ -63,8 +63,8 @@ public class ConnectManagerImpl implements ConnectManager {
     private UIPropertiesProvider appProperties;
 
     @Override
-    public Msg.Builder connect() {
-        Msg.Builder msg = new MsgImpl.MsgBuilder("onConnect").type(MediaType.APPLICATION_JSON_VALUE);
+    public Msg connect() {
+        var msg = new MsgImpl.MsgBuilder("onConnect").type(MediaType.APPLICATION_JSON_VALUE);
 
         Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
         authFuture.awaitUninterruptibly(this.connectTimeout);
@@ -82,7 +82,7 @@ public class ConnectManagerImpl implements ConnectManager {
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
-        return msg;
+        return msg.build();
     }
 
     @Override

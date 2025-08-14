@@ -34,11 +34,15 @@ public interface Msg {
 
     int MAX_CHAR_TO_PRINT = 128;
 
+    String getId();
+
     String getType();
 
     String getData();
 
     String getTimestamp();
+
+    Msg.Builder toBuilder();
 
     @JsonDeserialize(as = MsgImpl.MsgBuilder.class)
     @JsonIgnoreProperties(ignoreUnknown = false)
@@ -51,6 +55,8 @@ public interface Msg {
         String getType();
 
         String getTimestamp();
+
+        Builder id(String id);
 
         Builder data(String data);
 

@@ -130,7 +130,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void execute(Msg.Builder command, String commandNumber) {
+    public void execute(Msg command, String commandNumber) {
         this.commandService.execute(command, commandNumber);
         logger.info("Data has been passed to the command service. Data={}.", command);
     }
@@ -142,13 +142,13 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void display(Msg.Builder data, String cardNumber) {
+    public void display(Msg data, String cardNumber) {
         this.uiService.display(data, cardNumber);
         logger.info("Data has been passed to the ui service. Card number={}, data={}.", cardNumber, data);
     }
 
     @Override
-    public void process(Msg.Builder data, String componentNumber) {
+    public void process(Msg data, String componentNumber) {
         this.componentService.process(data, componentNumber);
         logger.info("Data has been passed to the component service. Data={}.", data);
     }
@@ -175,22 +175,23 @@ public class ServiceMediatorImpl implements ServiceMediator {
             logger.debug("Convert mqttMessage to Msg. {}", builder);
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert json to Msg. Message id={}. Data was added as plain text. {}", id, ex.getMessage());
-            builder = new MsgImpl.MsgBuilder();
+            builder = MsgImpl.newBuilder();
             builder.data(mqttMessage.payload().toString(StandardCharsets.UTF_8));
-            builder.timestamp("n/a");
+            builder.timestamp("n/a");       //TODO
             builder.type(MediaType.TEXT_PLAIN_VALUE);   //TODO get type from options by topic
         }
 
         String topicName = (mqttMessage.variableHeader().topicName());
+        Msg msg = builder.build();
 
-        dispatchMessageToService(topicName, builder, id, "ui service", this::display);
-        dispatchMessageToService(topicName, builder, id, "command service", this::execute);
-        dispatchMessageToService(topicName, builder, id, "component service", this::process);
+        dispatchMessageToService(topicName, msg, id, "ui service", this::display);
+        dispatchMessageToService(topicName, msg, id, "command service", this::execute);
+        dispatchMessageToService(topicName, msg, id, "component service", this::process);
 
         logger.debug("End handle message id={}.", id);
     }
 
-    private void dispatchMessageToService(String topicName, Msg.Builder builder, int id, String serviceName, BiConsumer<Msg.Builder, String> action) {
+    private void dispatchMessageToService(String topicName, Msg msg, int id, String serviceName, BiConsumer<Msg, String> action) {
         List<String> numbers = switch (serviceName) {
             case "ui service" ->
                 this.appProperties.getCardNumbersByTopic(topicName);
@@ -204,7 +205,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
         for (String number : numbers) {
             if (StringUtils.isNotEmpty(number)) {
-                action.accept(builder, number);
+                action.accept(msg, number);
                 logger.debug("Message id={} has been passed to {}.", id, serviceName);
             }
         }

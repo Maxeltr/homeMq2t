@@ -27,6 +27,6 @@ import ru.maxeltr.homeMq2t.Model.Msg;
 
 public interface PublishManager {
 
-    public void publish(Msg.Builder msg);
+    public void publish(Msg msg);
 
 }
