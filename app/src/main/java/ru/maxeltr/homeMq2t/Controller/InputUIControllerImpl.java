@@ -69,25 +69,31 @@ public class InputUIControllerImpl implements InputUIController {
     @MessageMapping("/publish")
     public void publish(Msg.Builder msg) {
         logger.info("Do publish. Msg.Builder was received - {}.", msg);
-        uiService.publish(msg);
-        uiService.launch(msg);
+        uiService.publish(msg.build());
+        uiService.launch(msg.build());
     }
 
-    @MessageMapping("/editSettings")
-    public void editSettings(Msg.Builder msg) {
+    @MessageMapping("/getCardSettings")
+    public void getCardSettings(Msg.Builder msg) {
         logger.info("Do edit settings. Msg.Builder was received - {}.", msg);
-        uiService.displayCardSettings(msg);
+        uiService.displayCardSettings(msg.build());
+    }
+
+    @MessageMapping("/getCommandSettings")
+    public void getCommandSettings(Msg.Builder msg) {
+        logger.debug("Do edit command settings. Msg.Builder was received - {}.", msg);
+        uiService.displayCommandSettings(msg.build());
     }
 
     @MessageMapping("/saveCard")
     public void saveCard(Msg.Builder msg) {
         logger.info("Do save settings. Msg.Builder was received - {}.", msg.getData());
-        uiService.saveCardSettings(msg);
+        uiService.saveCardSettings(msg.build());
     }
 
     @MessageMapping("/deleteCard")
     public void deleteCard(Msg.Builder msg) {
         logger.info("Do delete card. Msg.Builder was received - {}.", msg.getData());
-        uiService.deleteCard(msg);
+        uiService.deleteCard(msg.build());
     }
 }

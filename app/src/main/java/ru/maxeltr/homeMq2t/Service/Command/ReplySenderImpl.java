@@ -69,14 +69,14 @@ public class ReplySenderImpl implements ReplySender {
             logger.info("Property type is empty for command={}. Set {}.", commandName, type);
         }
 
-        Msg.Builder builder = new MsgImpl.MsgBuilder("onExecuteCommand")
+        var builder = new MsgImpl.MsgBuilder("onExecuteCommand")
                 .type(type)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .data(data);
 
         Msg msg = builder.build();
         logger.info("Sending reply on command={}. Msg={}, topic={}, qos={}, retain={}.", commandName, msg, topic, qos, retain);
-        this.mediator.publish(builder.build(), topic, qos, retain);
+        this.mediator.publish(msg, topic, qos, retain);
     }
 
     /**

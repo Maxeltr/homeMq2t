@@ -62,9 +62,7 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
     }
 
     @Override
-    public Msg.Builder getCardSettings(Msg.Builder msg) {
-        msg.type(MediaType.APPLICATION_JSON_VALUE);
-
+    public Msg getCardSettings(Msg msg) {
         Optional<CardModel> cardSettingsOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
             cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
@@ -73,21 +71,40 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
             logger.debug("New card was created. Card={}", cardSettingsOpt.get());
         }
 
-        if (cardSettingsOpt.isPresent()) {
-            logger.info("Settings retrieved successfully. Card={}", msg.getId());
-            msg.data(this.jsonFormatter.createJson(cardSettingsOpt.get().getHtml(), "onEditCardSettings", Status.OK));
-        } else {
-            logger.warn("Could not get settings for card={}.", msg.getId());
-            msg.data(this.jsonFormatter.createJson("", "onEditCardSettings", Status.FAIL));
-        }
-
-        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
-
-        return msg;
+        return msg.toBuilder()
+                .data(createJson(cardSettingsOpt))
+                .type(MediaType.APPLICATION_JSON_VALUE)
+                .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                .build();
     }
 
     @Override
-    public void saveCardSettings(Msg.Builder msg) {
+    public Msg getCommandSettings(Msg msg) {
+        Optional<CardModel> cardSettingsOpt;
+        if (StringUtils.isNotBlank(msg.getId())) {
+            cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
+        } else {
+            cardSettingsOpt = this.appProperties.getEmptyCardSettings();
+            logger.debug("New card was created. Card={}", cardSettingsOpt.get());
+        }
+
+        return msg.toBuilder()
+                .type(MediaType.APPLICATION_JSON_VALUE)
+                .data(createJson(cardSettingsOpt))
+                .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                .build();
+    }
+
+    private String createJson(Optional<CardModel> modelOpt) {
+        if (modelOpt.isPresent()) {
+            return this.jsonFormatter.createJson(modelOpt.get().getHtml(), "onEditCardSettings", Status.OK);
+        }
+
+        return this.jsonFormatter.createJson("", "onEditCardSettings", Status.FAIL);
+    }
+
+    @Override
+    public void saveCardSettings(Msg msg) {
         CardEntity cardEntity;
         JsonNode root;
 
@@ -105,7 +122,7 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
     }
 
     @Override
-    public void deleteCard(Msg.Builder msg) {
+    public void deleteCard(Msg msg) {
         JsonNode root;
 
         try {

@@ -32,6 +32,8 @@ import java.util.Objects;
  */
 public class MsgImpl implements Msg {
 
+    private final String id;
+
     private final String data;
 
     private final String type;
@@ -39,9 +41,15 @@ public class MsgImpl implements Msg {
     private final String timestamp;
 
     private MsgImpl(MsgBuilder builder) {
+        this.id = Objects.requireNonNullElse(builder.id, "");
         this.data = Objects.requireNonNullElse(builder.data, "");
         this.type = Objects.requireNonNullElse(builder.type, "");
         this.timestamp = Objects.requireNonNullElse(builder.timestamp, "");
+    }
+
+    @Override
+    public String getId() {
+        return this.id;
     }
 
     @Override
@@ -60,10 +68,24 @@ public class MsgImpl implements Msg {
     }
 
     @Override
+    public Msg.Builder toBuilder() {
+        return newBuilder()
+                .id(this.id)
+                .data(this.data)
+                .type(this.type)
+                .timestamp(this.timestamp);
+    }
+
+    public static Msg.Builder newBuilder() {
+        return new MsgImpl.MsgBuilder();
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("MsgImpl{")
-                .append("type=").append(this.type)
+                .append("id=").append(this.id)
+                .append(", type=").append(this.type)
                 .append(", timestamp=").append(this.timestamp)
                 .append(", data=");
         if (this.data.length() > MAX_CHAR_TO_PRINT) {
@@ -89,14 +111,16 @@ public class MsgImpl implements Msg {
 
         MsgImpl that = (MsgImpl) o;
 
-        return this.type.equals(that.type)
+        return this.id.equals(that.id)
+                && this.type.equals(that.type)
                 && this.timestamp.equals(that.timestamp)
                 && this.data.equals(that.data);
     }
 
     @Override
     public int hashCode() {
-        int result = this.type.hashCode();
+        int result = this.id.hashCode();
+        result = 31 * result + this.type.hashCode();
         result = 31 * result + this.timestamp.hashCode();
         result = 31 * result + this.data.hashCode();
 
@@ -143,6 +167,12 @@ public class MsgImpl implements Msg {
         @Override
         public String getTimestamp() {
             return timestamp;
+        }
+
+        @Override
+        public MsgBuilder id(String id) {
+            this.id = Objects.requireNonNullElse(id, "");
+            return this;
         }
 
         @Override

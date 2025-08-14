@@ -48,10 +48,10 @@ public class LocalTaskManagerImpl implements LocalTaskManager {
     private UIPropertiesProvider appProperties;
 
     @Override
-    public Msg.Builder run(Msg.Builder msg) {
+    public Msg run(Msg msg) {
         String data = "";
 
-        Msg.Builder builder = new MsgImpl.MsgBuilder()
+        var builder = msg.toBuilder()
                 .data(data)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .type(this.appProperties.getCardLocalTaskDataType(msg.getId()));
@@ -59,7 +59,7 @@ public class LocalTaskManagerImpl implements LocalTaskManager {
         String path = this.appProperties.getCardLocalTaskPath(msg.getId());
         if (StringUtils.isEmpty(path)) {
             logger.info("There is no local task to launch for msg={}.", msg.getId());
-            return builder;
+            return builder.build();
         }
 
         String arguments = this.appProperties.getCardLocalTaskArguments(msg.getId());
@@ -69,6 +69,6 @@ public class LocalTaskManagerImpl implements LocalTaskManager {
             builder.data(data);
         }
 
-        return builder;
+        return builder.build();
     }
 }

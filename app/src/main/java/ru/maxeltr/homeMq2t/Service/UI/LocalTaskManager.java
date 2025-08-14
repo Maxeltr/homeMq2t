@@ -27,6 +27,6 @@ import ru.maxeltr.homeMq2t.Model.Msg;
 
 public interface LocalTaskManager {
 
-    public Msg.Builder run(Msg.Builder msg);
+    public Msg run(Msg msg);
 
 }

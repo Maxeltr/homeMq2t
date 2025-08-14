@@ -27,18 +27,20 @@ import ru.maxeltr.homeMq2t.Model.Msg;
 
 public interface DashboardItemManager {
 
-    public Msg.Builder getCardSettings(Msg.Builder msg);
+    public Msg getCardSettings(Msg msg);
 
-    public void saveCardSettings(Msg.Builder msg);
+    public Msg getCommandSettings(Msg msg);
 
-    public void deleteCard(Msg.Builder msg);
+    public void saveCardSettings(Msg msg);
 
-//    public Msg.Builder getCommandSettings(Msg.Builder msg);
+    public void deleteCard(Msg msg);
+
+//    public Msg getCommandSettings(Msg msg);
 //
-//    public void saveCommandSettings(Msg.Builder msg);
+//    public void saveCommandSettings(Msg msg);
 //
-//    public Msg.Builder getComponentSettings(Msg.Builder msg);
+//    public Msg getComponentSettings(Msg msg);
 //
-//    public void saveComponentSettings(Msg.Builder msg);
+//    public void saveComponentSettings(Msg msg);
 
 }

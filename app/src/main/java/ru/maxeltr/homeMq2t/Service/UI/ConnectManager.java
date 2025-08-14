@@ -31,7 +31,7 @@ import ru.maxeltr.homeMq2t.Model.Msg;
  */
 public interface ConnectManager {
 
-    public Msg.Builder connect();
+    public Msg connect();
 
     public void disconnect(byte reasonCode);
 

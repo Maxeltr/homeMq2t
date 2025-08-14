@@ -254,7 +254,7 @@ public class ComponentServiceImpl implements ComponentService {
     public void onDataReceived(String data) {
         logger.info("Callback method triggered. Received data={}", data);
         this.getComponentNameFromJson(data).ifPresentOrElse(
-                componentName -> publish(createMessage(componentName, data), componentName),
+                componentName -> publish(createMessage(componentName, data).build(), componentName),
                 () -> logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data)
         );
     }
@@ -267,15 +267,13 @@ public class ComponentServiceImpl implements ComponentService {
      * accordingly. Then it processes the command contained in the incoming
      * message.
      *
-     * @param builder the Msg.Builder used to construct the message to be
-     * processed
+     * @param msg the Msg used to construct the message to be processed
      * @param componentNumber the identifier of the component for which the
      * message is being processed.
      */
     @Async("processExecutor")
     @Override
-    public void process(Msg.Builder builder, String componentNumber) {
-        Msg msg = builder.build();
+    public void process(Msg msg, String componentNumber) {
         logger.info("Process message. Component number={}, msg={}", componentNumber, msg);
 
         String componentName = appProperties.getComponentName(componentNumber);
@@ -428,13 +426,13 @@ public class ComponentServiceImpl implements ComponentService {
                 logger.warn("Could not get data from component={}.", componentName, ex);
                 return;
             }
-            Msg.Builder builder = this.createMessage(componentName, data);
-            this.publish(builder, componentName);
-            this.publishLocally(builder, componentName);
+            Msg msg = this.createMessage(componentName, data).build();
+            this.publish(msg, componentName);
+            this.publishLocally(msg, componentName);
         }
     }
 
-    private void publishLocally(Msg.Builder builder, String componentName) {
+    private void publishLocally(Msg msg, String componentName) {
         String cardName = this.appProperties.getComponentPubLocalCard(componentName);
         if (StringUtils.isEmpty(cardName)) {
             logger.info("There is no local card for component={} to publish locally.", componentName);
@@ -448,10 +446,10 @@ public class ComponentServiceImpl implements ComponentService {
         }
 
         if (this.mediator != null && this.mediator.isConnected()) {
-            logger.info("Message passes to dispay locally. Message={}, card id={}", builder, cardId);
-            this.mediator.display(builder, cardId);
+            logger.info("Message passes to dispay locally. Message={}, card id={}", msg, cardId);
+            this.mediator.display(msg, cardId);
         } else {
-            logger.debug("Message could not passes to dispay locally, , because mediator is null. Message={}, card id={}", builder, cardId);
+            logger.debug("Message could not passes to dispay locally, , because mediator is null. Message={}, card id={}", msg, cardId);
         }
     }
 
@@ -462,7 +460,7 @@ public class ComponentServiceImpl implements ComponentService {
             logger.info("Type is empty for component={}. Set {}.", componentName, type);
         }
 
-        Msg.Builder builder = new MsgImpl.MsgBuilder()
+        Msg.Builder builder = MsgImpl.newBuilder()
                 .data(data)
                 .type(type)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()));
@@ -472,7 +470,7 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     @Async("processExecutor")
-    private void publish(Msg.Builder msg, String componentName) {       // TODO several topics?
+    private void publish(Msg msg, String componentName) {       // TODO several topics?
         String topic = appProperties.getComponentPubTopic(componentName);
         if (StringUtils.isEmpty(topic)) {
             logger.info("Could not publish. There is no topic for component={}", componentName);
@@ -485,7 +483,7 @@ public class ComponentServiceImpl implements ComponentService {
 
         if (this.mediator != null && this.mediator.isConnected()) {
             logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
-            this.mediator.publish(msg.build(), topic, qos, retain);
+            this.mediator.publish(msg, topic, qos, retain);
         } else {
             logger.debug("Message could not pass to publish, because mq2t is disconnected. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
         }

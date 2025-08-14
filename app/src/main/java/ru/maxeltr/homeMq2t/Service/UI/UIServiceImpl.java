@@ -80,81 +80,88 @@ public class UIServiceImpl implements UIService {
      */
     @Override
     public void connect() {
-        logger.info("Do connect.");
+        logger.debug("Do connect.");
         this.display(this.connectManager.connect(), "");
     }
 
     @Override
-    public void displayCardSettings(Msg.Builder msg) {
-        logger.info("Do edit settings {}.", msg);
+    public void displayCardSettings(Msg msg) {
+        logger.debug("Do edit card settings {}.", msg);
         this.display(this.dashboardItemManager.getCardSettings(msg), "");
     }
 
     @Override
-    public void saveCardSettings(Msg.Builder msg) {
-        logger.info("Do save settings {}.", msg.getData());
+    public void displayCommandSettings(Msg msg) {
+        logger.debug("Do edit command settings {}.", msg);
+        this.display(this.dashboardItemManager.getCommandSettings(msg), "");
+    }
+
+    @Override
+    public void saveCardSettings(Msg msg) {
+        logger.debug("Do save settings {}.", msg.getData());
         this.dashboardItemManager.saveCardSettings(msg);
 
     }
 
     @Override
-    public void deleteCard(Msg.Builder msg) {
-        logger.info("Do delete card {}.", msg.getData());
+    public void deleteCard(Msg msg) {
+        logger.debug("Do delete card {}.", msg.getData());
         this.dashboardItemManager.deleteCard(msg);
 
     }
 
     @Override
     public void disconnect(byte reasonCode) {
-        logger.info("Do disconnect with reason code {}.", reasonCode);
+        logger.debug("Do disconnect with reason code {}.", reasonCode);
         this.connectManager.disconnect(reasonCode);
     }
 
     @Override
     public void shutdownApp() {
-        logger.info("Do shutdown application.");
+        logger.debug("Do shutdown application.");
         this.connectManager.shutdownApp();   //disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
     }
 
     @Override
-    public void publish(Msg.Builder msg) {
-        logger.info("Do publish message from card {}.", msg.getId());
+    public void publish(Msg msg) {
+        logger.debug("Do publish message from card {}.", msg.getId());
         this.publishManager.publish(msg);
     }
 
     @Override
-    public void launch(Msg.Builder msg) {
-        logger.info("Do run local task from card {}.", msg.getId());
+    public void launch(Msg msg) {
+        logger.debug("Do run local task from card {}.", msg.getId());
         this.display(this.localTaskManager.run(msg), msg.getId());
     }
 
     @Async("processExecutor")
     @Override
-    public void display(Msg.Builder builder, String cardNumber) {
+    public void display(Msg msg, String cardNumber) {
+        var message = msg.toBuilder();
         String type = this.appProperties.getCardSubDataType(cardNumber);
         if (StringUtils.isNotEmpty(type)) {
-            builder.type(type);
+            message.type(type);
             logger.info("Changed type to defined in properties for card={}. Set type={}.", cardNumber, type);
         } else {
-            if (StringUtils.isEmpty(builder.getType())) {
-                builder.type(MediaType.APPLICATION_JSON_VALUE);
-                logger.info("Type is undefined for card={}. Set {}.", cardNumber, builder.getType());
+            if (StringUtils.isEmpty(message.getType())) {
+                message.type(MediaType.APPLICATION_JSON_VALUE);
+                logger.info("Type is undefined for card={}. Set {}.", cardNumber, message.getType());
             }
         }
 
-        if (builder.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
+        if (message.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
             String jsonPathExpression = this.appProperties.getCardJsonPathExpression(cardNumber);
             if (StringUtils.isNotEmpty(jsonPathExpression)) {
-                builder.data(this.jsonFormatter.createJson(builder.getData(), jsonPathExpression));
+                message.data(this.jsonFormatter.createJson(message.getData(), jsonPathExpression));
             } else {
                 logger.debug("JsonPath expression is empty for card={}.", cardNumber);
             }
         }
 
-        builder.data(this.htmlSanitizer.sanitize(builder.getData()));
+        message.data(this.htmlSanitizer.sanitize(message.getData()));
 
-        logger.debug("Display data={}. Card={}", builder, cardNumber);
-        this.uiController.display(builder.build(), cardNumber);
+        logger.debug("Display data={}. Card={}", message, cardNumber);
+        this.uiController.display(message.build(), cardNumber);
     }
 
 }
