@@ -184,20 +184,20 @@ public class ServiceMediatorImpl implements ServiceMediator {
         String topicName = (mqttMessage.variableHeader().topicName());
         Msg msg = builder.build();
 
-        dispatchMessageToService(topicName, msg, id, "ui service", this::display);
-        dispatchMessageToService(topicName, msg, id, "command service", this::execute);
-        dispatchMessageToService(topicName, msg, id, "component service", this::process);
+        dispatchMessageToService(topicName, msg, id, ServiceType.UI, this::display);
+        dispatchMessageToService(topicName, msg, id, ServiceType.COMMAND, this::execute);
+        dispatchMessageToService(topicName, msg, id, ServiceType.COMPONENT, this::process);
 
         logger.debug("End handle message id={}.", id);
     }
 
-    private void dispatchMessageToService(String topicName, Msg msg, int id, String serviceName, BiConsumer<Msg, String> action) {
-        List<String> numbers = switch (serviceName) {
-            case "ui service" ->
+    private void dispatchMessageToService(String topicName, Msg msg, int id, ServiceType serviceType, BiConsumer<Msg, String> action) {
+        List<String> numbers = switch (serviceType) {
+            case ServiceType.UI ->
                 this.appProperties.getCardNumbersByTopic(topicName);
-            case "command service" ->
+            case ServiceType.COMMAND ->
                 this.appProperties.getCommandNumbersByTopic(topicName);
-            case "component service" ->
+            case ServiceType.COMPONENT ->
                 this.appProperties.getComponentNumbersByTopic(topicName);
             default ->
                 Collections.emptyList();
@@ -206,7 +206,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         for (String number : numbers) {
             if (StringUtils.isNotEmpty(number)) {
                 action.accept(msg, number);
-                logger.debug("Message id={} has been passed to {}.", id, serviceName);
+                logger.debug("Message id={} has been passed to {}.", id, serviceType);
             }
         }
     }
