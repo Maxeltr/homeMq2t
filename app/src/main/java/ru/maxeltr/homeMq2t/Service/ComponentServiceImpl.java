@@ -210,53 +210,34 @@ public class ComponentServiceImpl implements ComponentService {
      * callback is to be set.
      */
     private void setCallback(Mq2tCallbackComponent mq2tCallbackComponent) {
+        String componentName = mq2tCallbackComponent.getName();
         mq2tCallbackComponent.setCallback(
                 data -> {
-                    if (data instanceof String dataStr) {
-                        onDataReceived(dataStr);    //TODO use closure to cath mq2tCallbackComponent like in else branch. remove requre to have name in json. And del getComponentNameFromJson
-                    } else {
-                        logger.warn("Invalid data type received from provider={}.", mq2tCallbackComponent.getName());
+                    try {
+                        if (data instanceof String dataStr) {
+                            onDataReceived(dataStr, componentName);
+                        } else {
+                            logger.warn("Invalid data type received from provider={}.", componentName);
+                        }
+                    } catch (Exception ex) {
+                        logger.error("Error in callback for {}:", componentName, ex);
                     }
                 });
-    }
-
-    /**
-     * Extract the component name from a json string.
-     *
-     * @param data the JSON string from which to extract the component name
-     *
-     * @return an Optional containing the component name if found, or an empty
-     * Optional if the name could not be extracted.
-     */
-    private Optional<String> getComponentNameFromJson(String data) {
-        HashMap<String, String> dataMap;
-        try {
-            dataMap = mapper.readValue(data, new TypeReference<HashMap<String, String>>() {
-            });
-        } catch (JsonProcessingException ex) {
-            logger.warn("Could not convert json data={} to map. {}", data, ex.getMessage());
-            return Optional.empty();
-        }
-
-        return Optional.ofNullable(dataMap.get("name"));
-
     }
 
     /**
      * Handles the reception of data from callback components.
      *
      * This method is triggered when data is received from a registered callback
-     * component. It processes the incoming data, extracting the component name
-     * from json payload and publish the data accordingly.
+     * component. It processes the incoming data and publish the data
+     * accordingly.
      *
-     * @param data the received data as a JSON string
+     * @param data the received data
+     * @param componentName
      */
-    public void onDataReceived(String data) {
-        logger.info("Callback method triggered. Received data={}", data);
-        this.getComponentNameFromJson(data).ifPresentOrElse(
-                componentName -> publish(createMessage(componentName, data).build(), componentName),
-                () -> logger.warn("Invalid data was passed to callback. Name of component is absent. Data={}", data)
-        );
+    public void onDataReceived(String data, String componentName) {
+        logger.info("Callback method of component {} was triggered. Received data={}", componentName, data);
+        publish(createMessage(componentName, data).build(), componentName);
     }
 
     /**
