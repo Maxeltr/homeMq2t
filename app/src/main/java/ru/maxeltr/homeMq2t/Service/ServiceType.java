@@ -24,19 +24,34 @@
 package ru.maxeltr.homeMq2t.Service;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import ru.maxeltr.homeMq2t.Config.S;
+import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.ComponentPropertiesProvider;
+import ru.maxeltr.homeMq2t.Model.Msg;
 
 public enum ServiceType {
 
-    UI("ui"),
-    COMMAND("command"),
-    COMPONENT("component");
+    UI("ui", CardPropertiesProvider::getCardNumbersByTopic, ServiceMediator::display),
+    COMMAND("command", CommandPropertiesProvider::getCommandNumbersByTopic, ServiceMediator::execute),
+    COMPONENT("component", ComponentPropertiesProvider::getComponentNumbersByTopic, ServiceMediator::process);
+
+    private final BiFunction<S, String, List<String>> getNumbers;
+
+    private final TriConsumer<ServiceMediator, Msg, String> action;
 
     private final String name;
 
 
-    ServiceType(String name) {
+    ServiceType(String name, BiFunction<S, String, List<String>> getNumbers, TriConsumer<ServiceMediator, Msg, String> action) {
         this.name = name;
+        this.getNumbers = getNumbers;
+        this.action = action;
     }
 
     public String getName() {
@@ -47,4 +62,15 @@ public enum ServiceType {
         return Arrays.stream(values()).filter(st -> st.name.equalsIgnoreCase(name)).findFirst();
     }
 
+    public void dispatch(ServiceMediator serviceMediator, Msg msg, String number) {
+        action.accept(serviceMediator, msg, number);
+    }
+
+    public List<String> getNumbers(S props, String topic) {
+        return getNumbers.apply(props, topic);
+    }
+
+    public interface TriConsumer<T, U, V> {
+        void accept(T t, U u, V v);
+    }
 }
