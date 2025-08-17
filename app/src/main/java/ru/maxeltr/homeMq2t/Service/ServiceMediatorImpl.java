@@ -53,7 +53,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
-import ru.maxeltr.homeMq2t.Config.AppProperties;
+import ru.maxeltr.homeMq2t.Config.S;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
@@ -90,7 +90,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     AppShutdownManager appShutdownManager;
 
     @Autowired
-    private AppProperties appProperties;
+    private S appProperties;
 
     @Value("${wait-disconnect-while-shutdown:1000}")
     private int waitDisconnect;
@@ -184,32 +184,39 @@ public class ServiceMediatorImpl implements ServiceMediator {
         String topicName = (mqttMessage.variableHeader().topicName());
         Msg msg = builder.build();
 
-        dispatchMessageToService(topicName, msg, id, ServiceType.UI, this::display);
-        dispatchMessageToService(topicName, msg, id, ServiceType.COMMAND, this::execute);
-        dispatchMessageToService(topicName, msg, id, ServiceType.COMPONENT, this::process);
+        for (ServiceType type : ServiceType.values()) {
+            List<String> numbers = type.getNumbers(appProperties, topicName);
+            for (String number : numbers) {
+                type.dispatch(this, msg, number);
+            }
+        }
+
+//        dispatchMessageToService(topicName, msg, id, ServiceType.UI, this::display);
+//        dispatchMessageToService(topicName, msg, id, ServiceType.COMMAND, this::execute);
+//        dispatchMessageToService(topicName, msg, id, ServiceType.COMPONENT, this::process);
 
         logger.debug("End handle message id={}.", id);
     }
 
-    private void dispatchMessageToService(String topicName, Msg msg, int id, ServiceType serviceType, BiConsumer<Msg, String> action) {
-        List<String> numbers = switch (serviceType) {
-            case ServiceType.UI ->
-                this.appProperties.getCardNumbersByTopic(topicName);
-            case ServiceType.COMMAND ->
-                this.appProperties.getCommandNumbersByTopic(topicName);
-            case ServiceType.COMPONENT ->
-                this.appProperties.getComponentNumbersByTopic(topicName);
-            default ->
-                Collections.emptyList();
-        };
-
-        for (String number : numbers) {
-            if (StringUtils.isNotEmpty(number)) {
-                action.accept(msg, number);
-                logger.debug("Message id={} has been passed to {}.", id, serviceType);
-            }
-        }
-    }
+//    private void dispatchMessageToService(String topicName, Msg msg, int id, ServiceType serviceType, BiConsumer<Msg, String> action) {
+//        List<String> numbers = switch (serviceType) {
+//            case ServiceType.UI ->
+//                this.appProperties.getCardNumbersByTopic(topicName);
+//            case ServiceType.COMMAND ->
+//                this.appProperties.getCommandNumbersByTopic(topicName);
+//            case ServiceType.COMPONENT ->
+//                this.appProperties.getComponentNumbersByTopic(topicName);
+//            default ->
+//                Collections.emptyList();
+//        };
+//
+//        for (String number : numbers) {
+//            if (StringUtils.isNotEmpty(number)) {
+//                action.accept(msg, number);
+//                logger.debug("Message id={} has been passed to {}.", id, serviceType);
+//            }
+//        }
+//    }
 
     @Override
     public Promise<MqttConnAckMessage> connect() {

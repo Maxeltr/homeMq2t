@@ -101,7 +101,7 @@ public class AppAnnotationConfig {
 
     @Bean
     @Primary
-    public AppProperties getAppProperty() {
+    public S getAppProperty() {
         logger.info("Current user dir={}", System.getProperty("user.dir"));
         String[] classpathes = System.getProperty("java.class.path").split(File.pathSeparator);
         for (String classpath : classpathes) {
@@ -136,7 +136,7 @@ public class AppAnnotationConfig {
             logger.info("Could not get network interfaces {}", ex);
         }
 
-        return new AppProperties();
+        return new S();
     }
 
     @Bean(name = "processExecutor")

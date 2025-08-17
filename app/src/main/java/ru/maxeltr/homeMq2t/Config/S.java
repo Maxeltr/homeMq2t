@@ -55,7 +55,7 @@ import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class AppProperties implements UIPropertiesProvider, CardPropertiesProvider, CommandPropertiesProvider, ComponentPropertiesProvider, StartupTaskPropertiesProvider {
+public class S implements UIPropertiesProvider, CardPropertiesProvider, CommandPropertiesProvider, ComponentPropertiesProvider, StartupTaskPropertiesProvider {
 
     @Autowired
     private Environment env;
@@ -81,7 +81,7 @@ public class AppProperties implements UIPropertiesProvider, CardPropertiesProvid
 
     private final List<String> emptyArray = List.of();
 
-    private static final Logger logger = LoggerFactory.getLogger(AppProperties.class);
+    private static final Logger logger = LoggerFactory.getLogger(S.class);
 
     public List<StartupTaskEntity> getAllStartupTasks() {
         return startupTaskRepository.findAll();
