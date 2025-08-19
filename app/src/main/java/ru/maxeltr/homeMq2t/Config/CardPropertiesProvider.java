@@ -26,13 +26,27 @@ package ru.maxeltr.homeMq2t.Config;
 import java.util.List;
 import java.util.Optional;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
-import ru.maxeltr.homeMq2t.Model.CardModel;
+import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
+import ru.maxeltr.homeMq2t.Model.Dashboard;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public interface CardPropertiesProvider {
+
+    public Optional<ViewModel> getDashboard(String number);
+
+    public Optional<ViewModel> getStartDashboard();
+
+    public Optional<DashboardEntity> getDashboardEntity(String number);
+
+    public CardEntity saveCardEntity(CardEntity cardEntity);
+
+    public Optional<ViewModel> getEmptyCardSettings();
+
+    public void deleteCard(String id);
 
     /**
      * Retrieves the list of card numbers associated with a specific
@@ -58,7 +72,7 @@ public interface CardPropertiesProvider {
 
     public Optional<CardEntity> getCardEntity(String number);
 
-    public Optional<CardModel> getCardSettings(String number);		//TODO rename to getCardSettingsModel or getCardSettingsForm
+    public Optional<ViewModel> getCardSettings(String number);		//TODO rename to getCardSettingsModel or getCardSettingsForm
 
 
     /**

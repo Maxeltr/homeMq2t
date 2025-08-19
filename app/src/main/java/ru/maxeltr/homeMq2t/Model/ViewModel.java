@@ -33,31 +33,33 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.maxeltr.homeMq2t.Entity.BaseEntity;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
+ * @param <T>
  */
-public abstract class CardModel {
+public abstract class ViewModel<T extends BaseEntity> {
 
-    private static final Logger logger = LoggerFactory.getLogger(CardModel.class);
+    private static final Logger logger = LoggerFactory.getLogger(ViewModel.class);
 
     private final String pathname;
 
-    private final CardEntity cardEntity;
+    private final T entity;
 
-    public CardModel(CardEntity cardEntity, String pathname) {
-        this.cardEntity = Objects.requireNonNull(cardEntity);
+    public ViewModel(T entity, String pathname) {
+        this.entity = Objects.requireNonNull(entity);
         this.pathname = Objects.requireNonNull(pathname);
     }
 
-    public String getCardNumber() {
-        return cardEntity.getNumber() != null ? String.valueOf(cardEntity.getNumber()) : "";
+    public String getNumber() {
+        return entity.getNumber() != null ? String.valueOf(entity.getNumber()) : "";
     }
 
     public String getName() {
-        return Objects.requireNonNullElse(cardEntity.getName(), "");
+        return Objects.requireNonNullElse(entity.getName(), "");
     }
 
     public String getHtml() {
@@ -72,8 +74,8 @@ public abstract class CardModel {
         return this.getViewTemplate();
     }
 
-    protected CardEntity getCardEntity() {
-        return cardEntity;
+    protected T getEntity() {
+        return entity;
     }
 
     abstract void configureTemplate(Document document);

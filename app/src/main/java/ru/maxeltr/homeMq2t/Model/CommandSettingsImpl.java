@@ -29,52 +29,44 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
 import org.slf4j.LoggerFactory;
-import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class CardSettingsImpl extends ViewModel<CardEntity> {
-
-    private final List<ViewModel> dashboards;
+public class CommandSettingsImpl extends ViewModel<CommandEntity> {
 
     private final List<String> mediaTypes;
 
-    public CardSettingsImpl(CardEntity cardEntity, String pathname, List<ViewModel> dashboards, List<String> mediaTypes) {
-        super(cardEntity, pathname);
-        this.dashboards = dashboards;
+    public CommandSettingsImpl(CommandEntity commandEntity, String pathname, List<String> mediaTypes) {
+        super(commandEntity, pathname);
         this.mediaTypes = mediaTypes;
     }
 
     @Override
     void configureTemplate(Document document) {
-        Element el = document.getElementById("settingsCard-number");
+        Element el = document.getElementById("settingsCommand-number");
         if (el != null) {
             el.attr("value", this.getNumber());
         }
 
-        el = document.getElementById("settingsCard-id");
+        el = document.getElementById("settingsCommand-id");
         if (el != null) {
             el.attr("value", String.valueOf(this.getEntity().getId()));
         }
 
-        el = document.getElementById("settingsCard-dashboardNumber");
-        if (el != null) {
-            el.attr("value", String.valueOf(this.getEntity().getDashboard().getNumber()));
-        }
-
-        el = document.getElementById("settingsCard-name");
+        el = document.getElementById("settingsCommand-name");
         if (el != null) {
             el.attr("value", Objects.requireNonNullElse(this.getEntity().getName(), ""));
         }
 
-        el = document.getElementById("settingsCard-subscriptionTopic");
+        el = document.getElementById("settingsCommand-subscriptionTopic");
         if (el != null) {
             el.attr("value", Objects.requireNonNullElse(this.getEntity().getSubscriptionTopic(), ""));
         }
 
-        el = document.getElementById("settingsCard-subscriptionQos");
+        el = document.getElementById("settingsCommand-subscriptionQos");
         if (el != null) {
             for (Element option : el.getElementsByTag("option")) {
                 if (Objects.requireNonNullElse(this.getEntity().getSubscriptionQos(), "").equals(option.val())) {
@@ -85,33 +77,12 @@ public class CardSettingsImpl extends ViewModel<CardEntity> {
             }
         }
 
-        el = document.getElementById("settingsCard-subscriptionDataName");
-        if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getEntity().getSubscriptionDataName(), ""));
-        }
-
-        el = document.getElementById("settingsCard-subscriptionDataType");
-        if (el != null) {
-            for (String mediaType : mediaTypes) {
-                Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
-                if (Objects.requireNonNullElse(this.getEntity().getSubscriptionDataType(), "").equals(option.val())) {
-                    option.attr("selected", "selected");
-                }
-                el.appendChild(option);
-            }
-        }
-
-        el = document.getElementById("settingsCard-displayDataJsonPath");
-        if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getEntity().getDisplayDataJsonpath(), ""));
-        }
-
-        el = document.getElementById("settingsCard-publicationTopic");
+        el = document.getElementById("settingsCommand-publicationTopic");
         if (el != null) {
             el.attr("value", Objects.requireNonNullElse(this.getEntity().getPublicationTopic(), ""));
         }
 
-        el = document.getElementById("settingsCard-publicationQos");
+        el = document.getElementById("settingsCommand-publicationQos");
         if (el != null) {
             for (Element option : el.getElementsByTag("option")) {
                 if (Objects.requireNonNullElse(this.getEntity().getPublicationQos(), "").equals(option.val())) {
@@ -122,7 +93,7 @@ public class CardSettingsImpl extends ViewModel<CardEntity> {
             }
         }
 
-        el = document.getElementById("settingsCard-publicationRetain");
+        el = document.getElementById("settingsCommand-publicationRetain");
         if (el != null) {
             for (Element option : el.getElementsByTag("option")) {
                 if (String.valueOf(this.getEntity().getPublicationRetain()).equals(option.val())) {
@@ -133,12 +104,7 @@ public class CardSettingsImpl extends ViewModel<CardEntity> {
             }
         }
 
-        el = document.getElementById("settingsCard-publicationData");
-        if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getEntity().getPublicationData(), ""));
-        }
-
-        el = document.getElementById("settingsCard-publicationDataType");
+        el = document.getElementById("settingsCommand-publicationDataType");
         if (el != null) {
             for (String mediaType : mediaTypes) {
                 Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
@@ -149,42 +115,21 @@ public class CardSettingsImpl extends ViewModel<CardEntity> {
             }
         }
 
-        el = document.getElementById("settingsCard-localTaskPath");
+        el = document.getElementById("settingsCommand-path");
         if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getEntity().getLocalTaskPath(), ""));
+            el.attr("value", Objects.requireNonNullElse(this.getEntity().getPath(), ""));
         }
 
-        el = document.getElementById("settingsCard-localTaskArguments");
+        el = document.getElementById("settingsCommand-arguments");
         if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getEntity().getLocalTaskArguments(), ""));
-        }
-
-        el = document.getElementById("settingsCard-localTaskDataType");
-        if (el != null) {
-            for (String mediaType : mediaTypes) {
-                Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
-                if (Objects.requireNonNullElse(this.getEntity().getLocalTaskDataType(), "").equals(option.val())) {
-                    option.attr("selected", "selected");
-                }
-                el.appendChild(option);
-            }
+            el.attr("value", Objects.requireNonNullElse(this.getEntity().getArguments(), ""));
         }
 
         el = document.select(".card-title").first();
         if (el != null) {
-            el.text("Settings for card " + this.getNumber());
+            el.text("Settings for command " + this.getNumber());
         }
 
-        el = document.getElementById("settingsCard-dashboardNumber");
-        if (el != null) {
-            for (ViewModel dashboard : this.dashboards) {
-                Element option = new Element(Tag.valueOf("option"), "").attr("value", String.valueOf(dashboard.getNumber())).text(dashboard.getName());
-                if (String.valueOf(this.getEntity().getDashboard().getNumber()).equals(option.val())) {
-                    option.attr("selected", "selected");
-                }
-                el.appendChild(option);
-            }
-        }
     }
 
 }

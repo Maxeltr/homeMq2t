@@ -53,7 +53,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
-import ru.maxeltr.homeMq2t.Config.S;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
@@ -90,7 +90,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
     AppShutdownManager appShutdownManager;
 
     @Autowired
-    private S appProperties;
+    private AppProperties appProperties;
 
     @Value("${wait-disconnect-while-shutdown:1000}")
     private int waitDisconnect;

@@ -37,5 +37,5 @@ public interface Dashboard {
 
     String getHtml();
 
-    List<CardModel> getCards();
+    List<ViewModel> getCards();
 }

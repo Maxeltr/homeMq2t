@@ -29,11 +29,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
-import ru.maxeltr.homeMq2t.Config.S;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
@@ -44,8 +45,8 @@ public class UIServiceImpl implements UIService {
     private ServiceMediator mediator;
 
     @Autowired
-    @Qualifier("getUIPropertiesProvider")
-    private UIPropertiesProvider appProperties;
+    @Qualifier("getCardPropertiesProvider")
+    private CardPropertiesProvider appProperties;
 
     @Autowired
     private OutputUIController uiController;
@@ -82,6 +83,21 @@ public class UIServiceImpl implements UIService {
     public void connect() {
         logger.debug("Do connect.");
         this.display(this.connectManager.connect(), "");
+    }
+
+    public void displayDashboard(Msg msg) {
+        logger.debug("Do display dashboard {}.", msg);
+        this.display(this.dashboardItemManager.getDashboard(msg), "");
+    }
+
+    public void displayStartDashboard(Msg msg) {
+        logger.debug("Do display start dashboard {}.", msg);
+        this.display(this.dashboardItemManager.getDashboard(msg.toBuilder().id("").build()), "");
+    }
+
+    public void displayCommands(Msg msg) {
+        logger.debug("Do display command list {}.", msg);
+        this.display(this.dashboardItemManager.getCommands(msg), "");
     }
 
     @Override

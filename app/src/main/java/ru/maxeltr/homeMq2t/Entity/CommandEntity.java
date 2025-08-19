@@ -32,7 +32,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "command_settings")
-public class CommandEntity {
+public class CommandEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,6 +58,7 @@ public class CommandEntity {
         this.id = id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -130,7 +131,8 @@ public class CommandEntity {
         this.arguments = arguments;
     }
 
-    public int getNumber() {
+    @Override
+    public Integer getNumber() {
         return number;
     }
 

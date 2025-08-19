@@ -46,8 +46,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.CardImpl;
-import ru.maxeltr.homeMq2t.Model.CardModel;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Model.CardSettingsImpl;
+import ru.maxeltr.homeMq2t.Model.CommandListImpl;
+import ru.maxeltr.homeMq2t.Model.CommandSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.DashboardImpl;
 import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
 
@@ -55,7 +57,7 @@ import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class S implements UIPropertiesProvider, CardPropertiesProvider, CommandPropertiesProvider, ComponentPropertiesProvider, StartupTaskPropertiesProvider {
+public class AppProperties implements CardPropertiesProvider, CommandPropertiesProvider, ComponentPropertiesProvider, StartupTaskPropertiesProvider {
 
     @Autowired
     private Environment env;
@@ -81,7 +83,7 @@ public class S implements UIPropertiesProvider, CardPropertiesProvider, CommandP
 
     private final List<String> emptyArray = List.of();
 
-    private static final Logger logger = LoggerFactory.getLogger(S.class);
+    private static final Logger logger = LoggerFactory.getLogger(AppProperties.class);
 
     public List<StartupTaskEntity> getAllStartupTasks() {
         return startupTaskRepository.findAll();
@@ -269,8 +271,9 @@ public class S implements UIPropertiesProvider, CardPropertiesProvider, CommandP
     public void deleteCard(String id) {
         this.cardRepository.deleteById(Long.valueOf(id));
     }
+
     @Override
-    public Optional<CardModel> getCardSettings(String number) {
+    public Optional<ViewModel> getCardSettings(String number) {
         String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
             logger.info("No value defined for card settings template pathname.");
@@ -285,18 +288,25 @@ public class S implements UIPropertiesProvider, CardPropertiesProvider, CommandP
         return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, this.getDashboards(), MEDIA_TYPES));
     }
 
-    public Optional<Dashboard> getStartDashboard() {
+    @Override
+    public Optional<ViewModel> getDashboard(String number) {
+        return this.getDashboards().stream().filter(d -> d.getNumber().equalsIgnoreCase(number)).findFirst();
+    }
+
+    @Override
+    public Optional<ViewModel> getStartDashboard() {
         return this.getDashboards().stream().findFirst();
     }
 
-    public Optional<CardModel> getEmptyCardSettings() {
+    @Override
+    public Optional<ViewModel> getEmptyCardSettings() {
         String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
             logger.error("No value defined for card settings template pathname.");
             return Optional.empty();
         }
 
-        Optional<Dashboard> startDashboardOpt = this.getStartDashboard();
+        Optional<ViewModel> startDashboardOpt = this.getStartDashboard();
         if (startDashboardOpt == null) {
             logger.error("No start dashboards found.");
             return Optional.empty();
@@ -320,12 +330,66 @@ public class S implements UIPropertiesProvider, CardPropertiesProvider, CommandP
         return Optional.of(new CardSettingsImpl(cardEntity, cardSettingsPathname, this.getDashboards(), MEDIA_TYPES));
     }
 
+    public Optional<ViewModel> getCommandSettings(String number) {
+        String commandSettingsPathname = env.getProperty("command-settings-template-path", "");
+        if (StringUtils.isEmpty(commandSettingsPathname)) {
+            logger.info("No value defined for command settings template pathname.");
+            return Optional.empty();
+        }
+
+        Optional<CommandEntity> commandEntity = safeParseInt(number).flatMap(commandRepository::findByNumber);
+        if (commandEntity.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new CommandSettingsImpl(commandEntity.get(), commandSettingsPathname, MEDIA_TYPES));
+    }
+
+    public Optional<ViewModel> getCommands() {
+        String commandListPathname = env.getProperty("commandList-template-path", "");
+        if (StringUtils.isEmpty(commandListPathname)) {
+            logger.info("No value defined for command list template pathname.");
+            return Optional.empty();
+        }
+
+        List<CommandEntity> commandEntities = commandRepository.findAll();
+        if (commandEntities.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new CommandListImpl(commandEntities, commandListPathname, MEDIA_TYPES));
+    }
+
+    public Optional<ViewModel> getEmptyCommandSettings() {
+        String commandSettingsPathname = env.getProperty("command-settings-template-path", "");
+        if (StringUtils.isEmpty(commandSettingsPathname)) {
+            logger.error("No value defined for command settings template pathname.");
+            return Optional.empty();
+        }
+
+        Optional<ViewModel> startDashboardOpt = this.getStartDashboard();
+        if (startDashboardOpt == null) {
+            logger.error("No start dashboards found.");
+            return Optional.empty();
+        }
+
+        CommandEntity CommandEntity = new CommandEntity();
+        CommandEntity.setName("default");
+        CommandEntity.setSubscriptionQos("AT_MOST_ONCE");	//TODO use MqttQoS
+        CommandEntity.setPublicationQos("AT_MOST_ONCE");
+        CommandEntity.setPublicationRetain(false);
+        CommandEntity.setPublicationDataType(MediaType.TEXT_PLAIN_VALUE);
+
+        return Optional.of(new CommandSettingsImpl(CommandEntity, commandSettingsPathname, MEDIA_TYPES));
+    }
+
     /**
      * Retrieves the card number associated with the specified name.
      *
      * @param name the name associated with the card number
      * @return the card number if found, or an empty string.
      */
+    @Override
     public String getCardNumber(String name) {
         return cardRepository.findByName(name).map(CardEntity::getNumber).map(String::valueOf).orElse("");
     }
@@ -624,15 +688,15 @@ public class S implements UIPropertiesProvider, CardPropertiesProvider, CommandP
 
         List<DashboardEntity> dashboardEntities = dashboardRepository.findAll();
         dashboardEntities.forEach(dashboardEntity -> {
-            List<CardModel> cards = new ArrayList<>();
+            List<ViewModel> cards = new ArrayList<>();
             List<CardEntity> cardEntities = cardRepository.findByDashboardNumber(dashboardEntity.getNumber());
             cardEntities.forEach(cardEntity -> {
-                CardModel card = new CardImpl(cardEntity, cardPathname);
+                ViewModel card = new CardImpl(cardEntity, cardPathname);
                 cards.add(card);
-                logger.info("Card={} has been created and added to card list. Number={}", card.getName(), card.getCardNumber());
+                logger.info("Card={} has been created and added to card list. Number={}", card.getName(), card.getNumber());
             });
             logger.info("Create card list with size={}.", cards.size());
-            Dashboard dashboard = new DashboardImpl(String.valueOf(dashboardEntity.getNumber()), dashboardEntity.getName(), cards, dashboardPathname);
+            Dashboard dashboard = new DashboardImpl(dashboardEntity, dashboardEntity.getName(), cards, dashboardPathname);
             dashboards.add(dashboard);
             logger.info("Dashboard={} has been created and added to dashboard list.", dashboard.getName());
         });

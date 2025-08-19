@@ -74,7 +74,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.boot.CommandLineRunner;
-import ru.maxeltr.homeMq2t.Config.S;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 
 /**
  *
@@ -128,7 +128,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     private boolean autoConnect;
 
     @Autowired
-    private S appProperties;
+    private AppProperties appProperties;
 
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 

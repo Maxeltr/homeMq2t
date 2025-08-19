@@ -1,0 +1,68 @@
+<div class="card text-center text-white bg-secondary shadow-sm" id="settingsCommand">
+    <div class="card-body">
+        <h5 class="card-title"></h5>
+        <form id="cardSettingsForm">
+            <input type="hidden" id="settingsCommand-id" name="ID" value="">
+            <div class="mb-3">
+                <label for="settingsCommand-name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="settingsCommand-name" name="NAME" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsCommand-subscriptionTopic" class="form-label">Subscription Topic</label>
+                <input type="text" class="form-control" id="settingsCommand-subscriptionTopic" name="subscriptionTopic" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsCommand-subscriptionQos" class="form-label">Subscription QoS</label>
+                <select class="form-select" id="settingsCommand-subscriptionQos" name="subscriptionQos">
+                    <option value="AT_MOST_ONCE" selected>AT_MOST_ONCE</option>
+                    <option value="AT_LEAST_ONCE">AT_LEAST_ONCE</option>
+                    <option value="EXACTLY_ONCE">EXACTLY_ONCE</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsCommand-subscriptionDataName" class="form-label">Subscription Data Name</label>
+                <input type="text" class="form-control" id="settingsCommand-subscriptionDataName" name="subscriptionDataName" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsCommand-publicationTopic" class="form-label">Publication Topic</label>
+                <input type="text" class="form-control" id="settingsCommand-publicationTopic" name="publicationTopic" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsCommand-publicationQos" class="form-label">Publication QoS</label>
+                <select class="form-select" id="settingsCommand-publicationQos" name="publicationQos">
+                    <option value="AT_MOST_ONCE" selected>AT_MOST_ONCE</option>
+                    <option value="AT_LEAST_ONCE">AT_LEAST_ONCE</option>
+                    <option value="EXACTLY_ONCE">EXACTLY_ONCE</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsCommand-publicationRetain" class="form-label">Publication Retain</label>
+                <select class="form-select" id="settingsCommand-publicationRetain" name="publicationRetain">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsCommand-publicationDataType" class="form-label">Publication Data Type</label>
+                <select class="form-select" id="settingsCommand-publicationDataType" name="publicationDataType">	
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsCommand-localTaskPath" class="form-label">Path</label>
+                <input type="text" class="form-control" id="settingsCommand-path" name="path" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsCommand-arguments" class="form-label">Arguments</label>
+                <input type="text" class="form-control" id="settingsCommand-arguments" name="arguments" value="">
+            </div>
+            <input type="hidden" id="settingsCommand-number" name="number" value="">
+            <div class="d-flex align-items-center">
+                <button type="button" class="btn btn-danger" id="deleteCommand" value="">Delete</button>
+                <div class="ms-auto">
+                    <button type="submit" class="btn btn-secondary me-2" id="cancel" value="">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveCommand" value="">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

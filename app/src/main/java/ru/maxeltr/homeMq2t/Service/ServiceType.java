@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import ru.maxeltr.homeMq2t.Config.S;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.ComponentPropertiesProvider;
@@ -41,14 +41,14 @@ public enum ServiceType {
     COMMAND("command", CommandPropertiesProvider::getCommandNumbersByTopic, ServiceMediator::execute),
     COMPONENT("component", ComponentPropertiesProvider::getComponentNumbersByTopic, ServiceMediator::process);
 
-    private final BiFunction<S, String, List<String>> getNumbers;
+    private final BiFunction<AppProperties, String, List<String>> getNumbers;
 
     private final TriConsumer<ServiceMediator, Msg, String> action;
 
     private final String name;
 
 
-    ServiceType(String name, BiFunction<S, String, List<String>> getNumbers, TriConsumer<ServiceMediator, Msg, String> action) {
+    ServiceType(String name, BiFunction<AppProperties, String, List<String>> getNumbers, TriConsumer<ServiceMediator, Msg, String> action) {
         this.name = name;
         this.getNumbers = getNumbers;
         this.action = action;
@@ -66,7 +66,7 @@ public enum ServiceType {
         action.accept(serviceMediator, msg, number);
     }
 
-    public List<String> getNumbers(S props, String topic) {
+    public List<String> getNumbers(AppProperties props, String topic) {
         return getNumbers.apply(props, topic);
     }
 
