@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
+import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -45,8 +46,8 @@ public class PublishManagerImpl implements PublishManager {
     private ServiceMediator mediator;
 
     @Autowired
-    @Qualifier("getUIPropertiesProvider")
-    private UIPropertiesProvider appProperties;
+    @Qualifier("getCardPropertiesProvider")
+    private CardPropertiesProvider appProperties;
 
     @Override
     public void publish(Msg msg) {

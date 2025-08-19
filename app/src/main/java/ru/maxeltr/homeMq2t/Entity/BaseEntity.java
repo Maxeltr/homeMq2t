@@ -21,30 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service.UI;
+package ru.maxeltr.homeMq2t.Entity;
 
-import ru.maxeltr.homeMq2t.Model.Msg;
+public abstract class BaseEntity {
 
-public interface DashboardItemManager {
+    public abstract String getName();
 
-    public Msg getDashboard(Msg msg);
-
-    public Msg getCardSettings(Msg msg);
-
-    public Msg getCommandSettings(Msg msg);
-
-    public Msg getCommands();
-
-    public void saveCardSettings(Msg msg);
-
-    public void deleteCard(Msg msg);
-
-//    public Msg getCommandSettings(Msg msg);
-//
-//    public void saveCommandSettings(Msg msg);
-//
-//    public Msg getComponentSettings(Msg msg);
-//
-//    public void saveComponentSettings(Msg msg);
-
+    public abstract Integer getNumber();
 }

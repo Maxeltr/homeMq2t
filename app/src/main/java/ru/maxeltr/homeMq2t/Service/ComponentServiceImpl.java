@@ -42,7 +42,7 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
-import ru.maxeltr.homeMq2t.Config.S;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.mq2tLib.Mq2tComponent;
@@ -99,7 +99,7 @@ public class ComponentServiceImpl implements ComponentService {
      * The application properties used fpr configuration.
      */
     @Autowired
-    private S appProperties;
+    private AppProperties appProperties;
 
     /**
      * This property holds an instance of ThreadPoolTaskScheduler used to

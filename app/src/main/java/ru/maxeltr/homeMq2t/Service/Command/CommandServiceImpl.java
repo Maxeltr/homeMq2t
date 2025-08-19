@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
-import ru.maxeltr.homeMq2t.Config.S;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import org.apache.commons.lang3.StringUtils;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -43,7 +43,7 @@ public class CommandServiceImpl implements CommandService {
     private ServiceMediator mediator;
 
     @Autowired
-    private S appProperties;
+    private AppProperties appProperties;
 
     @Autowired
     private CommandParser commandParser;

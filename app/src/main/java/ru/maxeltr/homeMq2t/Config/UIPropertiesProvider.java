@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Optional;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
-import ru.maxeltr.homeMq2t.Model.CardModel;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
@@ -67,11 +67,11 @@ public interface UIPropertiesProvider {
 
     public void deleteCard(String id);
 
-    public Optional<CardModel> getCardSettings(String number);
+    public Optional<ViewModel> getCardSettings(String number);
 
     public Optional<Dashboard> getStartDashboard();
 
-    public Optional<CardModel> getEmptyCardSettings();
+    public Optional<ViewModel> getEmptyCardSettings();
 
     /**
      * Retrieves the card number associated with the specified name.

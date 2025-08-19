@@ -36,10 +36,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
+import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
-import ru.maxeltr.homeMq2t.Model.CardModel;
+import ru.maxeltr.homeMq2t.Model.Dashboard;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.Status;
 
@@ -48,8 +51,12 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
     private static final Logger logger = LoggerFactory.getLogger(DashboardItemManagerImpl.class);
 
     @Autowired
-    @Qualifier("getUIPropertiesProvider")
-    private UIPropertiesProvider appProperties;
+    @Qualifier("getCardPropertiesProvider")
+    private CardPropertiesProvider cardProperties;
+
+    @Autowired
+    @Qualifier("getCommandPropertiesProvider")
+    private CommandPropertiesProvider commandProperties;
 
     @Autowired
     private UIJsonFormatter jsonFormatter;
@@ -62,45 +69,67 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
     }
 
     @Override
-    public Msg getCardSettings(Msg msg) {
-        Optional<CardModel> cardSettingsOpt;
+    public Msg getDashboard(Msg msg) {
+        Optional<ViewModel> dashboardOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
-            cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
+            dashboardOpt = this.cardProperties.getDashboard(msg.getId());
         } else {
-            cardSettingsOpt = this.appProperties.getEmptyCardSettings();
-            logger.debug("New card was created. Card={}", cardSettingsOpt.get());
+            dashboardOpt = this.cardProperties.getStartDashboard();
         }
 
         return msg.toBuilder()
-                .data(createJson(cardSettingsOpt))
+                .data(createJson(dashboardOpt, "onDisplayDashboard"))
                 .type(MediaType.APPLICATION_JSON_VALUE)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .build();
     }
 
     @Override
-    public Msg getCommandSettings(Msg msg) {
-        Optional<CardModel> cardSettingsOpt;
+    public Msg getCardSettings(Msg msg) {
+        Optional<ViewModel> cardSettingsOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
-            cardSettingsOpt = this.appProperties.getCardSettings(msg.getId());
+            cardSettingsOpt = this.cardProperties.getCardSettings(msg.getId());
         } else {
-            cardSettingsOpt = this.appProperties.getEmptyCardSettings();
+            cardSettingsOpt = this.cardProperties.getEmptyCardSettings();
             logger.debug("New card was created. Card={}", cardSettingsOpt.get());
         }
 
         return msg.toBuilder()
+                .data(createJson(cardSettingsOpt, "onEditCardSettings"))
                 .type(MediaType.APPLICATION_JSON_VALUE)
-                .data(createJson(cardSettingsOpt))
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .build();
     }
 
-    private String createJson(Optional<CardModel> modelOpt) {
-        if (modelOpt.isPresent()) {
-            return this.jsonFormatter.createJson(modelOpt.get().getHtml(), "onEditCardSettings", Status.OK);
+    @Override
+    public Msg getCommands() {
+        Optional<ViewModel> commandSettingsOpt = this.commandProperties.getCommands();
+
+    }
+
+    @Override
+    public Msg getCommandSettings(Msg msg) {
+        Optional<ViewModel> commanddSettingsOpt;
+        if (StringUtils.isNotBlank(msg.getId())) {
+            commanddSettingsOpt = this.commandProperties.getCommandSettings(msg.getId());
+        } else {
+            commanddSettingsOpt = this.commandProperties.getEmptyCommandSettings();
+            logger.debug("New command was created. Command={}", commanddSettingsOpt.get());
         }
 
-        return this.jsonFormatter.createJson("", "onEditCardSettings", Status.FAIL);
+        return msg.toBuilder()
+                .type(MediaType.APPLICATION_JSON_VALUE)
+                .data(createJson(commanddSettingsOpt, "onEditCommandSettings"))
+                .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                .build();
+    }
+
+    private String createJson(Optional<ViewModel> modelOpt, String name) {
+        if (modelOpt.isPresent()) {
+            return this.jsonFormatter.createJson(modelOpt.get().getHtml(), name, Status.OK);
+        }
+
+        return this.jsonFormatter.createJson("", name, Status.FAIL);
     }
 
     @Override
@@ -110,10 +139,10 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
 
         try {
             root = mapper.readTree(msg.getData());
-            DashboardEntity dashboardEntity = appProperties.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
+            DashboardEntity dashboardEntity = cardProperties.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
             cardEntity = mapper.readValue(msg.getData(), CardEntity.class);
             cardEntity.setDashboard(dashboardEntity);
-            var entity = this.appProperties.saveCardEntity(cardEntity);
+            var entity = this.cardProperties.saveCardEntity(cardEntity);
             logger.debug("Saved card settings {}.", entity);
         } catch (JsonProcessingException | NoSuchElementException ex) {
             logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
@@ -128,7 +157,7 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
         try {
             root = mapper.readTree(msg.getData());
             String id = root.path("ID").asText();
-            this.appProperties.deleteCard(id);
+            this.cardProperties.deleteCard(id);
             logger.debug("Deletetd card {}.", msg);
         } catch (JsonProcessingException | NoSuchElementException ex) {
             logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());

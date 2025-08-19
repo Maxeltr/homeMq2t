@@ -37,11 +37,11 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "dashboard_settings")
-public class DashboardEntity {
+public class DashboardEntity<T extends BaseEntity> extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     private String name;
     @Column(name = "number", insertable = false)
@@ -49,16 +49,17 @@ public class DashboardEntity {
 
     @JsonManagedReference
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.LAZY)
-    private List<CardEntity> cards;
+    private List<T> cards;
 
-    public long getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -67,19 +68,20 @@ public class DashboardEntity {
         this.name = name;
     }
 
-    public int getNumber() {
+    @Override
+    public Integer getNumber() {
         return number;
     }
 
-    public void setNumber(int number) {
+    public void setNumber(Integer number) {
         this.number = number;
     }
 
-    public List<CardEntity> getCards() {
+    public List<T> getCards() {
         return cards;
     }
 
-    public void setCards(List<CardEntity> cards) {
+    public void setCards(List<T> cards) {
         this.cards = cards;
     }
 
@@ -87,7 +89,7 @@ public class DashboardEntity {
     public String toString() {
         String cardNames = (cards != null)
                 ? cards.stream()
-                        .map(CardEntity::getName)
+                        .map(BaseEntity::getName)
                         .collect(Collectors.joining(", "))
                 : "[]";
 

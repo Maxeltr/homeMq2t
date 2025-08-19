@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2025 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,46 +23,47 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
+import java.util.List;
 import java.util.Objects;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class CardImpl extends ViewModel<CardEntity> {
+public class CommandListImpl extends ViewModel<CommandEntity> {
 
-    public CardImpl(CardEntity cardEntity, String pathname) {
-        super(cardEntity, pathname);
+    public CommandListImpl(List<CommandEntity> commandEntity, String pathname) {
+        super(commandEntity, pathname);
     }
 
     @Override
     void configureTemplate(Document document) {
-        Element el = document.getElementById("card1");
+        Element el = document.getElementById("command1");
         if (el != null) {
             el.attr("id", this.getNumber());
         }
 
-        el = document.getElementById("editCardSettings");
+        el = document.getElementById("editCommandSettings");
         if (el != null) {
             el.attr("value", this.getNumber());
         }
 
-        el = document.getElementById("card1-payload");
+        el = document.getElementById("command1-payload");
         if (el != null) {
             el.attr("id", this.getNumber() + "-payload");
         }
 
-        el = document.getElementById("card1-save");
+        el = document.getElementById("command1-save");
         if (el != null) {
             el.attr("id", this.getNumber() + "-save");
         }
 
-        el = document.getElementById("card1-timestamp");
+        el = document.getElementById("command1-timestamp");
         if (el != null) {
             el.attr("id", this.getNumber() + "-timestamp");
         }
@@ -72,23 +73,17 @@ public class CardImpl extends ViewModel<CardEntity> {
             el.attr("value", this.getNumber());
         }
 
-        el = document.getElementById("card1-save");
+        el = document.getElementById("command1-save");
         if (el != null) {
             el.attr("id", this.getNumber() + "-save");
         }
 
-        el = document.getElementById("card1-text");
-        if (el != null) {
-            el.text(Objects.requireNonNullElse(this.getEntity().getSubscriptionDataName(), ""));
-            el.attr("id", this.getNumber() + "-text");
-        }
-
-        el = document.getElementById("card1-status");
+        el = document.getElementById("command1-status");
         if (el != null) {
             el.attr("id", this.getNumber() + "-status");
         }
 
-        el = document.select(".card-title").first();
+        el = document.select(".command-title").first();
         if (el != null) {
             el.text(this.getName());
         }

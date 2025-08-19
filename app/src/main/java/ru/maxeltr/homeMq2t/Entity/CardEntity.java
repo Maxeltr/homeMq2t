@@ -36,7 +36,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "card_settings")
-public class CardEntity {
+public class CardEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,6 +74,7 @@ public class CardEntity {
         this.id = id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -186,6 +187,7 @@ public class CardEntity {
         this.localTaskDataType = localTaskDataType;
     }
 
+    @Override
     public Integer getNumber() {
         return number;
     }

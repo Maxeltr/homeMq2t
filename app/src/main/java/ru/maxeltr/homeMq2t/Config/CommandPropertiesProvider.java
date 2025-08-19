@@ -24,12 +24,20 @@
 package ru.maxeltr.homeMq2t.Config;
 
 import java.util.List;
+import java.util.Optional;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 /**
  *
  * @author Dev
  */
 public interface CommandPropertiesProvider {
+
+    public Optional<ViewModel> getCommandSettings(String number);
+
+    public Optional<ViewModel> getEmptyCommandSettings();
+
+    public Optional<ViewModel> getCommands();
 
     /**
      * Retrieves the list of command numbers associated with a specific

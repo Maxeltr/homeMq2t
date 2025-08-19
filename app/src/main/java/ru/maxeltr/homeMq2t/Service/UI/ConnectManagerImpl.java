@@ -33,11 +33,13 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
+import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Model.Status;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
@@ -59,8 +61,8 @@ public class ConnectManagerImpl implements ConnectManager {
     private UIJsonFormatter jsonFormatter;
 
     @Autowired
-    @Qualifier("getUIPropertiesProvider")
-    private UIPropertiesProvider appProperties;
+    @Qualifier("getCardPropertiesProvider")
+    private CardPropertiesProvider appProperties;
 
     @Override
     public Msg connect() {
@@ -68,7 +70,7 @@ public class ConnectManagerImpl implements ConnectManager {
 
         Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
         authFuture.awaitUninterruptibly(this.connectTimeout);
-        String dashboardHtml = this.appProperties.getStartDashboard().map(Dashboard::getHtml).orElse("");
+        String dashboardHtml = this.appProperties.getStartDashboard().map(ViewModel::getHtml).orElse("");
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
             msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", Status.FAIL));

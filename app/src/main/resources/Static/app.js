@@ -144,20 +144,13 @@ function showData(message, cardNumber) {
                 return;
             }
 
-            if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONCONNECT') {
+            if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
                 showBase64(payload);
-                console.log("Mqtt connection status - ." + payload.status);
-
-            } else if (payload.hasOwnProperty("name") && payload.name.toUpperCase() === 'ONEDITCARDSETTINGS') {
-                showBase64(payload);
-
             } else {
                 setInnerHtml(cardNumber + '-text', payload.name);
                 setInnerHtml(cardNumber + '-status', payload.status);
 
-                if (payload.hasOwnProperty("data")) {
-                    setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>');
-                } else {
+                if (null === setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>')) {	
                     setInnerHtml(cardNumber + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
                     console.log("Error. No property data for card=" + cardNumber);
                 }
