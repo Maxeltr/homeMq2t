@@ -61,7 +61,7 @@ public class DashboardImpl extends ViewModel<DashboardEntity> implements Dashboa
 
 //    private final Document view;
 
-    public DashboardImpl(DashboardEntity dashboardEntity, String name, List<ViewModel> dashboardCards, String pathname) {
+    public DashboardImpl(DashboardEntity dashboardEntity, List<ViewModel> dashboardCards, String pathname) {
         super(dashboardEntity, pathname);
 //        this.dashboardNumber = Objects.requireNonNullElse(dashboardNumber, "");
 //        this.name = Objects.requireNonNullElse(name, "");

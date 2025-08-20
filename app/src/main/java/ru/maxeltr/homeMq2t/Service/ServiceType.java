@@ -26,9 +26,7 @@ package ru.maxeltr.homeMq2t.Service;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
@@ -59,6 +57,9 @@ public enum ServiceType {
     }
 
     public static Optional<ServiceType> fromString(String name) {
+        if (name == null) {
+            return Optional.empty();
+        }
         return Arrays.stream(values()).filter(st -> st.name.equalsIgnoreCase(name)).findFirst();
     }
 
@@ -70,6 +71,7 @@ public enum ServiceType {
         return getNumbers.apply(props, topic);
     }
 
+    @FunctionalInterface
     public interface TriConsumer<T, U, V> {
         void accept(T t, U u, V v);
     }

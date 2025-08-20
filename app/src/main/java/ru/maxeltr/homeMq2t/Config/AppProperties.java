@@ -64,6 +64,8 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
 
     private final static String ERROR_TOPIC = "mq2t/error";
 
+    private final static String COMMAND_LIST_NAME = "Command List";
+
     public final static List<String> MEDIA_TYPES = Arrays.asList(MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE, "image/jpeg;base64");
 
     @Autowired
@@ -119,6 +121,36 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
      */
     public String getStartupTaskPath(String name) {
         return startupTaskRepository.findByName(name).map(StartupTaskEntity::getPath).orElse("");
+    }
+
+    public Optional<Dashboard> getCommandDashboard() {
+        String commandPathname = env.getProperty("command-template-path", "");
+        if (StringUtils.isEmpty(commandPathname)) {
+            logger.warn("No value defined for command template pathname.");
+            return Optional.empty();
+        }
+
+        String dashboardPathname = env.getProperty("dashboard-template-path", "");
+        if (StringUtils.isEmpty(dashboardPathname)) {
+            logger.warn("No value defined for dashboard template pathname.");
+            return Optional.empty();;
+        }
+
+        Optional<DashboardEntity> dashboardEntity = dashboardRepository.findByName(COMMAND_LIST_NAME);
+        if (dashboardEntity.isEmpty()) {
+            return Optional.empty();
+        }
+
+        List<ViewModel> commands = new ArrayList<>();
+        List<CommandEntity> commandEntities = commandRepository.findAll();
+        commandEntities.forEach(commandEntity -> {
+            ViewModel command = new CommandImpl(commandEntity, commandPathname);
+            commands.add(command);
+            logger.debug("Command={} has been created and added to command list. Number={}", command.getName(), command.getNumber());
+        });
+        logger.debug("Create command list with size={}.", commands.size());
+
+        return Optional.of(new DashboardImpl(dashboardEntity, commands, dashboardPathname));
     }
 
     /**
@@ -285,17 +317,17 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
             return Optional.empty();
         }
 
-        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, this.getDashboards(), MEDIA_TYPES));
+        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, this.getAllDashboards(), MEDIA_TYPES));
     }
 
     @Override
     public Optional<ViewModel> getDashboard(String number) {
-        return this.getDashboards().stream().filter(d -> d.getNumber().equalsIgnoreCase(number)).findFirst();
+        return this.getAllDashboards().stream().filter(d -> d.getNumber().equalsIgnoreCase(number)).findFirst();
     }
 
     @Override
     public Optional<ViewModel> getStartDashboard() {
-        return this.getDashboards().stream().findFirst();
+        return this.getAllDashboards().stream().findFirst();
     }
 
     @Override
@@ -327,7 +359,7 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
         cardEntity.setLocalTaskDataType(MediaType.TEXT_PLAIN_VALUE);
         cardEntity.setDashboard(startDashboardEntityOpt.get());
 
-        return Optional.of(new CardSettingsImpl(cardEntity, cardSettingsPathname, this.getDashboards(), MEDIA_TYPES));
+        return Optional.of(new CardSettingsImpl(cardEntity, cardSettingsPathname, this.getAllDashboards(), MEDIA_TYPES));
     }
 
     public Optional<ViewModel> getCommandSettings(String number) {
@@ -345,10 +377,10 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
         return Optional.of(new CommandSettingsImpl(commandEntity.get(), commandSettingsPathname, MEDIA_TYPES));
     }
 
-    public Optional<ViewModel> getCommands() {
-        String commandListPathname = env.getProperty("commandList-template-path", "");
-        if (StringUtils.isEmpty(commandListPathname)) {
-            logger.info("No value defined for command list template pathname.");
+    public Optional<ViewModel> getAllCommands() {
+        String commandPathname = env.getProperty("command-template-path", "");
+        if (StringUtils.isEmpty(commandPathname)) {
+            logger.info("No value defined for command template pathname.");
             return Optional.empty();
         }
 
@@ -357,7 +389,10 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
             return Optional.empty();
         }
 
-        return Optional.of(new CommandListImpl(commandEntities, commandListPathname, MEDIA_TYPES));
+        DashboardEntity dashboardEntity
+
+        return Optional.of(DashboardImpl(dashboardEntity, cards, dashboardPathname));
+
     }
 
     public Optional<ViewModel> getEmptyCommandSettings() {
@@ -671,7 +706,7 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
      * @return a list of dashboards created from configuration. If no dashboards
      * are defined, an empty list is returned.
      */
-    public List<Dashboard> getDashboards() {
+    public List<Dashboard> getAllDashboards() {
         List<Dashboard> dashboards = new ArrayList<>();
 
         String dashboardPathname = env.getProperty("dashboard-template-path", "");
@@ -696,7 +731,7 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
                 logger.info("Card={} has been created and added to card list. Number={}", card.getName(), card.getNumber());
             });
             logger.info("Create card list with size={}.", cards.size());
-            Dashboard dashboard = new DashboardImpl(dashboardEntity, dashboardEntity.getName(), cards, dashboardPathname);
+            Dashboard dashboard = new DashboardImpl(dashboardEntity, cards, dashboardPathname);
             dashboards.add(dashboard);
             logger.info("Dashboard={} has been created and added to dashboard list.", dashboard.getName());
         });

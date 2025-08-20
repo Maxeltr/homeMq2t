@@ -45,7 +45,7 @@ public class UIServiceImpl implements UIService {
     private ServiceMediator mediator;
 
     @Autowired
-    @Qualifier("getCardPropertiesProvider")
+    @Qualifier("CardPropertiesProvider")
     private CardPropertiesProvider appProperties;
 
     @Autowired
@@ -55,7 +55,12 @@ public class UIServiceImpl implements UIService {
     private ConnectManager connectManager;
 
     @Autowired
-    private DashboardItemManager dashboardItemManager;
+    @Qualifier("CardManagerImpl")
+    private DashboardItemManager cardManager;
+
+    @Autowired
+    @Qualifier("CommandManagerImpl")
+    private DashboardItemManager commandManager;
 
     @Autowired
     private PublishManager publishManager;
@@ -87,42 +92,42 @@ public class UIServiceImpl implements UIService {
 
     public void displayDashboard(Msg msg) {
         logger.debug("Do display dashboard {}.", msg);
-        this.display(this.dashboardItemManager.getDashboard(msg), "");
+        this.display(this.cardManager.getItemsByDashboard(msg), "");
     }
 
     public void displayStartDashboard(Msg msg) {
         logger.debug("Do display start dashboard {}.", msg);
-        this.display(this.dashboardItemManager.getDashboard(msg.toBuilder().id("").build()), "");
+        this.display(this.cardManager.getItemsByDashboard(msg.toBuilder().id("").build()), "");
     }
 
-    public void displayCommands(Msg msg) {
+    public void displayCommandDashboard(Msg msg) {
         logger.debug("Do display command list {}.", msg);
-        this.display(this.dashboardItemManager.getCommands(msg), "");
+        this.display(this.commandManager.getItemsByDashboard(msg), "");
     }
 
     @Override
     public void displayCardSettings(Msg msg) {
         logger.debug("Do edit card settings {}.", msg);
-        this.display(this.dashboardItemManager.getCardSettings(msg), "");
+        this.display(this.cardManager.getItemSettings(msg), "");
     }
 
     @Override
     public void displayCommandSettings(Msg msg) {
         logger.debug("Do edit command settings {}.", msg);
-        this.display(this.dashboardItemManager.getCommandSettings(msg), "");
+        this.display(this.commandManager.getItemSettings(msg), "");
     }
 
     @Override
     public void saveCardSettings(Msg msg) {
         logger.debug("Do save settings {}.", msg.getData());
-        this.dashboardItemManager.saveCardSettings(msg);
+        this.cardManager.saveItemSettings(msg);
 
     }
 
     @Override
     public void deleteCard(Msg msg) {
         logger.debug("Do delete card {}.", msg.getData());
-        this.dashboardItemManager.deleteCard(msg);
+        this.cardManager.deleteItem(msg);
 
     }
 

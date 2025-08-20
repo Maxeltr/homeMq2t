@@ -37,7 +37,7 @@ public interface CommandPropertiesProvider {
 
     public Optional<ViewModel> getEmptyCommandSettings();
 
-    public Optional<ViewModel> getCommands();
+    public Optional<ViewModel> getAllCommands();
 
     /**
      * Retrieves the list of command numbers associated with a specific
