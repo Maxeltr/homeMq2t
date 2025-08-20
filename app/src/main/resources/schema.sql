@@ -101,6 +101,12 @@ WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings);
 VALUES
   ('Start dashboard');
 
+INSERT INTO dashboard_settings (name)
+SELECT 'Command List'
+WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings);
+VALUES
+  ('Command List');
+  
 -- INSERT INTO card_settings (
 --     name,
 --     subscription_topic,

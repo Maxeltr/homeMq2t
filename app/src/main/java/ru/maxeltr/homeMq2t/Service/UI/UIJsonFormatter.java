@@ -23,7 +23,9 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import java.util.Optional;
 import ru.maxeltr.homeMq2t.Model.Status;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 /**
  *
@@ -62,5 +64,7 @@ public interface UIJsonFormatter {
     public String createJson(String data, String event, Status status);
 
     public String createJson(String msg, String jsonPathExpression);
+
+    public <T extends ViewModel> String createJson(Optional<T> modelOpt, String name);
 
 }

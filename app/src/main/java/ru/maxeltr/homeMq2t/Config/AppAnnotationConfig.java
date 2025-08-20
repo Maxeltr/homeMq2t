@@ -75,10 +75,11 @@ import ru.maxeltr.homeMq2t.Service.Command.ReplySenderImpl;
 import ru.maxeltr.homeMq2t.Service.UI.ConnectManager;
 import ru.maxeltr.homeMq2t.Service.UI.ConnectManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.DashboardItemManager;
-import ru.maxeltr.homeMq2t.Service.UI.DashboardItemManagerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.CardManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizer;
 import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.Base64HtmlJsonFormatterImpl;
+import ru.maxeltr.homeMq2t.Service.UI.CommandManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManager;
 import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.PublishManager;
@@ -255,8 +256,13 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public DashboardItemManager getDashboardItemManager() {
-        return new DashboardItemManagerImpl();
+    public CardManagerImpl getCardManager() {
+        return new CardManagerImpl();
+    }
+
+    @Bean
+    public CommandManagerImpl getCommandManager() {
+        return new CommandManagerImpl();
     }
 
     @Bean

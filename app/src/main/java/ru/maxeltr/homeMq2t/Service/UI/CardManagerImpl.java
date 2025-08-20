@@ -37,39 +37,31 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
-import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
-import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
-import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Model.Status;
 
-public class DashboardItemManagerImpl implements DashboardItemManager {
+public class CardManagerImpl implements DashboardItemManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(DashboardItemManagerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(CardManagerImpl.class);
 
     @Autowired
     @Qualifier("getCardPropertiesProvider")
     private CardPropertiesProvider cardProperties;
 
     @Autowired
-    @Qualifier("getCommandPropertiesProvider")
-    private CommandPropertiesProvider commandProperties;
-
-    @Autowired
     private UIJsonFormatter jsonFormatter;
 
     private final ObjectMapper mapper;
 
-    public DashboardItemManagerImpl() {
+    public CardManagerImpl() {
         this.mapper = new ObjectMapper();
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
     @Override
-    public Msg getDashboard(Msg msg) {
+    public Msg getItemsByDashboard(Msg msg) {
         Optional<ViewModel> dashboardOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
             dashboardOpt = this.cardProperties.getDashboard(msg.getId());
@@ -78,62 +70,31 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
         }
 
         return msg.toBuilder()
-                .data(createJson(dashboardOpt, "onDisplayDashboard"))
+                .data(this.jsonFormatter.createJson(dashboardOpt, "onDisplayDashboard"))
                 .type(MediaType.APPLICATION_JSON_VALUE)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .build();
     }
 
     @Override
-    public Msg getCardSettings(Msg msg) {
+    public Msg getItemSettings(Msg msg) {
         Optional<ViewModel> cardSettingsOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
             cardSettingsOpt = this.cardProperties.getCardSettings(msg.getId());
         } else {
             cardSettingsOpt = this.cardProperties.getEmptyCardSettings();
-            logger.debug("New card was created. Card={}", cardSettingsOpt.get());
+            //logger.debug("New card was created. Card={}", cardSettingsOpt.orElse(""));
         }
 
         return msg.toBuilder()
-                .data(createJson(cardSettingsOpt, "onEditCardSettings"))
+                .data(this.jsonFormatter.createJson(cardSettingsOpt, "onEditCardSettings"))
                 .type(MediaType.APPLICATION_JSON_VALUE)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .build();
     }
 
     @Override
-    public Msg getCommands() {
-        Optional<ViewModel> commandSettingsOpt = this.commandProperties.getCommands();
-
-    }
-
-    @Override
-    public Msg getCommandSettings(Msg msg) {
-        Optional<ViewModel> commanddSettingsOpt;
-        if (StringUtils.isNotBlank(msg.getId())) {
-            commanddSettingsOpt = this.commandProperties.getCommandSettings(msg.getId());
-        } else {
-            commanddSettingsOpt = this.commandProperties.getEmptyCommandSettings();
-            logger.debug("New command was created. Command={}", commanddSettingsOpt.get());
-        }
-
-        return msg.toBuilder()
-                .type(MediaType.APPLICATION_JSON_VALUE)
-                .data(createJson(commanddSettingsOpt, "onEditCommandSettings"))
-                .timestamp(String.valueOf(Instant.now().toEpochMilli()))
-                .build();
-    }
-
-    private String createJson(Optional<ViewModel> modelOpt, String name) {
-        if (modelOpt.isPresent()) {
-            return this.jsonFormatter.createJson(modelOpt.get().getHtml(), name, Status.OK);
-        }
-
-        return this.jsonFormatter.createJson("", name, Status.FAIL);
-    }
-
-    @Override
-    public void saveCardSettings(Msg msg) {
+    public void saveItemSettings(Msg msg) {
         CardEntity cardEntity;
         JsonNode root;
 
@@ -151,7 +112,7 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
     }
 
     @Override
-    public void deleteCard(Msg msg) {
+    public void deleteItem(Msg msg) {
         JsonNode root;
 
         try {
@@ -163,6 +124,16 @@ public class DashboardItemManagerImpl implements DashboardItemManager {
             logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
 
         }
+    }
+
+    @Override
+    public Msg getItem(Msg msg) {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public void saveItem(Msg msg) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
 }

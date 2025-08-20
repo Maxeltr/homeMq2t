@@ -29,11 +29,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Model.Status;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 public class Base64HtmlJsonFormatterImpl implements UIJsonFormatter {
 
@@ -44,11 +46,11 @@ public class Base64HtmlJsonFormatterImpl implements UIJsonFormatter {
 
     private static final String MEDIA_TYPE_BASE64_HTML = "text/html;base64";
 
-    private static final String ERROR_CAPTION = "<div style=\"color:red;\">There was an error while loading the dashboard. Please check the logs for more details.</div>";	//add
+    private static final String ERROR_CAPTION = "<div style=\"color:red;\">There was an error while loading the dashboard. Please check the logs for more details.</div>";
 
-    private static final String UNKNOWN_STATUS_CAPTION = "<div style=\"color:red;\">The last action completed with an undefined status. Please check the logs for more details.</div>";		//add
+    private static final String UNKNOWN_STATUS_CAPTION = "<div style=\"color:red;\">The last action completed with an undefined status. Please check the logs for more details.</div>";
 
-    private static final String ERROR_JSON_PROCESSING = "{\"name\": \"\", \"status\": \"fail\", \"type\": \"" + MediaType.TEXT_PLAIN_VALUE + "\", \"data\": \"Could not serialize json.\"}";	//add
+    private static final String ERROR_JSON_PROCESSING = "{\"name\": \"\", \"status\": \"fail\", \"type\": \"" + MediaType.TEXT_PLAIN_VALUE + "\", \"data\": \"Could not serialize json.\"}";
 
     /**
      * Construct a Json-romatted response string containing the given HTML,
@@ -101,6 +103,14 @@ public class Base64HtmlJsonFormatterImpl implements UIJsonFormatter {
         String status = this.parseJson(msg, "status");
 
         return buildJson(dataName, status, MediaType.TEXT_PLAIN_VALUE, parsedValue);
+    }
+
+    public <T extends ViewModel> String createJson(Optional<T> modelOpt, String name) {
+        if (modelOpt.isPresent()) {
+            return this.createJson(modelOpt.get().getHtml(), name, Status.OK);
+        }
+
+        return this.createJson("", name, Status.FAIL);
     }
 
     private String buildJson(String name, String status, String type, String data) {
