@@ -42,31 +42,43 @@ import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
-public class CardManagerImpl implements DashboardItemManager {
+public class DashboardItemCardManagerImpl implements DashboardItemManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(CardManagerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(DashboardItemCardManagerImpl.class);
 
     @Autowired
     @Qualifier("getCardPropertiesProvider")
-    private CardPropertiesProvider cardProperties;
+    private CardPropertiesProvider propertiesProvider;
 
     @Autowired
     private UIJsonFormatter jsonFormatter;
 
     private final ObjectMapper mapper;
 
-    public CardManagerImpl() {
+    public DashboardItemCardManagerImpl() {
         this.mapper = new ObjectMapper();
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
+    /**
+     * Retrieve items for a dashboard and return a message whose data contains
+     * the JSON representation of the dashboard view model. If msg.getId() is
+     * not blank, the dashboard with that id(number) is requested from property
+     * provider. Otherwise the configured start dashboard is used.
+     *
+     * @param Msg incoming message containing optional dashboard number
+     * @return a new Msg built from the incoming with JSON payload, type set to
+     * APPLICATION/JSON and an updated timestamp. Json payload contains the
+     * event name, status, content type and Base64-encoded HTML with optional
+     * error or unknown status prefix
+     */
     @Override
     public Msg getItemsByDashboard(Msg msg) {
         Optional<ViewModel> dashboardOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
-            dashboardOpt = this.cardProperties.getDashboard(msg.getId());
+            dashboardOpt = this.propertiesProvider.getDashboard(msg.getId());
         } else {
-            dashboardOpt = this.cardProperties.getStartDashboard();
+            dashboardOpt = this.propertiesProvider.getStartDashboard();
         }
 
         return msg.toBuilder()
@@ -76,14 +88,26 @@ public class CardManagerImpl implements DashboardItemManager {
                 .build();
     }
 
+    /**
+     * Retrive settings for single card and return a Msg whose data contains the
+     * JSON representation of the card settings view model.
+     *
+     * If msg.getId() is not blank, settings for that card id are requested
+     * otherwise an empty/new card settings model is returned.
+     *
+     * @param Msg incoming message containing optional card id
+     * @return a new Msg built from incoming message with JSON payload, type set
+     * to APPLICATION/JSON and an updated timestamp. Json payload contains the
+     * event name, status, content type and Base64-encoded HTML with optional
+     * error or unknown status prefix
+     */
     @Override
     public Msg getItemSettings(Msg msg) {
         Optional<ViewModel> cardSettingsOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
-            cardSettingsOpt = this.cardProperties.getCardSettings(msg.getId());
+            cardSettingsOpt = this.propertiesProvider.getCardSettings(msg.getId());
         } else {
-            cardSettingsOpt = this.cardProperties.getEmptyCardSettings();
-            //logger.debug("New card was created. Card={}", cardSettingsOpt.orElse(""));
+            cardSettingsOpt = this.propertiesProvider.getEmptyCardSettings();
         }
 
         return msg.toBuilder()
@@ -93,6 +117,14 @@ public class CardManagerImpl implements DashboardItemManager {
                 .build();
     }
 
+    /**
+     * Parse JSON payload from msg, resolve the referenced dashboard entity, map
+     * the payload to CardEntity, associate it with the resolved DashboardEntity
+     * and persist the card entity via property provider.
+     *
+     * @param Msg incoming message whose data contains JSON representing
+     * CardEntity.
+     */
     @Override
     public void saveItemSettings(Msg msg) {
         CardEntity cardEntity;
@@ -100,27 +132,33 @@ public class CardManagerImpl implements DashboardItemManager {
 
         try {
             root = mapper.readTree(msg.getData());
-            DashboardEntity dashboardEntity = cardProperties.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
+            DashboardEntity dashboardEntity = propertiesProvider.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
             cardEntity = mapper.readValue(msg.getData(), CardEntity.class);
             cardEntity.setDashboard(dashboardEntity);
-            var entity = this.cardProperties.saveCardEntity(cardEntity);
+            var entity = this.propertiesProvider.saveCardEntity(cardEntity);
             logger.debug("Saved card settings {}.", entity);
-        } catch (JsonProcessingException | NoSuchElementException ex) {
+        } catch (JsonProcessingException ex) {
             logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
-
+        } catch (NoSuchElementException ex) {
+            logger.warn("Could not find entity for id={}. {}", msg.getId(), ex.getMessage());
         }
     }
 
+    /**
+     * Parse the JSON payload from Msg and delete the referenced card.
+     *
+     * @param Msg incoming message whose data contains a JSON with an ID field.
+     */
     @Override
     public void deleteItem(Msg msg) {
         JsonNode root;
 
         try {
             root = mapper.readTree(msg.getData());
-            String id = root.path("ID").asText();
-            this.cardProperties.deleteCard(id);
+            String id = root.path(CardEntity.JSON_FIELD_ID).asText();
+            this.propertiesProvider.deleteCard(id);
             logger.debug("Deletetd card {}.", msg);
-        } catch (JsonProcessingException | NoSuchElementException ex) {
+        } catch (JsonProcessingException ex) {
             logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
 
         }
@@ -128,11 +166,6 @@ public class CardManagerImpl implements DashboardItemManager {
 
     @Override
     public Msg getItem(Msg msg) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public void saveItem(Msg msg) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 

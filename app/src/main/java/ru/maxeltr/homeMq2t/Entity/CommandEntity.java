@@ -34,6 +34,8 @@ import jakarta.persistence.Table;
 @Table(name = "command_settings")
 public class CommandEntity extends BaseEntity {
 
+    public static final String JSON_FIELD_ID = "ID";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;

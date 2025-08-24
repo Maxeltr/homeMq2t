@@ -54,6 +54,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
+import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.ComponentPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
@@ -91,6 +94,15 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
     @Autowired
     private AppProperties appProperties;
+
+    @Autowired
+    private CardPropertiesProvider cardPropertiesProvider;
+
+    @Autowired
+    private CommandPropertiesProvider commandPropertiesProvider;
+
+    @Autowired
+    private ComponentPropertiesProvider componentPropertiesProvider;
 
     @Value("${wait-disconnect-while-shutdown:1000}")
     private int waitDisconnect;
@@ -175,48 +187,31 @@ public class ServiceMediatorImpl implements ServiceMediator {
             logger.debug("Convert mqttMessage to Msg. {}", builder);
         } catch (JsonProcessingException ex) {
             logger.warn("Cannot convert json to Msg. Message id={}. Data was added as plain text. {}", id, ex.getMessage());
-            builder = MsgImpl.newBuilder();
-            builder.data(mqttMessage.payload().toString(StandardCharsets.UTF_8));
-            builder.timestamp("n/a");       //TODO
-            builder.type(MediaType.TEXT_PLAIN_VALUE);   //TODO get type from options by topic
+            builder = MsgImpl.newBuilder()
+                    .data(mqttMessage.payload().toString(StandardCharsets.UTF_8))
+                    .timestamp("n/a") //TODO
+                    .type(MediaType.TEXT_PLAIN_VALUE);   //TODO get type from options by topic
         }
 
         String topicName = (mqttMessage.variableHeader().topicName());
         Msg msg = builder.build();
 
         for (ServiceType type : ServiceType.values()) {
-            List<String> numbers = type.getNumbers(appProperties, topicName);
+            List<String> numbers = switch (type) {
+                case ServiceType.UI ->
+                    cardPropertiesProvider.getCardNumbersByTopic(topicName);
+                case ServiceType.COMMAND ->
+                    commandPropertiesProvider.getCommandNumbersByTopic(topicName);
+                case ServiceType.COMPONENT ->
+                    componentPropertiesProvider.getComponentNumbersByTopic(topicName);
+            };
             for (String number : numbers) {
                 type.dispatch(this, msg, number);
             }
         }
 
-//        dispatchMessageToService(topicName, msg, id, ServiceType.UI, this::display);
-//        dispatchMessageToService(topicName, msg, id, ServiceType.COMMAND, this::execute);
-//        dispatchMessageToService(topicName, msg, id, ServiceType.COMPONENT, this::process);
-
         logger.debug("End handle message id={}.", id);
     }
-
-//    private void dispatchMessageToService(String topicName, Msg msg, int id, ServiceType serviceType, BiConsumer<Msg, String> action) {
-//        List<String> numbers = switch (serviceType) {
-//            case ServiceType.UI ->
-//                this.appProperties.getCardNumbersByTopic(topicName);
-//            case ServiceType.COMMAND ->
-//                this.appProperties.getCommandNumbersByTopic(topicName);
-//            case ServiceType.COMPONENT ->
-//                this.appProperties.getComponentNumbersByTopic(topicName);
-//            default ->
-//                Collections.emptyList();
-//        };
-//
-//        for (String number : numbers) {
-//            if (StringUtils.isNotEmpty(number)) {
-//                action.accept(msg, number);
-//                logger.debug("Message id={} has been passed to {}.", id, serviceType);
-//            }
-//        }
-//    }
 
     @Override
     public Promise<MqttConnAckMessage> connect() {

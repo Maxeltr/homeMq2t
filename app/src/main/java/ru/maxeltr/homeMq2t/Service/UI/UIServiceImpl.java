@@ -101,7 +101,7 @@ public class UIServiceImpl implements UIService {
     }
 
     public void displayCommandDashboard(Msg msg) {
-        logger.debug("Do display command list {}.", msg);
+        logger.debug("Do display command dashboard {}.", msg);
         this.display(this.commandManager.getItemsByDashboard(msg), "");
     }
 

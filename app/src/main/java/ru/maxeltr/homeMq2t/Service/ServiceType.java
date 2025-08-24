@@ -24,31 +24,21 @@
 package ru.maxeltr.homeMq2t.Service;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
-import java.util.function.BiFunction;
-import ru.maxeltr.homeMq2t.Config.AppProperties;
-import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
-import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
-import ru.maxeltr.homeMq2t.Config.ComponentPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Msg;
 
 public enum ServiceType {
 
-    UI("ui", CardPropertiesProvider::getCardNumbersByTopic, ServiceMediator::display),
-    COMMAND("command", CommandPropertiesProvider::getCommandNumbersByTopic, ServiceMediator::execute),
-    COMPONENT("component", ComponentPropertiesProvider::getComponentNumbersByTopic, ServiceMediator::process);
-
-    private final BiFunction<AppProperties, String, List<String>> getNumbers;
+    UI("ui", ServiceMediator::display),
+    COMMAND("command", ServiceMediator::execute),
+    COMPONENT("component", ServiceMediator::process);
 
     private final TriConsumer<ServiceMediator, Msg, String> action;
 
     private final String name;
 
-
-    ServiceType(String name, BiFunction<AppProperties, String, List<String>> getNumbers, TriConsumer<ServiceMediator, Msg, String> action) {
+    ServiceType(String name, TriConsumer<ServiceMediator, Msg, String> action) {
         this.name = name;
-        this.getNumbers = getNumbers;
         this.action = action;
     }
 
@@ -65,10 +55,6 @@ public enum ServiceType {
 
     public void dispatch(ServiceMediator serviceMediator, Msg msg, String number) {
         action.accept(serviceMediator, msg, number);
-    }
-
-    public List<String> getNumbers(AppProperties props, String topic) {
-        return getNumbers.apply(props, topic);
     }
 
     @FunctionalInterface

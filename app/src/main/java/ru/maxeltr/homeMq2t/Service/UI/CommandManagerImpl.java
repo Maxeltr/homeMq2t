@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
+import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
@@ -39,7 +41,7 @@ public class CommandManagerImpl implements DashboardItemManager {
 
     @Autowired
     @Qualifier("getCommandPropertiesProvider")
-    private CommandPropertiesProvider commandProperties;
+    private CommandPropertiesProvider propertiesProvider;
 
     @Autowired
     private UIJsonFormatter jsonFormatter;
@@ -51,10 +53,15 @@ public class CommandManagerImpl implements DashboardItemManager {
 
     @Override
     public Msg getItemsByDashboard(Msg msg) {
-        Optional<ViewModel> commandSettingsOpt = this.commandProperties.getAllCommands();
+        Optional<ViewModel> dashboardOpt;
+        if (StringUtils.isNotBlank(msg.getId())) {
+            dashboardOpt = this.propertiesProvider.getDashboard(msg.getId());
+        } else {
+            dashboardOpt = this.propertiesProvider.getCommandDashboard();
+        }
 
         return MsgImpl.newBuilder()
-                .data(this.jsonFormatter.createJson(commandSettingsOpt, "onDisplayCommandList"))
+                .data(this.jsonFormatter.createJson(dashboardOpt, "onDisplayCommandList"))
                 .type(MediaType.APPLICATION_JSON_VALUE)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .build();
@@ -64,9 +71,9 @@ public class CommandManagerImpl implements DashboardItemManager {
     public Msg getItemSettings(Msg msg) {
         Optional<ViewModel> commandSettingsOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
-            commandSettingsOpt = this.commandProperties.getCommandSettings(msg.getId());
+            commandSettingsOpt = this.propertiesProvider.getCommandSettings(msg.getId());
         } else {
-            commandSettingsOpt = this.commandProperties.getEmptyCommandSettings();
+            commandSettingsOpt = this.propertiesProvider.getEmptyCommandSettings();
             //logger.debug("New command was created. Command={}", commandSettingsOpt.orElse(""));
         }
 
@@ -79,17 +86,31 @@ public class CommandManagerImpl implements DashboardItemManager {
 
     @Override
     public void saveItemSettings(Msg msg) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        CommandEntity commandEntity;
+        JsonNode root;
+
+        try {
+            root = mapper.readTree(msg.getData());
+            commandEntity = mapper.readValue(msg.getData(), CommandEntity.class);
+            var entity = this.propertiesProvider.saveCommandEntity(commandEntity);
+            logger.debug("Saved command settings {}.", entity);
+        } catch (JsonProcessingException | NoSuchElementException ex) {
+            logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
+        }
     }
 
     @Override
     public void deleteItem(Msg msg) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
-    }
+        JsonNode root;
+        try {
+            root = mapper.readTree(msg.getData());
+            String id = root.path(CommandEntity.JSON_FIELD_ID).asText();
+            this.propertiesProvider.deleteCommand(id);
+            logger.debug("Deletetd command {}.", msg);
+        } catch (JsonProcessingException | NoSuchElementException ex) {
+            logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
 
-    @Override
-    public void saveItem(Msg msg) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        }
     }
 
 }
