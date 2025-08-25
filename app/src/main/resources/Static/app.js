@@ -138,7 +138,7 @@ function showData(message, cardNumber) {
             try {
                 payload = JSON.parse(message.data);
             } catch (SyntaxError) {
-                console.log('Error. Not valid Json. Shows as plain text.');
+                console.error('Error. Not valid Json. Shows as plain text.');
                 setInnerHtml('errors', "<div style=\"color:red;\">Error. Invalid json. Card=" + cardNumber + ".</div>");
                 showPlainText(message, cardNumber);
                 return;
@@ -150,17 +150,17 @@ function showData(message, cardNumber) {
                 setInnerHtml(cardNumber + '-text', payload.name);
                 setInnerHtml(cardNumber + '-status', payload.status);
 
-                if (null === setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>')) {	
+                if (null === setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>')) {
                     setInnerHtml(cardNumber + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
-                    console.log("Error. No property data for card=" + cardNumber);
+                    console.error("Error. No property data for card=" + cardNumber);
                 }
             }
         } else {
-            console.log("Error. Incorrect payload type for card=" + cardNumber + ". Message type is " + message.type);
+            console.error("Error. Incorrect payload type for card=" + cardNumber + ". Message type is " + message.type);
             setInnerHtml('errors', "<div style=\"color:red;\">Error. Incorrect payload type for card=" + cardNumber + ".</div>");
         }
     } else {
-        console.log('Error: message type is undefined');
+        console.error('Error: message type is undefined');
         setInnerHtml('errors', "<div style=\"color:red;\">Error: message type is undefined.</div>");
     }
 }

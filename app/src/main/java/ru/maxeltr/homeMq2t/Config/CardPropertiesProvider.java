@@ -36,11 +36,11 @@ import ru.maxeltr.homeMq2t.Model.ViewModel;
  */
 public interface CardPropertiesProvider {
 
-    public Optional<ViewModel> getDashboard(String number);
+//    public Optional<ViewModel> getDashboard(String number);
 
-    public Optional<ViewModel> getStartDashboard();
+//    public Optional<ViewModel> getStartDashboard();
 
-    public Optional<DashboardEntity> getDashboardEntity(String number);
+//    public Optional<DashboardEntity> getDashboardEntity(String number);
 
     public CardEntity saveCardEntity(CardEntity cardEntity);
 

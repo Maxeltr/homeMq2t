@@ -37,6 +37,4 @@ public interface DashboardItemManager {
 
     public void deleteItem(Msg msg);
 
-    public void saveItem(Msg msg);
-
 }

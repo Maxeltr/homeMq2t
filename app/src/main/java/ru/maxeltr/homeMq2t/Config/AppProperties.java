@@ -713,7 +713,7 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
      *
      * @return a list of Mqtt topic subscriptions.
      */
-    public List<MqttTopicSubscription> getSubscriptions() {
+    public List<MqttTopicSubscription> getAllSubscriptions() {
         List<MqttTopicSubscription> subscriptions = new ArrayList<>();
 
         List<CardEntity> cardEntities = cardRepository.findAll();

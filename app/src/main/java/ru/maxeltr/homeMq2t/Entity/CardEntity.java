@@ -38,9 +38,11 @@ import jakarta.persistence.Table;
 @Table(name = "card_settings")
 public class CardEntity extends BaseEntity {
 
+    public static final String JSON_FIELD_ID = "ID";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonProperty("ID")
+    @JsonProperty(JSON_FIELD_ID)
     private long id;
     @JsonProperty("NAME")
     private String name;
