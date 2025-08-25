@@ -21,14 +21,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service.Command;
+package ru.maxeltr.homeMq2t.Mqtt;
 
-/**
- *
- * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
- */
-public interface ReplySender {
+import io.netty.handler.codec.mqtt.MqttQoS;
 
-    void sendReply(String data, String commandName);
+public class MqttUtils {
 
+    private MqttUtils() {
+
+    }
+
+    /**
+     * Convert the given qos value from string to MqttQos enum instance. If the
+     * qos value is invalid, it defaults to qos level 0.
+     *
+     * @param qosString The qos value as a string. Must not be null.
+     * @return The qos level as a MqttQos enum value.
+     */
+    public static MqttQoS convertToMqttQos(String qosString) {
+        MqttQoS qos;
+        try {
+            qos = MqttQoS.valueOf(qosString);
+        } catch (IllegalArgumentException ex) {
+            qos = MqttQoS.AT_MOST_ONCE;
+        }
+
+        return qos;
+    }
 }

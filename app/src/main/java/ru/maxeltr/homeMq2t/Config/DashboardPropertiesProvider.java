@@ -21,14 +21,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service.Command;
+package ru.maxeltr.homeMq2t.Config;
 
-/**
- *
- * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
- */
-public interface ReplySender {
+import java.util.List;
+import java.util.Optional;
+import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
+import ru.maxeltr.homeMq2t.Model.Dashboard;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 
-    void sendReply(String data, String commandName);
+public interface DashboardPropertiesProvider {
 
+    public Optional<ViewModel<DashboardEntity>> getCommandDashboard();
+
+    public Optional<DashboardEntity> getDashboardEntity(String number);
+
+    public Optional<ViewModel<DashboardEntity>> getDashboard(String number);
+
+    public Optional<ViewModel<DashboardEntity>> getStartDashboard();
+
+    public List<ViewModel<DashboardEntity>> getAllDashboards();
 }

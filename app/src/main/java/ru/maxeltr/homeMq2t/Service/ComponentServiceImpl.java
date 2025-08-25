@@ -470,25 +470,6 @@ public class ComponentServiceImpl implements ComponentService {
         }
     }
 
-    /**
-     * Convert the given qos value from string to MqttQos enum instance. If the
-     * qos value is invalid, it defaults to qos level 0.
-     *
-     * @param qosString The qos value as a string. Must not be null.
-     * @return The qos level as a MqttQos enum value.
-     */
-    private MqttQoS convertToMqttQos(String qosString) {
-        MqttQoS qos;
-        try {
-            qos = MqttQoS.valueOf(qosString);
-        } catch (IllegalArgumentException ex) {
-            logger.warn("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
-            qos = MqttQoS.AT_MOST_ONCE;
-        }
-
-        return qos;
-    }
-
     class PollingTask implements Runnable {
 
         @Override

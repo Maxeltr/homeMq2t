@@ -35,6 +35,7 @@ import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Msg;
+import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 public class PublishManagerImpl implements PublishManager {
@@ -57,7 +58,7 @@ public class PublishManagerImpl implements PublishManager {
             return;
         }
 
-        MqttQoS qos = this.convertToMqttQos(this.appProperties.getCardPubQos(msg.getId()));
+        MqttQoS qos = MqttUtils.convertToMqttQos(this.appProperties.getCardPubQos(msg.getId()));
 
         boolean retain = Boolean.parseBoolean(this.appProperties.getCardPubRetain(msg.getId()));
 
@@ -77,22 +78,4 @@ public class PublishManagerImpl implements PublishManager {
         this.mediator.publish(message.build(), topic, qos, retain);
     }
 
-    /**
-     * Convert the given qos value from string to MqttQos enum instance. If the
-     * qos value is invalid, it defaults to qos level 0.
-     *
-     * @param qosString The qos value as a string. Must not be null.
-     * @return The qos level as a MqttQos enum value.
-     */
-    private MqttQoS convertToMqttQos(String qosString) {
-        MqttQoS qos;
-        try {
-            qos = MqttQoS.valueOf(qosString);
-        } catch (IllegalArgumentException ex) {
-            logger.error("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
-            qos = MqttQoS.AT_MOST_ONCE;
-        }
-
-        return qos;
-    }
 }

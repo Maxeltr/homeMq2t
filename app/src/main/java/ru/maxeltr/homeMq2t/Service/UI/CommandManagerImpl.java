@@ -23,15 +23,19 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.time.Instant;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.DashboardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Entity.CommandEntity;
+import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
@@ -44,6 +48,10 @@ public class CommandManagerImpl implements DashboardItemManager {
     private CommandPropertiesProvider propertiesProvider;
 
     @Autowired
+    @Qualifier("getDashboardPropertiesProvider")
+    private DashboardPropertiesProvider dashboardPropertiesProvider;
+
+    @Autowired
     private UIJsonFormatter jsonFormatter;
 
     @Override
@@ -53,11 +61,11 @@ public class CommandManagerImpl implements DashboardItemManager {
 
     @Override
     public Msg getItemsByDashboard(Msg msg) {
-        Optional<ViewModel> dashboardOpt;
+        Optional<ViewModel<DashboardEntity>> dashboardOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
-            dashboardOpt = this.propertiesProvider.getDashboard(msg.getId());
+            dashboardOpt = this.dashboardPropertiesProvider.getDashboard(msg.getId());
         } else {
-            dashboardOpt = this.propertiesProvider.getCommandDashboard();
+            dashboardOpt = this.dashboardPropertiesProvider.getCommandDashboard();
         }
 
         return MsgImpl.newBuilder()

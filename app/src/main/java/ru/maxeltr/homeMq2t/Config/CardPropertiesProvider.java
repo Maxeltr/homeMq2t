@@ -36,6 +36,10 @@ import ru.maxeltr.homeMq2t.Model.ViewModel;
  */
 public interface CardPropertiesProvider {
 
+    public final static String CARD_TEMPLATE_PATH = "card-template-path";
+
+    public final static String CARD_SETTINGS_TEMPLATE_PATH = "card-settings-template-path";
+
 //    public Optional<ViewModel> getDashboard(String number);
 
 //    public Optional<ViewModel> getStartDashboard();
