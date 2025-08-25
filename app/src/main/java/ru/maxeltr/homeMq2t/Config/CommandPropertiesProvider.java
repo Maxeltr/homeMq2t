@@ -33,6 +33,10 @@ import ru.maxeltr.homeMq2t.Model.ViewModel;
  */
 public interface CommandPropertiesProvider {
 
+    public final static String COMMAND_TEMPLATE_PATH = "command-template-path";
+
+    public final static String COMMAND_SETTINGS_TEMPLATE_PATH = "command-settings-template-path";
+
     public Optional<ViewModel> getCommandSettings(String number);
 
     public Optional<ViewModel> getEmptyCommandSettings();

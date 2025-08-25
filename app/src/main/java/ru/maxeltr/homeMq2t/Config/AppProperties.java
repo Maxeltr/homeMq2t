@@ -64,7 +64,7 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
 
     private final static String ERROR_TOPIC = "mq2t/error";
 
-    private final static String COMMAND_LIST_NAME = "Command List";
+    public final static String COMMAND_LIST_NAME = "Command List";
 
     public final static List<String> MEDIA_TYPES = Arrays.asList(MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE, "image/jpeg;base64");
 
@@ -264,15 +264,6 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
         return cardNumbers;
     }
 
-    private Optional<Integer> safeParseInt(String number) {
-        try {
-            return Optional.ofNullable(number).filter(StringUtils::isNotBlank).map(Integer::valueOf);
-
-        } catch (NumberFormatException e) {
-            return Optional.empty();
-        }
-    }
-
     /**
      * Retrieves the name of a card based on its number.
      *
@@ -377,34 +368,10 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
         return Optional.of(new CommandSettingsImpl(commandEntity.get(), commandSettingsPathname, MEDIA_TYPES));
     }
 
-    public Optional<ViewModel> getAllCommands() {
-        String commandPathname = env.getProperty("command-template-path", "");
-        if (StringUtils.isEmpty(commandPathname)) {
-            logger.info("No value defined for command template pathname.");
-            return Optional.empty();
-        }
-
-        List<CommandEntity> commandEntities = commandRepository.findAll();
-        if (commandEntities.isEmpty()) {
-            return Optional.empty();
-        }
-
-        DashboardEntity dashboardEntity
-
-        return Optional.of(DashboardImpl(dashboardEntity, cards, dashboardPathname));
-
-    }
-
     public Optional<ViewModel> getEmptyCommandSettings() {
         String commandSettingsPathname = env.getProperty("command-settings-template-path", "");
         if (StringUtils.isEmpty(commandSettingsPathname)) {
             logger.error("No value defined for command settings template pathname.");
-            return Optional.empty();
-        }
-
-        Optional<ViewModel> startDashboardOpt = this.getStartDashboard();
-        if (startDashboardOpt == null) {
-            logger.error("No start dashboards found.");
             return Optional.empty();
         }
 
@@ -776,22 +743,4 @@ public class AppProperties implements CardPropertiesProvider, CommandPropertiesP
         return subscriptions;
     }
 
-    /**
-     * Convert the given qos value from string to MqttQos enum instance. If the
-     * qos value is invalid, it defaults to qos level 0.
-     *
-     * @param qosString The qos value as a string. Must not be null.
-     * @return The qos level as a MqttQos enum value.
-     */
-    private MqttQoS convertToMqttQos(String qosString) {		//TODO move to mqtt package as static
-        MqttQoS qos;
-        try {
-            qos = MqttQoS.valueOf(qosString);
-        } catch (IllegalArgumentException ex) {
-            logger.error("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
-            qos = MqttQoS.AT_MOST_ONCE;
-        }
-
-        return qos;
-    }
 }

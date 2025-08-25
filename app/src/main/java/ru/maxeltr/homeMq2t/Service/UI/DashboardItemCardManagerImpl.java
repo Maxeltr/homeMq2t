@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.DashboardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
@@ -49,6 +50,10 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
     @Autowired
     @Qualifier("getCardPropertiesProvider")
     private CardPropertiesProvider propertiesProvider;
+
+    @Autowired
+    @Qualifier("getDashboardPropertiesProvider")
+    private DashboardPropertiesProvider dashboardPropertiesProvider;
 
     @Autowired
     private UIJsonFormatter jsonFormatter;
@@ -66,7 +71,7 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
      * not blank, the dashboard with that id(number) is requested from property
      * provider. Otherwise the configured start dashboard is used.
      *
-     * @param Msg incoming message containing optional dashboard number
+     * @param msg incoming message containing optional dashboard number
      * @return a new Msg built from the incoming with JSON payload, type set to
      * APPLICATION/JSON and an updated timestamp. Json payload contains the
      * event name, status, content type and Base64-encoded HTML with optional
@@ -74,11 +79,11 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
      */
     @Override
     public Msg getItemsByDashboard(Msg msg) {
-        Optional<ViewModel> dashboardOpt;
+        Optional<ViewModel<DashboardEntity>> dashboardOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
-            dashboardOpt = this.propertiesProvider.getDashboard(msg.getId());
+            dashboardOpt = this.dashboardPropertiesProvider.getDashboard(msg.getId());
         } else {
-            dashboardOpt = this.propertiesProvider.getStartDashboard();
+            dashboardOpt = this.dashboardPropertiesProvider.getStartDashboard();
         }
 
         return msg.toBuilder()
@@ -95,7 +100,7 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
      * If msg.getId() is not blank, settings for that card id are requested
      * otherwise an empty/new card settings model is returned.
      *
-     * @param Msg incoming message containing optional card id
+     * @param msg incoming message containing optional card id
      * @return a new Msg built from incoming message with JSON payload, type set
      * to APPLICATION/JSON and an updated timestamp. Json payload contains the
      * event name, status, content type and Base64-encoded HTML with optional
@@ -122,7 +127,7 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
      * the payload to CardEntity, associate it with the resolved DashboardEntity
      * and persist the card entity via property provider.
      *
-     * @param Msg incoming message whose data contains JSON representing
+     * @param msg incoming message whose data contains JSON representing
      * CardEntity.
      */
     @Override
@@ -132,7 +137,7 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
 
         try {
             root = mapper.readTree(msg.getData());
-            DashboardEntity dashboardEntity = propertiesProvider.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
+            DashboardEntity dashboardEntity = dashboardPropertiesProvider.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
             cardEntity = mapper.readValue(msg.getData(), CardEntity.class);
             cardEntity.setDashboard(dashboardEntity);
             var entity = this.propertiesProvider.saveCardEntity(cardEntity);
@@ -147,7 +152,7 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
     /**
      * Parse the JSON payload from Msg and delete the referenced card.
      *
-     * @param Msg incoming message whose data contains a JSON with an ID field.
+     * @param msg incoming message whose data contains a JSON with an ID field.
      */
     @Override
     public void deleteItem(Msg msg) {

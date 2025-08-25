@@ -102,7 +102,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      */
     @Override
     public Optional<ViewModel> getCardSettings(String number) {
-        String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
+        String cardSettingsPathname = env.getProperty(CardPropertiesProvider.CARD_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
             logger.info("No value defined for card settings template pathname.");
             return Optional.empty();
@@ -125,7 +125,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      */
     @Override
     public Optional<ViewModel> getEmptyCardSettings() {
-        String cardSettingsPathname = env.getProperty("card-settings-template-path", "");
+        String cardSettingsPathname = env.getProperty(CardPropertiesProvider.CARD_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
             logger.error("No value defined for card settings template pathname.");
             return Optional.empty();
@@ -372,31 +372,4 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
         return subscriptions;
     }
 
-    private Optional<Integer> safeParseInt(String number) {     //TODO to utils class
-        try {
-            return Optional.ofNullable(number).filter(StringUtils::isNotBlank).map(Integer::valueOf);
-
-        } catch (NumberFormatException e) {
-            return Optional.empty();
-        }
-    }
-
-     /**
-     * Convert the given qos value from string to MqttQos enum instance. If the
-     * qos value is invalid, it defaults to qos level 0.
-     *
-     * @param qosString The qos value as a string. Must not be null.
-     * @return The qos level as a MqttQos enum value.
-     */
-    private MqttQoS convertToMqttQos(String qosString) {		//TODO move to mqtt package as static
-        MqttQoS qos;
-        try {
-            qos = MqttQoS.valueOf(qosString);
-        } catch (IllegalArgumentException ex) {
-            logger.error("Invalid QoS value for the given qos string={}: {}. Set QoS=0.", qosString, ex.getMessage());
-            qos = MqttQoS.AT_MOST_ONCE;
-        }
-
-        return qos;
-    }
 }

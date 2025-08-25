@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2025 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,14 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service.Command;
+package ru.maxeltr.homeMq2t.Utils;
 
-/**
- *
- * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
- */
-public interface ReplySender {
+import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
 
-    void sendReply(String data, String commandName);
+public final class AppUtils {
+
+    private AppUtils() {
+
+    }
+
+    /**
+     * Attempts to parse the given string to Integer.
+     *
+     * @param number value the string to parse
+     * @return Optional containing the parsed Integer or empty Optional if
+     * parsing fails
+     */
+    public static Optional<Integer> safeParseInt(String number) {
+        try {
+            return Optional.ofNullable(number).filter(StringUtils::isNotBlank).map(StringUtils::trim).map(Integer::valueOf);
+        } catch (NumberFormatException e) {
+            return Optional.empty();
+        }
+    }
 
 }
