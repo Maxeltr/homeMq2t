@@ -45,7 +45,7 @@ public class UIServiceImpl implements UIService {
     private ServiceMediator mediator;
 
     @Autowired
-    @Qualifier("CardPropertiesProvider")
+    @Qualifier("getCardPropertiesProvider")
     private CardPropertiesProvider appProperties;
 
     @Autowired
@@ -55,11 +55,11 @@ public class UIServiceImpl implements UIService {
     private ConnectManager connectManager;
 
     @Autowired
-    @Qualifier("CardManagerImpl")
+    @Qualifier("getDashboardItemCardManager")
     private DashboardItemManager cardManager;
 
     @Autowired
-    @Qualifier("CommandManagerImpl")
+    @Qualifier("getDashboardItemCommandManager")
     private DashboardItemManager commandManager;
 
     @Autowired

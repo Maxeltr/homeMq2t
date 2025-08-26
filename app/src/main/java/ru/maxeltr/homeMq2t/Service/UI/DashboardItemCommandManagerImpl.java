@@ -24,11 +24,15 @@
 package ru.maxeltr.homeMq2t.Service.UI;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
@@ -36,12 +40,13 @@ import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.DashboardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
-import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 
-public class CommandManagerImpl implements DashboardItemManager {
+public class DashboardItemCommandManagerImpl implements DashboardItemManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(DashboardItemCommandManagerImpl.class);
 
     @Autowired
     @Qualifier("getCommandPropertiesProvider")
@@ -53,6 +58,13 @@ public class CommandManagerImpl implements DashboardItemManager {
 
     @Autowired
     private UIJsonFormatter jsonFormatter;
+
+    private final ObjectMapper mapper;
+
+    public DashboardItemCommandManagerImpl() {
+        this.mapper = new ObjectMapper();
+        this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
 
     @Override
     public Msg getItem(Msg msg) {

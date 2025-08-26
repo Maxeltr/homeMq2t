@@ -79,7 +79,7 @@ import ru.maxeltr.homeMq2t.Service.UI.DashboardItemCardManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizer;
 import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.Base64HtmlJsonFormatterImpl;
-import ru.maxeltr.homeMq2t.Service.UI.CommandManagerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.DashboardItemCommandManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManager;
 import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.PublishManager;
@@ -256,13 +256,13 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public DashboardItemCardManagerImpl getCardManager() {
+    public DashboardItemCardManagerImpl getDashboardItemCardManager() {
         return new DashboardItemCardManagerImpl();
     }
 
     @Bean
-    public CommandManagerImpl getCommandManager() {
-        return new CommandManagerImpl();
+    public DashboardItemCommandManagerImpl getDashboardItemCommandManager() {
+        return new DashboardItemCommandManagerImpl();
     }
 
     @Bean
@@ -292,21 +292,26 @@ public class AppAnnotationConfig {
 
     @Bean
     public CardPropertiesProvider getCardPropertiesProvider() {
-        return getAppProperty();
+        return new CardPropertiesProviderImpl();
     }
 
     @Bean
     public CommandPropertiesProvider getCommandPropertiesProvider() {
-        return getAppProperty();
+        return new CommandPropertiesProviderImpl();
     }
 
     @Bean
     public ComponentPropertiesProvider getComponentPropertiesProvider() {
-        return getAppProperty();
+        return new ComponentPropertiesProviderImpl();
     }
 
     @Bean
     public StartupTaskPropertiesProvider getStartupTaskPropertiesProvider() {
         return getAppProperty();
+    }
+
+    @Bean
+    public DashboardPropertiesProvider getDashboardPropertiesProvider() {
+        return new DashboardPropertiesProviderImpl();
     }
 }

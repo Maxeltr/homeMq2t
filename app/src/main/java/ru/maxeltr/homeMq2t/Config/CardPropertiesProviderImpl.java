@@ -32,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import static ru.maxeltr.homeMq2t.Config.AppProperties.MEDIA_TYPES;
@@ -40,7 +41,10 @@ import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.CardSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
+import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.homeMq2t.Repository.CardRepository;
+import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
+import ru.maxeltr.homeMq2t.Utils.AppUtils;
 
 /**
  *
@@ -56,6 +60,13 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
     @Autowired
     private CardRepository cardRepository;
 
+    @Autowired
+    private DashboardRepository dashboardRepository;
+
+    @Autowired
+    @Qualifier("getDashboardPropertiesProvider")
+    private DashboardPropertiesProvider dashboardPropertiesProvider;
+
     /**
      * Retrieves the CardEntity for the specified card number.
      *
@@ -65,7 +76,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      */
     @Override
     public Optional<CardEntity> getCardEntity(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber);
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber);
     }
 
     /**
@@ -85,6 +96,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      *
      * @param id The id of the card to delete
      */
+    @Override
     public void deleteCard(String id) {
         this.cardRepository.deleteById(Long.valueOf(id));
     }
@@ -108,12 +120,12 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
             return Optional.empty();
         }
 
-        Optional<CardEntity> cardEntity = safeParseInt(number).flatMap(cardRepository::findByNumber);
+        Optional<CardEntity> cardEntity = AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber);
         if (cardEntity.isEmpty()) {
             return Optional.empty();
         }
 
-        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, this.getAllDashboards(), MEDIA_TYPES));
+        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, dashboardPropertiesProvider.getAllDashboards(), MEDIA_TYPES));
     }
 
     /**
@@ -131,13 +143,13 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
             return Optional.empty();
         }
 
-        Optional<ViewModel> startDashboardOpt = this.getStartDashboard();
+        Optional<ViewModel<DashboardEntity>> startDashboardOpt = dashboardPropertiesProvider.getStartDashboard();
         if (startDashboardOpt == null) {
             logger.error("No start dashboards found.");
             return Optional.empty();
         }
 
-        Optional<DashboardEntity> startDashboardEntityOpt = safeParseInt(startDashboardOpt.get().getNumber()).flatMap(dashboardRepository::findByNumber);
+        Optional<DashboardEntity> startDashboardEntityOpt = AppUtils.safeParseInt(startDashboardOpt.get().getNumber()).flatMap(dashboardRepository::findByNumber);
         if (startDashboardEntityOpt.isEmpty()) {
             return Optional.empty();
         }
@@ -152,7 +164,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
         cardEntity.setLocalTaskDataType(MediaType.TEXT_PLAIN_VALUE);
         cardEntity.setDashboard(startDashboardEntityOpt.get());
 
-        return Optional.of(new CardSettingsImpl(cardEntity, cardSettingsPathname, this.getAllDashboards(), MEDIA_TYPES));
+        return Optional.of(new CardSettingsImpl(cardEntity, cardSettingsPathname, dashboardPropertiesProvider.getAllDashboards(), MEDIA_TYPES));
     }
 
     /**
@@ -166,6 +178,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * @return a list of card numbers subscribed to the specified topic, returns
      * empty list if no cards are found for the topic.
      */
+    @Override
     public List<String> getCardNumbersByTopic(String topic) {
         List<String> cardNumbers = new ArrayList<>();
         List<CardEntity> cards = cardRepository.findBySubscriptionTopic(topic);
@@ -185,7 +198,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      */
     @Override
     public String getCardName(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getName).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getName).orElse("");
     }
 
     /**
@@ -207,8 +220,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * subscription topic
      * @return the subscription topic if found, or an empty string.
      */
+    @Override
     public String getCardSubTopic(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionTopic).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionTopic).orElse("");
     }
 
     /**
@@ -219,8 +233,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * subscription QoS level
      * @return the subscription QoS level if found, or "AT_MOST_ONCE".
      */
+    @Override
     public String getCardSubQos(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionQos).orElse("AT_MOST_ONCE");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionQos).orElse("AT_MOST_ONCE");
     }
 
     /**
@@ -231,8 +246,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * subscription data name
      * @return the subscription data name if found, or an empty string.
      */
+    @Override
     public String getCardSubDataName(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionDataName).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionDataName).orElse("");
     }
 
     /**
@@ -243,8 +259,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * subscription data type
      * @return the subscription data type if found, or an empty string.
      */
+    @Override
     public String getCardSubDataType(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionDataType).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getSubscriptionDataType).orElse("");
     }
 
     /**
@@ -255,8 +272,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * expression
      * @return the jsonpath expression if found, or an empty string.
      */
+    @Override
     public String getCardJsonPathExpression(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getDisplayDataJsonpath).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getDisplayDataJsonpath).orElse("");
     }
 
     /**
@@ -267,8 +285,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * publication topic
      * @return the publication topic if found, or an empty string.
      */
+    @Override
     public String getCardPubTopic(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationTopic).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationTopic).orElse("");
     }
 
     /**
@@ -279,8 +298,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * publication QoS level
      * @return the publication QoS level if found, or "AT_MOST_ONCE".
      */
+    @Override
     public String getCardPubQos(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationQos).orElse("AT_MOST_ONCE");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationQos).orElse("AT_MOST_ONCE");
     }
 
     /**
@@ -291,8 +311,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * publication retain flag
      * @return the publication retain flag if found, or "false".
      */
+    @Override
     public String getCardPubRetain(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationRetain).map(String::valueOf).orElse("false");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationRetain).map(String::valueOf).orElse("false");
     }
 
     /**
@@ -302,8 +323,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * publication data
      * @return the publication data if found, or an empty string.
      */
+    @Override
     public String getCardPubData(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationData).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationData).orElse("");
     }
 
     /**
@@ -314,8 +336,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * publication data type
      * @return the publication data type if found, or an empty string.
      */
+    @Override
     public String getCardPubDataType(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationDataType).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getPublicationDataType).orElse("");
     }
 
     /**
@@ -325,8 +348,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * path
      * @return the local task path if found, or an empty string.
      */
+    @Override
     public String getCardLocalTaskPath(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getLocalTaskPath).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getLocalTaskPath).orElse("");
     }
 
     /**
@@ -337,8 +361,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * arguments
      * @return the local task arguments if found, or an empty string.
      */
+    @Override
     public String getCardLocalTaskArguments(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getLocalTaskArguments).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getLocalTaskArguments).orElse("");
     }
 
     /**
@@ -349,8 +374,9 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * data type
      * @return the local task data type if found, or an empty string.
      */
+    @Override
     public String getCardLocalTaskDataType(String number) {
-        return safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getLocalTaskDataType).orElse("");
+        return AppUtils.safeParseInt(number).flatMap(cardRepository::findByNumber).map(CardEntity::getLocalTaskDataType).orElse("");
     }
 
     /**
@@ -364,7 +390,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
         List<CardEntity> cardEntities = cardRepository.findAll();
         cardEntities.forEach(cardEntity -> {
             if (StringUtils.isNotBlank(cardEntity.getSubscriptionTopic())) {
-                subscriptions.add(new MqttTopicSubscription(cardEntity.getSubscriptionTopic(), convertToMqttQos(cardEntity.getSubscriptionQos())));
+                subscriptions.add(new MqttTopicSubscription(cardEntity.getSubscriptionTopic(), MqttUtils.convertToMqttQos(cardEntity.getSubscriptionQos())));
                 logger.info("Add subscription={} with qos={} to subscription list.", cardEntity.getSubscriptionTopic(), cardEntity.getSubscriptionQos());
             }
         });

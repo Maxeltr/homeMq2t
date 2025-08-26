@@ -30,6 +30,7 @@ import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
 import org.slf4j.LoggerFactory;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 
 /**
  *
@@ -37,11 +38,11 @@ import ru.maxeltr.homeMq2t.Entity.CardEntity;
  */
 public class CardSettingsImpl extends ViewModel<CardEntity> {
 
-    private final List<ViewModel> dashboards;
+    private final List<ViewModel<DashboardEntity>> dashboards;
 
     private final List<String> mediaTypes;
 
-    public CardSettingsImpl(CardEntity cardEntity, String pathname, List<ViewModel> dashboards, List<String> mediaTypes) {
+    public CardSettingsImpl(CardEntity cardEntity, String pathname, List<ViewModel<DashboardEntity>> dashboards, List<String> mediaTypes) {
         super(cardEntity, pathname);
         this.dashboards = dashboards;
         this.mediaTypes = mediaTypes;

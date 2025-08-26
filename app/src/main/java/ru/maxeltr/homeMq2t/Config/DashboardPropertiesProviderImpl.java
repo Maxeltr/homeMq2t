@@ -64,7 +64,7 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
 
     @Override
     public Optional<ViewModel<DashboardEntity>> getCommandDashboard() {
-        String commandPathname = env.getProperty(AppProperties.COMMAND_TEMPLATE_PATH, "");
+        String commandPathname = env.getProperty(CommandPropertiesProvider.COMMAND_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(commandPathname)) {
             logger.warn("No value defined for command template pathname.");
             return Optional.empty();
@@ -106,7 +106,7 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
             return Optional.empty();
         }
 
-        String cardPathname = env.getProperty(AppProperties.CARD_TEMPLATE_PATH, "");
+        String cardPathname = env.getProperty(CardPropertiesProvider.CARD_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(cardPathname)) {
             logger.warn("No value defined for card template pathname.");
             return Optional.empty();
@@ -157,7 +157,7 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
             return dashboards;
         }
 
-        String cardPathname = env.getProperty(AppProperties.CARD_TEMPLATE_PATH, "");
+        String cardPathname = env.getProperty(CardPropertiesProvider.CARD_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(cardPathname)) {
             logger.info("No value defined for card template pathname.");
             return dashboards;

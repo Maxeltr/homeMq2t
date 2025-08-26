@@ -23,18 +23,18 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
+import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.homeMq2t.Repository.ComponentRepository;
+import ru.maxeltr.homeMq2t.Utils.AppUtils;
 
 /**
  *
@@ -71,6 +71,7 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
      * @return a list of component numbers subscribed to the specified topic,
      * returns empty list if no components are found for the topic.
      */
+    @Override
     public List<String> getComponentNumbersByTopic(String topic) {
         List<String> componentNumbers = new ArrayList<>();
         List<ComponentEntity> components = componentRepository.findBySubscriptionTopic(topic);
@@ -101,6 +102,7 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
      * publication QoS level
      * @return the publication QoS level if found, or "AT_MOST_ONCE".
      */
+    @Override
     public String getComponentPubQos(String name) {
         return componentRepository.findByName(name).map(ComponentEntity::getPublicationQos).orElse("AT_MOST_ONCE");
     }
@@ -113,6 +115,7 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
      * publication retain flag
      * @return the publication retain flag if found, or "false".
      */
+    @Override
     public String getComponentPubRetain(String name) {
         return componentRepository.findByName(name).map(ComponentEntity::getPublicationRetain).map(String::valueOf).orElse("false");
     }
@@ -125,6 +128,7 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
      * publication data type
      * @return the publication data type if found, or an empty string.
      */
+    @Override
     public String getComponentPubDataType(String name) {
         return componentRepository.findByName(name).map(ComponentEntity::getPublicationDataType).orElse(MediaType.TEXT_PLAIN_VALUE);
     }
@@ -137,6 +141,7 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
      * card path
      * @return the local card number if found, or an empty string.
      */
+    @Override
     public String getComponentPubLocalCard(String name) {
         return componentRepository.findByName(name).map(ComponentEntity::getPublicationLocalCardId).orElse("");
     }
@@ -148,6 +153,7 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
      * path
      * @return the provider name if found, or an empty string.
      */
+    @Override
     public String getComponentProvider(String name) {
         return componentRepository.findByName(name).map(ComponentEntity::getProvider).orElse("");
     }
@@ -159,6 +165,7 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
      * arguments
      * @return the provider arguments if found, or an empty string.
      */
+    @Override
     public String getComponentProviderArgs(String name) {
         return componentRepository.findByName(name).map(ComponentEntity::getProviderArgs).orElse("");
     }
@@ -174,7 +181,7 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
         List<ComponentEntity> componentEntities = componentRepository.findAll();
         componentEntities.forEach(componentEntity -> {
             if (StringUtils.isNotBlank(componentEntity.getSubscriptionTopic())) {
-                subscriptions.add(new MqttTopicSubscription(componentEntity.getSubscriptionTopic(), convertToMqttQos(componentEntity.getSubscriptionQos())));
+                subscriptions.add(new MqttTopicSubscription(componentEntity.getSubscriptionTopic(), MqttUtils.convertToMqttQos(componentEntity.getSubscriptionQos())));
                 logger.info("Add subscription={} with qos={} to subscription list.", componentEntity.getSubscriptionTopic(), componentEntity.getSubscriptionQos());
             }
         });
