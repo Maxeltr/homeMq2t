@@ -32,6 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
+import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
@@ -46,7 +47,7 @@ public class ReplySenderImpl implements ReplySender {
     private static final Logger logger = LoggerFactory.getLogger(ReplySenderImpl.class);
 
     @Autowired
-    private AppProperties appProperties;
+    private CommandPropertiesProvider appProperties;
 
     @Autowired
     @Lazy               //TODO

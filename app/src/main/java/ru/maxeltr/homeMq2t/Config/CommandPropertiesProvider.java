@@ -25,6 +25,7 @@ package ru.maxeltr.homeMq2t.Config;
 
 import java.util.List;
 import java.util.Optional;
+import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 /**
@@ -41,7 +42,10 @@ public interface CommandPropertiesProvider {
 
     public Optional<ViewModel> getEmptyCommandSettings();
 
-    public Optional<ViewModel> getAllCommands();
+    public CommandEntity saveCommandEntity(CommandEntity commandEntity);
+
+    //public Optional<ViewModel> getAllCommands();
+    public void deleteCommand(String id);
 
     /**
      * Retrieves the list of command numbers associated with a specific

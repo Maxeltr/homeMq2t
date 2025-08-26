@@ -48,7 +48,7 @@ public class DashboardEntity<T extends BaseEntity> extends BaseEntity {
     private Integer number;
 
     @JsonManagedReference
-    @OneToMany(mappedBy = "dashboard", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "dashboard", fetch = FetchType.LAZY, targetEntity = CardEntity.class)
     private List<T> cards;
 
     public Long getId() {

@@ -43,8 +43,12 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
+import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.ComponentPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
+import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.mq2tLib.Mq2tComponent;
 import ru.maxeltr.mq2tLib.Mq2tCallbackComponent;
 import ru.maxeltr.mq2tLib.Mq2tPollableComponent;
@@ -99,7 +103,10 @@ public class ComponentServiceImpl implements ComponentService {
      * The application properties used fpr configuration.
      */
     @Autowired
-    private AppProperties appProperties;
+    private ComponentPropertiesProvider componentPropertiesProvider;
+
+    @Autowired
+    CardPropertiesProvider cardPropertiesProvider;
 
     /**
      * This property holds an instance of ThreadPoolTaskScheduler used to
@@ -170,7 +177,7 @@ public class ComponentServiceImpl implements ComponentService {
     private void initializeCallbackComponents() {
         int i = 0;
         String componentName;
-        while (StringUtils.isNotEmpty(componentName = appProperties.getComponentName(String.valueOf(i)))) {
+        while (StringUtils.isNotEmpty(componentName = componentPropertiesProvider.getComponentName(String.valueOf(i)))) {
             this.initializeCallbackComponent(componentName);
             i++;
         }
@@ -190,7 +197,7 @@ public class ComponentServiceImpl implements ComponentService {
      * @param componentName the name of the component to initialize
      */
     private void initializeCallbackComponent(String componentName) {
-        Optional<Mq2tComponent> componentOpt = this.lookUpComponentProvider(this.appProperties.getComponentProvider(componentName));
+        Optional<Mq2tComponent> componentOpt = this.lookUpComponentProvider(this.componentPropertiesProvider.getComponentProvider(componentName));
         if (componentOpt.isEmpty()) {
             logger.warn("Could not get provider for component name={}.", componentName);
             return;
@@ -257,7 +264,7 @@ public class ComponentServiceImpl implements ComponentService {
     public void process(Msg msg, String componentNumber) {
         logger.info("Process message. Component number={}, msg={}", componentNumber, msg);
 
-        String componentName = appProperties.getComponentName(componentNumber);
+        String componentName = componentPropertiesProvider.getComponentName(componentNumber);
         if (StringUtils.isEmpty(componentName)) {
             logger.info("Could not process for component={}. Component name is empty.", componentNumber);
             return;
@@ -385,7 +392,7 @@ public class ComponentServiceImpl implements ComponentService {
 
     private void readAndPublish(String componentName) {
 
-        String providerName = this.appProperties.getComponentProvider(componentName);
+        String providerName = this.componentPropertiesProvider.getComponentProvider(componentName);
         Optional<Mq2tComponent> componentOpt = this.lookUpComponentProvider(providerName);
         if (componentOpt.isEmpty()) {
             logger.warn("Could not get provider for component name={}.", componentName);
@@ -394,7 +401,7 @@ public class ComponentServiceImpl implements ComponentService {
 
         if (componentOpt.get() instanceof Mq2tPollableComponent mq2tPollableComponent) {
             String[] args = {};
-            String argsProperty = this.appProperties.getComponentProviderArgs(componentName);
+            String argsProperty = this.componentPropertiesProvider.getComponentProviderArgs(componentName);
             if (StringUtils.isNotEmpty(argsProperty)) {
                 args = argsProperty.split(",");
             }
@@ -414,13 +421,13 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     private void publishLocally(Msg msg, String componentName) {
-        String cardName = this.appProperties.getComponentPubLocalCard(componentName);
+        String cardName = this.componentPropertiesProvider.getComponentPubLocalCard(componentName);
         if (StringUtils.isEmpty(cardName)) {
             logger.info("There is no local card for component={} to publish locally.", componentName);
             return;
         }
 
-        String cardId = this.appProperties.getCardNumber(cardName);
+        String cardId = this.cardPropertiesProvider.getCardNumber(cardName);
         if (StringUtils.isEmpty(cardId)) {
             logger.warn("Could not get card number by card name={}.", cardName);
             return;
@@ -435,7 +442,7 @@ public class ComponentServiceImpl implements ComponentService {
     }
 
     private Msg.Builder createMessage(String componentName, String data) {
-        String type = appProperties.getComponentPubDataType(componentName);
+        String type = componentPropertiesProvider.getComponentPubDataType(componentName);
         if (StringUtils.isEmpty(type)) {
             type = MediaType.TEXT_PLAIN_VALUE;
             logger.info("Type is empty for component={}. Set {}.", componentName, type);
@@ -452,15 +459,15 @@ public class ComponentServiceImpl implements ComponentService {
 
     @Async("processExecutor")
     private void publish(Msg msg, String componentName) {       // TODO several topics?
-        String topic = appProperties.getComponentPubTopic(componentName);
+        String topic = componentPropertiesProvider.getComponentPubTopic(componentName);
         if (StringUtils.isEmpty(topic)) {
             logger.info("Could not publish. There is no topic for component={}", componentName);
             return;
         }
 
-        MqttQoS qos = this.convertToMqttQos(appProperties.getComponentPubQos(componentName));
+        MqttQoS qos = MqttUtils.convertToMqttQos(componentPropertiesProvider.getComponentPubQos(componentName));
 
-        boolean retain = Boolean.parseBoolean(appProperties.getComponentPubRetain(componentName));
+        boolean retain = Boolean.parseBoolean(componentPropertiesProvider.getComponentPubRetain(componentName));
 
         if (this.mediator != null && this.mediator.isConnected()) {
             logger.info("Message passes to publish. Message={}, topic={}, qos={}, retain={}", msg, topic, qos, retain);
@@ -478,7 +485,7 @@ public class ComponentServiceImpl implements ComponentService {
 
             int i = 0;
             String componentName;
-            while (StringUtils.isNotEmpty(componentName = appProperties.getComponentName(String.valueOf(i)))) {
+            while (StringUtils.isNotEmpty(componentName = componentPropertiesProvider.getComponentName(String.valueOf(i)))) {
                 logger.debug("Polling component={}.", componentName);
                 readAndPublish(componentName);
                 i++;

@@ -38,8 +38,10 @@ import static ru.maxeltr.homeMq2t.Config.AppProperties.MEDIA_TYPES;
 import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 import ru.maxeltr.homeMq2t.Model.CommandSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
+import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.homeMq2t.Repository.CommandRepository;
 import ru.maxeltr.homeMq2t.Service.UI.DashboardItemCardManagerImpl;
+import ru.maxeltr.homeMq2t.Utils.AppUtils;
 
 /**
  *
@@ -72,6 +74,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      *
      * @param id The id of the command to delete
      */
+    @Override
     public void deleteCommand(String id) {
         this.commandRepository.deleteById(Long.valueOf(id));
     }
@@ -87,6 +90,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      * not configured or the command cannot be found, an empty Optional is
      * returned.
      */
+    @Override
     public Optional<ViewModel> getCommandSettings(String number) {
         String commandSettingsPathname = env.getProperty(CommandPropertiesProvider.COMMAND_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(commandSettingsPathname)) {
@@ -94,7 +98,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
             return Optional.empty();
         }
 
-        Optional<CommandEntity> commandEntity = safeParseInt(number).flatMap(commandRepository::findByNumber);
+        Optional<CommandEntity> commandEntity = AppUtils.safeParseInt(number).flatMap(commandRepository::findByNumber);
         if (commandEntity.isEmpty()) {
             return Optional.empty();
         }
@@ -109,16 +113,11 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      * @return an Optional containing the VeiwModel for the empty/default
      * command settings-template-path
      */
+    @Override
     public Optional<ViewModel> getEmptyCommandSettings() {
         String commandSettingsPathname = env.getProperty(CommandPropertiesProvider.COMMAND_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(commandSettingsPathname)) {
             logger.error("No value defined for command settings template pathname.");
-            return Optional.empty();
-        }
-
-        Optional<ViewModel> startDashboardOpt = this.getStartDashboard();
-        if (startDashboardOpt == null) {
-            logger.error("No start dashboards found.");
             return Optional.empty();
         }
 
@@ -144,6 +143,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      * @return a list of command numbers subscribed to the specified topic,
      * returns empty list if no command numbers are found for the topic.
      */
+    @Override
     public List<String> getCommandNumbersByTopic(String topic) {
         List<String> commandNumbers = new ArrayList<>();
         List<CommandEntity> commands = commandRepository.findBySubscriptionTopic(topic);
@@ -161,6 +161,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      * topic
      * @return the publication topic if found, or an empty string.
      */
+    @Override
     public String getCommandPubTopic(String name) {
         return commandRepository.findByName(name).map(CommandEntity::getPublicationTopic).orElse("");
     }
@@ -173,6 +174,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      * QoS level
      * @return the publication QoS level if found, or "AT_MOST_ONCE".
      */
+    @Override
     public String getCommandPubQos(String name) {
         return commandRepository.findByName(name).map(CommandEntity::getPublicationQos).orElse("AT_MOST_ONCE");
     }
@@ -185,6 +187,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      * retain flag
      * @return the publication retain flag if found, or "false".
      */
+    @Override
     public String getCommandPubRetain(String name) {
         return commandRepository.findByName(name).map(CommandEntity::getPublicationRetain).map(String::valueOf).orElse("false");
     }
@@ -197,6 +200,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      * data type
      * @return the publication data type if found, or an empty string.
      */
+    @Override
     public String getCommandPubDataType(String name) {
         return commandRepository.findByName(name).map(CommandEntity::getPublicationDataType).orElse(MediaType.TEXT_PLAIN_VALUE);
     }
@@ -207,6 +211,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      * @param name the name of the command for which to retrieve the path path
      * @return the command path if found, or an empty string.
      */
+    @Override
     public String getCommandPath(String name) {
         return commandRepository.findByName(name).map(CommandEntity::getPath).orElse("");
     }
@@ -233,7 +238,7 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
         List<CommandEntity> commandEntities = commandRepository.findAll();
         commandEntities.forEach(commandEntity -> {
             if (StringUtils.isNotBlank(commandEntity.getSubscriptionTopic())) {
-                subscriptions.add(new MqttTopicSubscription(commandEntity.getSubscriptionTopic(), convertToMqttQos(commandEntity.getSubscriptionQos())));
+                subscriptions.add(new MqttTopicSubscription(commandEntity.getSubscriptionTopic(), MqttUtils.convertToMqttQos(commandEntity.getSubscriptionQos())));
                 logger.info("Add subscription={} with qos={} to subscription list.", commandEntity.getSubscriptionTopic(), commandEntity.getSubscriptionQos());
             }
         });

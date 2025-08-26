@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.DashboardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -61,8 +62,8 @@ public class ConnectManagerImpl implements ConnectManager {
     private UIJsonFormatter jsonFormatter;
 
     @Autowired
-    @Qualifier("getCardPropertiesProvider")
-    private CardPropertiesProvider appProperties;
+    //@Qualifier("getCardPropertiesProvider")
+    private DashboardPropertiesProvider appProperties;
 
     @Override
     public Msg connect() {

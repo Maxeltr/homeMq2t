@@ -174,7 +174,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
                 connected.set(true);
                 logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
                 //perform post-connection operations here
-                HmMq2tImpl.this.subscribe(appProperties.getSubscriptions());
+                HmMq2tImpl.this.subscribe(appProperties.getAllSubscriptions());
                 reconnectAttempts = 0;
                 this.startRetransmitTask();
             }
