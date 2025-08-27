@@ -63,7 +63,7 @@ public class CardEntity extends BaseEntity {
     @Column(name = "number", insertable = false)
     private Integer number;
 
-    @JsonBackReference
+    //@JsonBackReference("dashboard-cards")
     @ManyToOne
     @JoinColumn(name = "dashboard_id", nullable = false)
     private DashboardEntity dashboard;

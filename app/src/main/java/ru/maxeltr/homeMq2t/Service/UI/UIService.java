@@ -38,6 +38,8 @@ public interface UIService {
 
     public void saveCardSettings(Msg msg);
 
+    public void saveCommandSettings(Msg msg);
+
     public void deleteCard(Msg msg);
 
     public void disconnect(byte reasonCode);

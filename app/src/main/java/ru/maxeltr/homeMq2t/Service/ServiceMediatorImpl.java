@@ -198,15 +198,19 @@ public class ServiceMediatorImpl implements ServiceMediator {
 
         for (ServiceType type : ServiceType.values()) {
             List<String> numbers = switch (type) {
-                case ServiceType.UI ->
+                case UI ->
                     cardPropertiesProvider.getCardNumbersByTopic(topicName);
-                case ServiceType.COMMAND ->
+                case COMMAND ->
                     commandPropertiesProvider.getCommandNumbersByTopic(topicName);
-                case ServiceType.COMPONENT ->
+                case COMPONENT ->
                     componentPropertiesProvider.getComponentNumbersByTopic(topicName);
             };
             for (String number : numbers) {
-                type.dispatch(this, msg, number);
+                try {
+                    type.dispatch(this, msg, number);
+                } catch (Exception ex) {
+                    logger.warn("Dispatch failed for type={} number={} id={}: {}", type.getName(), number, id, ex.getMessage());
+                }
             }
         }
 

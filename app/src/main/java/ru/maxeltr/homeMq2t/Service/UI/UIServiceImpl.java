@@ -26,16 +26,13 @@ package ru.maxeltr.homeMq2t.Service.UI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
-import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
-import ru.maxeltr.homeMq2t.Config.UIPropertiesProvider;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 public class UIServiceImpl implements UIService {
@@ -119,9 +116,14 @@ public class UIServiceImpl implements UIService {
 
     @Override
     public void saveCardSettings(Msg msg) {
-        logger.debug("Do save settings {}.", msg.getData());
+        logger.debug("Do save card settings {}.", msg.getData());
         this.cardManager.saveItemSettings(msg);
+    }
 
+    @Override
+    public void saveCommandSettings(Msg msg) {
+        logger.debug("Do save command settings {}.", msg.getData());
+        this.commandManager.saveItemSettings(msg);
     }
 
     @Override

@@ -55,17 +55,17 @@ public class DashboardImpl extends ViewModel<DashboardEntity> implements Dashboa
 
     static final String CARD_ELEMENT_ID = "dashboard-cards";
 
-    private final List<ViewModel> dashboardCards;
+    private final List<ViewModel<?>> dashboardCards;
 
 //    private String name = "";
 
 //    private final Document view;
 
-    public DashboardImpl(DashboardEntity dashboardEntity, List<ViewModel> dashboardCards, String pathname) {
+    public <T extends ViewModel<?>> DashboardImpl(DashboardEntity dashboardEntity, List<T> dashboardCards, String pathname) {
         super(dashboardEntity, pathname);
 //        this.dashboardNumber = Objects.requireNonNullElse(dashboardNumber, "");
 //        this.name = Objects.requireNonNullElse(name, "");
-        this.dashboardCards = Objects.requireNonNullElse(dashboardCards, new ArrayList<>());
+        this.dashboardCards = Objects.requireNonNullElse(new ArrayList<>(dashboardCards), new ArrayList<>());
 //        this.pathname = Objects.requireNonNull(pathname);
 //        this.view = this.getViewTemplate();
 
@@ -82,7 +82,7 @@ public class DashboardImpl extends ViewModel<DashboardEntity> implements Dashboa
 //    }
 
     @Override
-    public List<ViewModel> getCards() {
+    public List<ViewModel<?>> getCards() {
         return this.dashboardCards;
     }
 

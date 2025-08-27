@@ -285,11 +285,6 @@ public class AppAnnotationConfig {
         return new PublishManagerImpl();
     }
 
-//    @Bean
-//    public CardPropertiesProvider getUIPropertiesProvider() {
-//        return getAppProperty();
-//    }
-
     @Bean
     public CardPropertiesProvider getCardPropertiesProvider() {
         return new CardPropertiesProviderImpl();
