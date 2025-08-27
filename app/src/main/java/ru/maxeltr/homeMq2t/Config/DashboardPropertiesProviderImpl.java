@@ -81,10 +81,10 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
             return Optional.empty();
         }
 
-        List<ViewModel> commands = new ArrayList<>();
+        List<ViewModel<CommandEntity>> commands = new ArrayList<>();
         List<CommandEntity> commandEntities = commandRepository.findAll();
         commandEntities.forEach(commandEntity -> {
-            ViewModel command = new CommandImpl(commandEntity, commandPathname);
+            ViewModel<CommandEntity> command = new CommandImpl(commandEntity, commandPathname);
             commands.add(command);
             logger.debug("Command={} has been created and added to command list. Number={}", command.getName(), command.getNumber());
         });
@@ -119,10 +119,10 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
         }
         DashboardEntity dashboardEntity = dashboardEntityOpt.get();
 
-        List<ViewModel> cards = new ArrayList<>();
+        List<ViewModel<CardEntity>> cards = new ArrayList<>();
         List<CardEntity> cardEntities = cardRepository.findByDashboardNumber(dashboardEntity.getNumber());
         cardEntities.forEach(cardEntity -> {
-            ViewModel card = new CardImpl(cardEntity, cardPathname);
+            ViewModel<CardEntity> card = new CardImpl(cardEntity, cardPathname);
             cards.add(card);
             logger.debug("Card={} has been created and added to card list. Number={}", card.getName(), card.getNumber());
         });
@@ -165,10 +165,10 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
 
         List<DashboardEntity> dashboardEntities = dashboardRepository.findAll();
         dashboardEntities.forEach(dashboardEntity -> {
-            List<ViewModel> cards = new ArrayList<>();
+            List<ViewModel<CardEntity>> cards = new ArrayList<>();
             List<CardEntity> cardEntities = cardRepository.findByDashboardNumber(dashboardEntity.getNumber());
             cardEntities.forEach(cardEntity -> {
-                ViewModel card = new CardImpl(cardEntity, cardPathname);
+                ViewModel<CardEntity> card = new CardImpl(cardEntity, cardPathname);
                 cards.add(card);
                 logger.info("Card={} has been created and added to card list. Number={}", card.getName(), card.getNumber());
             });

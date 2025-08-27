@@ -87,8 +87,14 @@ public class InputUIControllerImpl implements InputUIController {
 
     @MessageMapping("/saveCard")
     public void saveCard(Msg.Builder msg) {
-        logger.info("Do save settings. Msg.Builder was received - {}.", msg.getData());
+        logger.info("Do save card settings. Msg.Builder was received - {}.", msg.getData());
         uiService.saveCardSettings(msg.build());
+    }
+
+    @MessageMapping("/saveCommand")
+    public void saveCommand(Msg.Builder msg) {
+        logger.info("Do save command settings. Msg.Builder was received - {}.", msg.getData());
+        uiService.saveCommandSettings(msg.build());
     }
 
     @MessageMapping("/deleteCard")

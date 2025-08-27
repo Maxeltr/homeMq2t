@@ -60,8 +60,16 @@ function getCardSettings(id) {
     stompClient.send("/app/getCardSettings", {}, JSON.stringify({'id': id}));
 }
 
+function getCommandSettings(id) {
+    stompClient.send("/app/getCommandSettings", {}, JSON.stringify({'id': id}));
+}
+
 function saveCard(data) {
     stompClient.send("/app/saveCard", {}, JSON.stringify({'data': data}));
+}
+
+function saveCommand(data) {
+    stompClient.send("/app/saveCommand", {}, JSON.stringify({'data': data}));
 }
 
 function deleteDashboardCard(data) {
@@ -219,6 +227,11 @@ $(function () {
         getCardSettings(arg);
     });
 
+    $(document).on("click", "#addCommand", function () {
+        const arg = $(this).val();
+        getCommandSettings(arg);
+    });
+    
     function getFormData(name) {
         let el = document.getElementById(name);
         let formData = new FormData(el);
@@ -232,6 +245,11 @@ $(function () {
 
     $(document).on("click", "#saveCard", function () {
         saveCard(JSON.stringify(getFormData('cardSettingsForm')));
+        goToDashboard();
+    });
+    
+    $(document).on("click", "#saveCommand", function () {
+        saveCommand(JSON.stringify(getFormData('commandSettingsForm')));
         goToDashboard();
     });
 

@@ -47,7 +47,7 @@ public class DashboardEntity<T extends BaseEntity> extends BaseEntity {
     @Column(name = "number", insertable = false)
     private Integer number;
 
-    @JsonManagedReference
+    //@JsonManagedReference("dashboard-cards")
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.LAZY, targetEntity = CardEntity.class)
     private List<T> cards;
 
