@@ -29,13 +29,12 @@ function connect() {
     });
 }
 
-function goToDashboard() {
-    stompClient.unsubscribe(subDataTopic);
-    stompClient.disconnect();
-    setConnected(false);
-    setTimeout(() => {
-        connect();
-    }, 800);
+function goToStartDashboard() {
+    stompClient.send("/app/displayCardDashboard", {}, JSON.stringify({'id': ""}));
+}
+
+function goToCommandDashboard() {
+    stompClient.send("/app/displayCommandDashboard", {}, JSON.stringify({'id': ""}));
 }
 
 function disconnect() {
@@ -110,12 +109,12 @@ function showBase64(payload) {
     if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
         data = payload.hasOwnProperty("data") ? b64ToUtf8(payload.data) : "<div style=\"color:red;\">Error to show dashboard. No data available.</div>";
     } else {
-        console.log("Error. Incorrect payload type. Require text/html;base64.");
+        console.error("Error. Incorrect payload type. Require text/html;base64.");
         data = "<div style=\"color:red;\">Error. Incorrect payload type. Require text/html;base64.</div>";
     }
 
     if (null === setInnerHtml('dashboard', data)) {
-        console.log("Error. No dashboard available.");
+        console.error("Error. No dashboard available.");
     }
 }
 
@@ -155,8 +154,8 @@ function showData(message, cardNumber) {
             if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
                 showBase64(payload);
             } else {
-                setInnerHtml(cardNumber + '-text', payload.name);
-                setInnerHtml(cardNumber + '-status', payload.status);
+//                setInnerHtml(cardNumber + '-text', payload.name);
+//                setInnerHtml(cardNumber + '-status', payload.status);
 
                 if (null === setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>')) {
                     setInnerHtml(cardNumber + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
@@ -221,6 +220,11 @@ $(function () {
         const arg = $(this).val();
         getCardSettings(arg);
     });
+    
+    $(document).on("click", "#editCommandSettings", function () {	
+        const arg = $(this).val();
+        getCommandSettings(arg);
+    });
 
     $(document).on("click", "#addCard", function () {
         const arg = $(this).val();
@@ -231,7 +235,7 @@ $(function () {
         const arg = $(this).val();
         getCommandSettings(arg);
     });
-    
+
     function getFormData(name) {
         let el = document.getElementById(name);
         let formData = new FormData(el);
@@ -245,16 +249,16 @@ $(function () {
 
     $(document).on("click", "#saveCard", function () {
         saveCard(JSON.stringify(getFormData('cardSettingsForm')));
-        goToDashboard();
+        goToStartDashboard();
     });
-    
+
     $(document).on("click", "#saveCommand", function () {
         saveCommand(JSON.stringify(getFormData('commandSettingsForm')));
-        goToDashboard();
+        goToCommandDashboard();
     });
 
     $(document).on("click", "#cancel", function () {
-        goToDashboard();
+        goToStartDashboard();
     });
 
     $(document).on("click", "#deleteCard", function () {
@@ -262,9 +266,13 @@ $(function () {
             return;
         }
         deleteDashboardCard(JSON.stringify(getFormData('cardSettingsForm')));
-        goToDashboard();
+        goToStartDashboard();
     });
 
+    $(document).on("click", "#viewCommands", function () {
+        goToCommandDashboard();
+    });
+    
 });
 
 

@@ -42,6 +42,7 @@ import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Model.Msg;
+import ru.maxeltr.homeMq2t.Model.Status;
 
 public class DashboardItemCardManagerImpl implements DashboardItemManager {
 
@@ -81,13 +82,16 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
     public Msg getItemsByDashboard(Msg msg) {
         Optional<ViewModel<DashboardEntity>> dashboardOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
-            dashboardOpt = this.dashboardPropertiesProvider.getDashboard(msg.getId());
+            dashboardOpt = this.dashboardPropertiesProvider.getCardDashboard(msg.getId());
         } else {
             dashboardOpt = this.dashboardPropertiesProvider.getStartDashboard();
         }
 
         return msg.toBuilder()
-                .data(this.jsonFormatter.createJson(dashboardOpt, "onDisplayDashboard"))
+                .data(dashboardOpt
+                        .map(viewModel -> jsonFormatter.encodeAndCreateJson(viewModel.getHtml(), Status.OK))
+                        .orElseGet(() -> jsonFormatter.encodeAndCreateJson("", Status.FAIL))
+                )
                 .type(MediaType.APPLICATION_JSON_VALUE)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .build();
@@ -116,7 +120,10 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
         }
 
         return msg.toBuilder()
-                .data(this.jsonFormatter.createJson(cardSettingsOpt, "onEditCardSettings"))
+                .data(cardSettingsOpt
+                        .map(viewModel -> jsonFormatter.encodeAndCreateJson(viewModel.getHtml(), Status.OK))
+                        .orElseGet(() -> jsonFormatter.encodeAndCreateJson("", Status.FAIL))
+                )
                 .type(MediaType.APPLICATION_JSON_VALUE)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .build();
@@ -132,20 +139,17 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
      */
     @Override
     public void saveItemSettings(Msg msg) {
-        CardEntity cardEntity;
-        JsonNode root;
-
         try {
-            root = mapper.readTree(msg.getData());
+            JsonNode root = mapper.readTree(msg.getData());
             DashboardEntity dashboardEntity = dashboardPropertiesProvider.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
-            cardEntity = mapper.readValue(msg.getData(), CardEntity.class);
+            CardEntity cardEntity = mapper.readValue(msg.getData(), CardEntity.class);
             cardEntity.setDashboard(dashboardEntity);
             var entity = this.propertiesProvider.saveCardEntity(cardEntity);
             logger.debug("Saved card settings {}.", entity);
         } catch (JsonProcessingException ex) {
-            logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
+            logger.warn("Could not convert json data={} to map. {}", msg, ex);
         } catch (NoSuchElementException ex) {
-            logger.warn("Could not find entity for id={}. {}", msg.getId(), ex.getMessage());
+            logger.warn("Could not find entity for id={}. {}", msg.getId(), ex);
         }
     }
 
@@ -156,15 +160,13 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
      */
     @Override
     public void deleteItem(Msg msg) {
-        JsonNode root;
-
         try {
-            root = mapper.readTree(msg.getData());
+            JsonNode root = mapper.readTree(msg.getData());
             String id = root.path(CardEntity.JSON_FIELD_ID).asText();
             this.propertiesProvider.deleteCard(id);
-            logger.debug("Deletetd card {}.", msg);
+            logger.debug("Deleted card {}.", msg);
         } catch (JsonProcessingException ex) {
-            logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
+            logger.warn("Could not delete data={}. {}", msg, ex);
 
         }
     }

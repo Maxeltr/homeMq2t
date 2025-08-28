@@ -48,34 +48,34 @@ public class InputUIControllerImpl implements InputUIController {
     @Override
     @MessageMapping("/connect")
     public void connect(Msg.Builder msg) {
-        logger.info("Do connect. Msg.Builder was received - {}.", msg);
+        logger.debug("Do connect. Msg.Builder was received - {}.", msg);
         uiService.connect();
     }
 
     @Override
     @MessageMapping("/disconnect")
     public void disconnect(Msg.Builder msg) {
-        logger.info("Do disconnect. Msg.Builder was received - {}.", msg);
+        logger.debug("Do disconnect. Msg.Builder was received - {}.", msg);
         uiService.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
     }
 
     @Override
     @MessageMapping("/shutdownApp")
     public void shutdownApp(Msg.Builder msg) {
-        logger.info("Do shutdown. Msg.Builder was received - {}.", msg);
+        logger.debug("Do shutdown. Msg.Builder was received - {}.", msg);
         uiService.shutdownApp();
     }
 
     @MessageMapping("/publish")
     public void publish(Msg.Builder msg) {
-        logger.info("Do publish. Msg.Builder was received - {}.", msg);
+        logger.debug("Do publish. Msg.Builder was received - {}.", msg);
         uiService.publish(msg.build());
         uiService.launch(msg.build());
     }
 
     @MessageMapping("/getCardSettings")
     public void getCardSettings(Msg.Builder msg) {
-        logger.info("Do edit settings. Msg.Builder was received - {}.", msg);
+        logger.debug("Do edit settings. Msg.Builder was received - {}.", msg);
         uiService.displayCardSettings(msg.build());
     }
 
@@ -87,19 +87,37 @@ public class InputUIControllerImpl implements InputUIController {
 
     @MessageMapping("/saveCard")
     public void saveCard(Msg.Builder msg) {
-        logger.info("Do save card settings. Msg.Builder was received - {}.", msg.getData());
+        logger.debug("Do save card settings. Msg.Builder was received - {}.", msg.getData());
         uiService.saveCardSettings(msg.build());
     }
 
     @MessageMapping("/saveCommand")
     public void saveCommand(Msg.Builder msg) {
-        logger.info("Do save command settings. Msg.Builder was received - {}.", msg.getData());
+        logger.debug("Do save command settings. Msg.Builder was received - {}.", msg.getData());
         uiService.saveCommandSettings(msg.build());
     }
 
     @MessageMapping("/deleteCard")
     public void deleteCard(Msg.Builder msg) {
-        logger.info("Do delete card. Msg.Builder was received - {}.", msg.getData());
+        logger.debug("Do delete card. Msg.Builder was received - {}.", msg.getData());
         uiService.deleteCard(msg.build());
+    }
+
+    @MessageMapping("/deleteCommand")
+    public void deleteCommand(Msg.Builder msg) {
+        logger.debug("Do delete command. Msg.Builder was received - {}.", msg.getData());
+        uiService.deleteCommand(msg.build());
+    }
+
+    @MessageMapping("/displayCardDashboard")
+    public void displayCards(Msg.Builder msg) {
+        logger.debug("Do display cards. {}", msg.getData());
+        uiService.displayCardDashboard(msg.build());
+    }
+
+    @MessageMapping("/displayCommandDashboard")
+    public void displayCommands(Msg.Builder msg) {
+        logger.debug("Do display commands. {}", msg.getData());
+        uiService.displayCommandDashboard(msg.build());
     }
 }

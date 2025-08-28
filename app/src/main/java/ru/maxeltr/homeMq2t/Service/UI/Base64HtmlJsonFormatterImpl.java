@@ -64,8 +64,6 @@ public class Base64HtmlJsonFormatterImpl implements UIJsonFormatter {
      * The generated JSON has the following structure
      * <pre>{@code
      * {
-     * 		"name": "<event>",
-     * 		"status": "<status>",
      * 		"type": "<text/html;base64>",
      * 		"data": "<base64-encoded HTML with opitonal prefix>"
      * }
@@ -73,7 +71,6 @@ public class Base64HtmlJsonFormatterImpl implements UIJsonFormatter {
      * </p>
      *
      * @param dashboard the raw HTML content to include in the response
-     * @param event the name of the event assosiated with this response
      * @param status the status of the last action, expected values are "ok" or
      * "fail".
      *
@@ -81,7 +78,7 @@ public class Base64HtmlJsonFormatterImpl implements UIJsonFormatter {
      * Base64-encoded HTML with optional error or unknown status prefix.
      */
     @Override
-    public String createJson(String dashboard, String event, Status status) {
+    public String encodeAndCreateJson(String dashboard, Status status) {
 
         String form = switch (status) {
             case OK ->
@@ -92,32 +89,23 @@ public class Base64HtmlJsonFormatterImpl implements UIJsonFormatter {
                 UNKNOWN_STATUS_CAPTION + dashboard;
         };
 
-        return buildJson(event, status.getValue(), MEDIA_TYPE_BASE64_HTML, Base64.getEncoder().encodeToString(form.getBytes(StandardCharsets.UTF_8)));
+        return buildJson(MEDIA_TYPE_BASE64_HTML, Base64.getEncoder().encodeToString(form.getBytes(StandardCharsets.UTF_8)));
     }
 
     @Override
-    public String createJson(String msg, String jsonPathExpression) {
+    public String parseAndCreateJson(String msg, String jsonPathExpression) {
         String parsedValue = this.parseJson(msg, jsonPathExpression);
         logger.debug("Parsed data by using jsonPath. Parsed value={}.", parsedValue);
-        String dataName = this.parseJson(msg, "name");
-        String status = this.parseJson(msg, "status");
+//        String dataName = this.parseJson(msg, "name");
+//        String status = this.parseJson(msg, "status");
 
-        return buildJson(dataName, status, MediaType.TEXT_PLAIN_VALUE, parsedValue);
+        return buildJson(MediaType.TEXT_PLAIN_VALUE, parsedValue);
     }
 
-    public <T extends ViewModel> String createJson(Optional<T> modelOpt, String name) {
-        if (modelOpt.isPresent()) {
-            return this.createJson(modelOpt.get().getHtml(), name, Status.OK);
-        }
-
-        return this.createJson("", name, Status.FAIL);
-    }
-
-    private String buildJson(String name, String status, String type, String data) {
-
+    private String buildJson(String type, String data) {
         ObjectNode root = mapper.createObjectNode();
-        root.put("name", name);
-        root.put("status", status);
+//        root.put("name", name);
+//        root.put("status", status);
         root.put("type", type);
         root.put("data", data);
 

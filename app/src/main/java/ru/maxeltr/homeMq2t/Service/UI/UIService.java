@@ -42,6 +42,8 @@ public interface UIService {
 
     public void deleteCard(Msg msg);
 
+    public void deleteCommand(Msg msg);
+
     public void disconnect(byte reasonCode);
 
     public void shutdownApp();
@@ -51,4 +53,8 @@ public interface UIService {
     public void launch(Msg msg);
 
     public void display(Msg msg, String cardNumber);
+
+    public void displayCardDashboard(Msg msg);
+
+    public void displayCommandDashboard(Msg msg);
 }

@@ -57,11 +57,6 @@ public class CardImpl extends ViewModel<CardEntity> {
             el.attr("id", this.getNumber() + "-payload");
         }
 
-        el = document.getElementById("card1-save");
-        if (el != null) {
-            el.attr("id", this.getNumber() + "-save");
-        }
-
         el = document.getElementById("card1-timestamp");
         if (el != null) {
             el.attr("id", this.getNumber() + "-timestamp");
@@ -88,9 +83,15 @@ public class CardImpl extends ViewModel<CardEntity> {
             el.attr("id", this.getNumber() + "-status");
         }
 
-        el = document.select(".card-title").first();
+        el = document.getElementById("card1-title");
         if (el != null) {
             el.text(this.getName());
+            el.attr("id", this.getNumber() + "-title");
         }
+
+//        el = document.select(".card-title").first();
+//        if (el != null) {
+//            el.text(this.getName());
+//        }
     }
 }

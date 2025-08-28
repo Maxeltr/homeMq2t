@@ -97,13 +97,13 @@ CREATE TABLE IF NOT EXISTS mqtt_settings (
 
 INSERT INTO dashboard_settings (name)
 SELECT 'Start dashboard'
-WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings);
+WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Start dashboard');
 VALUES
   ('Start dashboard');
 
 INSERT INTO dashboard_settings (name)
 SELECT 'Command List'
-WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings);
+WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Command List');
 VALUES
   ('Command List');
   

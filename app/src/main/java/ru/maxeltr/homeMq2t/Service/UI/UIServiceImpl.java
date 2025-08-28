@@ -87,7 +87,8 @@ public class UIServiceImpl implements UIService {
         this.display(this.connectManager.connect(), "");
     }
 
-    public void displayDashboard(Msg msg) {
+    @Override
+    public void displayCardDashboard(Msg msg) {
         logger.debug("Do display dashboard {}.", msg);
         this.display(this.cardManager.getItemsByDashboard(msg), "");
     }
@@ -97,6 +98,7 @@ public class UIServiceImpl implements UIService {
         this.display(this.cardManager.getItemsByDashboard(msg.toBuilder().id("").build()), "");
     }
 
+    @Override
     public void displayCommandDashboard(Msg msg) {
         logger.debug("Do display command dashboard {}.", msg);
         this.display(this.commandManager.getItemsByDashboard(msg), "");
@@ -130,7 +132,12 @@ public class UIServiceImpl implements UIService {
     public void deleteCard(Msg msg) {
         logger.debug("Do delete card {}.", msg.getData());
         this.cardManager.deleteItem(msg);
+    }
 
+    @Override
+    public void deleteCommand(Msg msg) {
+        logger.debug("Do delete command {}.", msg.getData());
+        this.commandManager.deleteItem(msg);
     }
 
     @Override
@@ -175,7 +182,7 @@ public class UIServiceImpl implements UIService {
         if (message.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
             String jsonPathExpression = this.appProperties.getCardJsonPathExpression(cardNumber);
             if (StringUtils.isNotEmpty(jsonPathExpression)) {
-                message.data(this.jsonFormatter.createJson(message.getData(), jsonPathExpression));
+                message.data(this.jsonFormatter.parseAndCreateJson(message.getData(), jsonPathExpression));
             } else {
                 logger.debug("JsonPath expression is empty for card={}.", cardNumber);
             }
