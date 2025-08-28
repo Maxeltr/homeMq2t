@@ -42,6 +42,7 @@ import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
+import ru.maxeltr.homeMq2t.Model.Status;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 public class DashboardItemCommandManagerImpl implements DashboardItemManager {
@@ -75,13 +76,16 @@ public class DashboardItemCommandManagerImpl implements DashboardItemManager {
     public Msg getItemsByDashboard(Msg msg) {
         Optional<ViewModel<DashboardEntity>> dashboardOpt;
         if (StringUtils.isNotBlank(msg.getId())) {
-            dashboardOpt = this.dashboardPropertiesProvider.getDashboard(msg.getId());
+            dashboardOpt = Optional.empty();        //TODO several command dashboards and choose between them
         } else {
             dashboardOpt = this.dashboardPropertiesProvider.getCommandDashboard();
         }
 
         return MsgImpl.newBuilder()
-                .data(this.jsonFormatter.createJson(dashboardOpt, "onDisplayCommandList"))
+                .data(dashboardOpt
+                        .map(viewModel -> jsonFormatter.encodeAndCreateJson(viewModel.getHtml(), Status.OK))
+                        .orElseGet(() -> jsonFormatter.encodeAndCreateJson("", Status.FAIL))
+                )
                 .type(MediaType.APPLICATION_JSON_VALUE)
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .build();
@@ -94,41 +98,38 @@ public class DashboardItemCommandManagerImpl implements DashboardItemManager {
             commandSettingsOpt = this.propertiesProvider.getCommandSettings(msg.getId());
         } else {
             commandSettingsOpt = this.propertiesProvider.getEmptyCommandSettings();
-            //logger.debug("New command was created. Command={}", commandSettingsOpt.orElse(""));
         }
 
         return msg.toBuilder()
                 .type(MediaType.APPLICATION_JSON_VALUE)
-                .data(this.jsonFormatter.createJson(commandSettingsOpt, "onEditCommandSettings"))
+                .data(commandSettingsOpt
+                        .map(viewModel -> jsonFormatter.encodeAndCreateJson(viewModel.getHtml(), Status.OK))
+                        .orElseGet(() -> jsonFormatter.encodeAndCreateJson("", Status.FAIL))
+                )
                 .timestamp(String.valueOf(Instant.now().toEpochMilli()))
                 .build();
     }
 
     @Override
     public void saveItemSettings(Msg msg) {
-        CommandEntity commandEntity;
-        JsonNode root;
-
         try {
-            root = mapper.readTree(msg.getData());
-            commandEntity = mapper.readValue(msg.getData(), CommandEntity.class);
+            CommandEntity commandEntity = mapper.readValue(msg.getData(), CommandEntity.class);
             var entity = this.propertiesProvider.saveCommandEntity(commandEntity);
             logger.debug("Saved command settings {}.", entity);
         } catch (JsonProcessingException | NoSuchElementException ex) {
-            logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
+            logger.warn("Could not save data={}. {}", msg, ex);
         }
     }
 
     @Override
     public void deleteItem(Msg msg) {
-        JsonNode root;
         try {
-            root = mapper.readTree(msg.getData());
+            JsonNode root = mapper.readTree(msg.getData());
             String id = root.path(CommandEntity.JSON_FIELD_ID).asText();
             this.propertiesProvider.deleteCommand(id);
-            logger.debug("Deletetd command {}.", msg);
+            logger.debug("Deleted command {}.", msg);
         } catch (JsonProcessingException | NoSuchElementException ex) {
-            logger.warn("Could not convert json data={} to map. {}", msg, ex.getMessage());
+            logger.warn("Could not delete data={}. {}", msg, ex);
 
         }
     }

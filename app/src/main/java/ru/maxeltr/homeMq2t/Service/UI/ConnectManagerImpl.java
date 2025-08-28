@@ -70,13 +70,13 @@ public class ConnectManagerImpl implements ConnectManager {
         String dashboardHtml = this.appProperties.getStartDashboard().map(ViewModel::getHtml).orElse("");
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
-            msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", Status.FAIL));
+            msg.data(this.jsonFormatter.encodeAndCreateJson(dashboardHtml, Status.FAIL));
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed.");
-            msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", Status.FAIL));
+            msg.data(this.jsonFormatter.encodeAndCreateJson(dashboardHtml, Status.FAIL));
         } else {
             logger.info("Connection established successfully.");
-            msg.data(this.jsonFormatter.createJson(dashboardHtml, "onConnect", Status.OK));
+            msg.data(this.jsonFormatter.encodeAndCreateJson(dashboardHtml, Status.OK));
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));

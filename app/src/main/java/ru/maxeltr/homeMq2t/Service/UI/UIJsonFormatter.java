@@ -27,10 +27,6 @@ import java.util.Optional;
 import ru.maxeltr.homeMq2t.Model.Status;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 
-/**
- *
- * @author Dev
- */
 public interface UIJsonFormatter {
 
     /**
@@ -54,17 +50,16 @@ public interface UIJsonFormatter {
      * </p>
      *
      * @param data the raw HTML content to include in the response
-     * @param event the name of the event assosiated with this response
      * @param status the status of the last action, expected values are "ok" or
      * "fail".
      *
      * @return a Json string with the event name, status, content type and
      * Base64-encoded HTML with optional error or unknown status prefix.
      */
-    public String createJson(String data, String event, Status status);
+    public String encodeAndCreateJson(String data, Status status);
 
-    public String createJson(String msg, String jsonPathExpression);
+    public String parseAndCreateJson(String msg, String jsonPathExpression);
 
-    public <T extends ViewModel> String createJson(Optional<T> modelOpt, String name);
+//    public <T extends ViewModel> String createJson(Optional<T> modelOpt, String name);
 
 }

@@ -57,24 +57,9 @@ public class CommandImpl extends ViewModel<CommandEntity> {
             el.attr("id", this.getNumber() + "-payload");
         }
 
-        el = document.getElementById("command1-save");
-        if (el != null) {
-            el.attr("id", this.getNumber() + "-save");
-        }
-
         el = document.getElementById("command1-timestamp");
         if (el != null) {
             el.attr("id", this.getNumber() + "-timestamp");
-        }
-
-        el = document.getElementById("sendCommand");
-        if (el != null) {
-            el.attr("value", this.getNumber());
-        }
-
-        el = document.getElementById("command1-save");
-        if (el != null) {
-            el.attr("id", this.getNumber() + "-save");
         }
 
         el = document.getElementById("command1-status");
@@ -82,9 +67,15 @@ public class CommandImpl extends ViewModel<CommandEntity> {
             el.attr("id", this.getNumber() + "-status");
         }
 
-        el = document.select(".command-title").first();
+        el = document.getElementById("command1-title");
         if (el != null) {
             el.text(this.getName());
+            el.attr("id", this.getNumber() + "-title");
         }
+
+//        el = document.select(".command-title").first();
+//        if (el != null) {
+//            el.text(this.getName());
+//        }
     }
 }
