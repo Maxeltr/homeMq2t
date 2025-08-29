@@ -1,6 +1,7 @@
 let stompClient = null;
 let subDataTopic = '/topic/data';
 let connectTopic = '/app/connect';
+let dataSuscription = null;
 
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
@@ -19,7 +20,7 @@ function connect() {
     stompClient.connect({}, function (frame) {
         console.log('Connected: ' + frame);
         setConnected(true);
-        stompClient.subscribe(subDataTopic, function (message) {
+        dataSubscription = stompClient.subscribe(subDataTopic, function (message) {
             showData(JSON.parse(message.body), message.headers.card);
         });
         stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
@@ -27,6 +28,9 @@ function connect() {
         console.error('STOMP connection error', error);
         setConnected(false);
     });
+    stompClient.debug = function (msg) {
+        console.log(msg);
+    };
 }
 
 function goToStartDashboard() {
@@ -40,7 +44,9 @@ function goToCommandDashboard() {
 function disconnect() {
     if (stompClient !== null) {
         stompClient.send("/app/disconnect", {}, JSON.stringify({'id': "disconnect"}));
-        stompClient.unsubscribe(subDataTopic);
+        if (dataSubscription) {
+            stompClient.unsubscribe();
+        }
         stompClient.disconnect();
     }
     setConnected(false);
@@ -105,16 +111,14 @@ function showTimestamp(message, cardNumber) {
 }
 
 function showBase64(payload) {
-    let data;
-    if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
-        data = payload.hasOwnProperty("data") ? b64ToUtf8(payload.data) : "<div style=\"color:red;\">Error to show dashboard. No data available.</div>";
-    } else {
-        console.error("Error. Incorrect payload type. Require text/html;base64.");
-        data = "<div style=\"color:red;\">Error. Incorrect payload type. Require text/html;base64.</div>";
-    }
-
-    if (null === setInnerHtml('dashboard', data)) {
-        console.error("Error. No dashboard available.");
+    try {
+        if (null === setInnerHtml('dashboard', b64ToUtf8(payload))) {
+            console.error("Error. No dashboard available.");
+            setInnerHtml('errors', "<div style=\"color:red;\">Error. No dashboard available.</div>");
+        }
+    } catch (err) {
+        console.error('Error while showing base64 payload:', err);
+        setInnerHtml('errors', "<div style=\"color:red;\">Error. The Base64 string to be decoded is not correctly encoded.</div>");
     }
 }
 
@@ -141,27 +145,26 @@ function showData(message, cardNumber) {
         } else if (message.type.toUpperCase() === 'TEXT/PLAIN') {
             showPlainText(message, cardNumber);
 
+        } else if (message.type.toUpperCase() === 'TEXT/HTML;BASE64') {
+            showBase64(message.data);
+
         } else if (message.type.toUpperCase() === 'APPLICATION/JSON') {
             try {
                 payload = JSON.parse(message.data);
             } catch (SyntaxError) {
-                console.error('Error. Not valid Json. Shows as plain text.');
-                setInnerHtml('errors', "<div style=\"color:red;\">Error. Invalid json. Card=" + cardNumber + ".</div>");
+                console.error('Error. Not valid Json for card=' + cardNumber + '. Shows as plain text.');
+                //setInnerHtml('errors', "<div style=\"color:red;\">Error. Invalid json. Card=" + cardNumber + ".</div>");
                 showPlainText(message, cardNumber);
                 return;
             }
 
-            if (payload.hasOwnProperty("type") && payload.type.toUpperCase() === 'TEXT/HTML;BASE64') {
-                showBase64(payload);
+            if (payload.hasOwnProperty("data")) {
+                setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>');
             } else {
-//                setInnerHtml(cardNumber + '-text', payload.name);
-//                setInnerHtml(cardNumber + '-status', payload.status);
-
-                if (null === setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>')) {
-                    setInnerHtml(cardNumber + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
-                    console.error("Error. No property data for card=" + cardNumber);
-                }
+                setInnerHtml(cardNumber + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
+                console.log("No data property for card=" + cardNumber + ' - showing full JSON.');
             }
+
         } else {
             console.error("Error. Incorrect payload type for card=" + cardNumber + ". Message type is " + message.type);
             setInnerHtml('errors', "<div style=\"color:red;\">Error. Incorrect payload type for card=" + cardNumber + ".</div>");
@@ -220,8 +223,8 @@ $(function () {
         const arg = $(this).val();
         getCardSettings(arg);
     });
-    
-    $(document).on("click", "#editCommandSettings", function () {	
+
+    $(document).on("click", "#editCommandSettings", function () {
         const arg = $(this).val();
         getCommandSettings(arg);
     });
@@ -249,12 +252,16 @@ $(function () {
 
     $(document).on("click", "#saveCard", function () {
         saveCard(JSON.stringify(getFormData('cardSettingsForm')));
-        goToStartDashboard();
+        setTimeout(() => {
+            goToStartDashboard();
+        }, 300);
     });
 
     $(document).on("click", "#saveCommand", function () {
         saveCommand(JSON.stringify(getFormData('commandSettingsForm')));
-        goToCommandDashboard();
+        setTimeout(() => {
+            goToCommandDashboard();
+        }, 300);
     });
 
     $(document).on("click", "#cancel", function () {
@@ -266,13 +273,16 @@ $(function () {
             return;
         }
         deleteDashboardCard(JSON.stringify(getFormData('cardSettingsForm')));
-        goToStartDashboard();
+        setTimeout(() => {
+            goToStartDashboard();
+        }, 300);
+
     });
 
     $(document).on("click", "#viewCommands", function () {
         goToCommandDashboard();
     });
-    
+
 });
 
 

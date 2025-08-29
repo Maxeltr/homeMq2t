@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2023 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2025 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,42 +21,32 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service;
+package ru.maxeltr.homeMq2t.Config;
 
-import io.netty.handler.codec.mqtt.MqttConnAckMessage;
-import io.netty.handler.codec.mqtt.MqttMessage;
-import io.netty.handler.codec.mqtt.MqttPublishMessage;
-import io.netty.handler.codec.mqtt.MqttQoS;
-import io.netty.util.concurrent.Promise;
+import java.util.Arrays;
 import java.util.List;
-import ru.maxeltr.homeMq2t.Model.Msg;
+import java.util.stream.Collectors;
+import org.springframework.http.MediaType;
 
-/**
- *
- * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
- */
-public interface ServiceMediator {
+public enum MediaTypes {
+    APPLICATION_JSON(MediaType.APPLICATION_JSON_VALUE),
+    TEXT_PLAIN(MediaType.TEXT_PLAIN_VALUE),
+    IMAGE_JPEG_BASE64("image/jpeg;base64"),
+    TEXT_HTML_BASE64("text/html;base64");
 
-    void publish(Msg msg, String topic, MqttQoS qos, boolean retain);
+    private final String value;
 
-    void execute(Msg command, String commandNumber);
+    MediaTypes(String value) {
+        this.value = value;
+    }
 
-    String execute(String commandPath, String arguments);
+    public String getValue() {
+        return value;
+    }
 
-    void process(Msg data, String componentNumber);
-
-    void display(Msg data, String cardNumber);
-
-    void handleMessage(MqttPublishMessage message);
-
-    Promise<MqttConnAckMessage> connect();
-
-    void reconnect();
-
-    void disconnect(byte reasonCode);
-
-    void shutdown();
-
-    boolean isConnected();
-
+    public static List<String> asStringList() {
+        return Arrays.stream(values())
+                .map(MediaTypes::getValue)
+                .collect(Collectors.toUnmodifiableList());
+    }
 }

@@ -57,7 +57,7 @@ public class AppProperties implements StartupTaskPropertiesProvider {
 
     public final static String COMMAND_LIST_NAME = "Command List";
 
-    public final static List<String> MEDIA_TYPES = Arrays.asList(MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE, "image/jpeg;base64");
+    public final static List<String> MEDIA_TYPES = Arrays.asList(MediaType.APPLICATION_JSON_VALUE, MediaType.TEXT_PLAIN_VALUE, MediaTypes.IMAGE_JPEG_BASE64.getValue(), MediaTypes.TEXT_HTML_BASE64.getValue());
 
     @Autowired
     private CardRepository cardRepository;

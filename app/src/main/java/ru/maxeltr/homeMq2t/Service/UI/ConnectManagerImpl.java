@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.DashboardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.MediaTypes;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Model.Status;
@@ -63,20 +63,20 @@ public class ConnectManagerImpl implements ConnectManager {
 
     @Override
     public Msg connect() {
-        var msg = new MsgImpl.MsgBuilder("onConnect").type(MediaType.APPLICATION_JSON_VALUE);
+        var msg = new MsgImpl.MsgBuilder("onConnect").type(MediaTypes.TEXT_HTML_BASE64.getValue());
 
         Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
         authFuture.awaitUninterruptibly(this.connectTimeout);
         String dashboardHtml = this.appProperties.getStartDashboard().map(ViewModel::getHtml).orElse("");
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
-            msg.data(this.jsonFormatter.encodeAndCreateJson(dashboardHtml, Status.FAIL));
+            msg.data(this.jsonFormatter.createAndEncodeHtml(dashboardHtml, Status.FAIL));
         } else if (!authFuture.isSuccess()) {
             logger.info("Connection established failed.");
-            msg.data(this.jsonFormatter.encodeAndCreateJson(dashboardHtml, Status.FAIL));
+            msg.data(this.jsonFormatter.createAndEncodeHtml(dashboardHtml, Status.FAIL));
         } else {
             logger.info("Connection established successfully.");
-            msg.data(this.jsonFormatter.encodeAndCreateJson(dashboardHtml, Status.OK));
+            msg.data(this.jsonFormatter.createAndEncodeHtml(dashboardHtml, Status.OK));
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));

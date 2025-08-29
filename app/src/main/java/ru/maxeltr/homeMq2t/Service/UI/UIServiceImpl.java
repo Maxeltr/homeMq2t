@@ -23,6 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import java.util.Arrays;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -180,11 +182,13 @@ public class UIServiceImpl implements UIService {
         }
 
         if (message.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
-            String jsonPathExpression = this.appProperties.getCardJsonPathExpression(cardNumber);
-            if (StringUtils.isNotEmpty(jsonPathExpression)) {
-                message.data(this.jsonFormatter.parseAndCreateJson(message.getData(), jsonPathExpression));
-            } else {
-                logger.debug("JsonPath expression is empty for card={}.", cardNumber);
+            List<String> jsonPathExpressions = Arrays.asList(StringUtils.split(this.appProperties.getCardJsonPathExpression(cardNumber), " "));
+            if (!jsonPathExpressions.isEmpty()) {
+                if (jsonPathExpressions.size() == 1) {
+                    message.data(this.jsonFormatter.parseAndCreateJson(message.getData(), jsonPathExpressions.get(0)));
+                } else {
+                    message.data(this.jsonFormatter.parseAndCreateJson(message.getData(), jsonPathExpressions));
+                }
             }
         }
 
