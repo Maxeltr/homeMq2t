@@ -33,25 +33,13 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.function.BiConsumer;
-import org.apache.commons.lang3.StringUtils;
-import org.jsoup.Jsoup;
-import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
@@ -166,6 +154,54 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     /**
+     * Retrive card numbers assosiatied with the given MQTT topic. This method
+     * delegates to the cardPRopertiesProvider to resolve which card identifiers
+     * (numbers) are bound to the specified topic.
+     *
+     * @param topic the MQTT topic name
+     * @return a list of card numbers associated with the topic
+     *
+     * @implNote This method is package-private and intended for use by
+     * ServiceType numbers-getter method references (e.g.
+     * ServiceMediator::getCardNumbersByTopic).
+     */
+    List<String> getCardNumbersByTopic(String topic) {
+        return cardPropertiesProvider.getCardNumbersByTopic(topic);
+    }
+
+    /**
+     * Retrive command numbers assosiatied with the given MQTT topic. This
+     * method delegates to the commandPropertiesProvider to resolve which
+     * command identifiers (numbers) are bound to the specified topic.
+     *
+     * @param topic the MQTT topic name
+     * @return a list of command numbers associated with the topic
+     *
+     * @implNote This method is package-private and intended for use by
+     * ServiceType numbers-getter method references (e.g.
+     * ServiceMediator::getCommandNumbersByTopic).
+     */
+    List<String> getCommandNumbersByTopic(String topic) {
+        return commandPropertiesProvider.getCommandNumbersByTopic(topic);
+    }
+
+    /**
+     * Retrive component numbers assosiatied with the given MQTT topic. This
+     * method delegates to the componentPropertiesProvider to resolve which
+     * component identifiers (numbers) are bound to the specified topic.
+     *
+     * @param topic the MQTT topic name
+     * @return a list of component numbers associated with the topic
+     *
+     * @implNote This method is package-private and intended for use by
+     * ServiceType numbers-getter method references (e.g.
+     * ServiceMediator::getComponentNumbersByTopic).
+     */
+    List<String> getComponentNumbersByTopic(String topic) {
+        return componentPropertiesProvider.getComponentNumbersByTopic(topic);
+    }
+
+    /**
      * Handles an incoming Mqtt publish message.
      *
      * This method processes the message payload, attempts to convert it into
@@ -189,28 +225,14 @@ public class ServiceMediatorImpl implements ServiceMediator {
             logger.warn("Cannot convert json to Msg. Message id={}. Data was added as plain text. {}", id, ex.getMessage());
             builder = MsgImpl.newBuilder()
                     .data(mqttMessage.payload().toString(StandardCharsets.UTF_8))
-                    .timestamp("n/a") //TODO
-                    .type(MediaType.TEXT_PLAIN_VALUE);   //TODO get type from options by topic
+                    .timestamp("n/a"); //TODO
         }
 
-        String topicName = (mqttMessage.variableHeader().topicName());
-        Msg msg = builder.build();
-
         for (ServiceType type : ServiceType.values()) {
-            List<String> numbers = switch (type) {
-                case UI ->
-                    cardPropertiesProvider.getCardNumbersByTopic(topicName);
-                case COMMAND ->
-                    commandPropertiesProvider.getCommandNumbersByTopic(topicName);
-                case COMPONENT ->
-                    componentPropertiesProvider.getComponentNumbersByTopic(topicName);
-            };
-            for (String number : numbers) {
-                try {
-                    type.dispatch(this, msg, number);
-                } catch (Exception ex) {
-                    logger.warn("Dispatch failed for type={} number={} id={}: {}", type.getName(), number, id, ex.getMessage());
-                }
+            try {
+                type.dispatch(this, builder.build(), mqttMessage.variableHeader().topicName());
+            } catch (Exception ex) {
+                logger.warn("Dispatch failed for type={} message id={}: {}", type.getName(), id, ex);
             }
         }
 

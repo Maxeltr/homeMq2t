@@ -30,24 +30,27 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.DashboardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.MediaTypes;
 import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Model.Status;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 public class DashboardItemCommandManagerImpl implements DashboardItemManager {
 
     private static final Logger logger = LoggerFactory.getLogger(DashboardItemCommandManagerImpl.class);
+
+    private final Lock lock = new ReentrantLock();
 
     @Autowired
     @Qualifier("getCommandPropertiesProvider")
@@ -74,55 +77,69 @@ public class DashboardItemCommandManagerImpl implements DashboardItemManager {
 
     @Override
     public Msg getItemsByDashboard(Msg msg) {
-        Optional<ViewModel<DashboardEntity>> dashboardOpt;
-        if (StringUtils.isNotBlank(msg.getId())) {
-            dashboardOpt = Optional.empty();        //TODO several command dashboards and choose between them
-        } else {
-            dashboardOpt = this.dashboardPropertiesProvider.getCommandDashboard();
-        }
+        lock.lock();
+        try {
+            Optional<ViewModel<DashboardEntity>> dashboardOpt;
+            if (StringUtils.isNotBlank(msg.getId())) {
+                dashboardOpt = Optional.empty();        //TODO several command dashboards and choose between them
+            } else {
+                dashboardOpt = this.dashboardPropertiesProvider.getCommandDashboard();
+            }
 
-        return MsgImpl.newBuilder()
-                .data(dashboardOpt
-                        .map(viewModel -> jsonFormatter.encodeAndCreateJson(viewModel.getHtml(), Status.OK))
-                        .orElseGet(() -> jsonFormatter.encodeAndCreateJson("", Status.FAIL))
-                )
-                .type(MediaType.APPLICATION_JSON_VALUE)
-                .timestamp(String.valueOf(Instant.now().toEpochMilli()))
-                .build();
+            return msg.toBuilder()
+                    .data(dashboardOpt
+                            .map(viewModel -> jsonFormatter.createAndEncodeHtml(viewModel.getHtml(), Status.OK))
+                            .orElseGet(() -> jsonFormatter.createAndEncodeHtml("", Status.FAIL))
+                    )
+                    .type(MediaTypes.TEXT_HTML_BASE64.getValue())
+                    .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                    .build();
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
     public Msg getItemSettings(Msg msg) {
-        Optional<ViewModel> commandSettingsOpt;
-        if (StringUtils.isNotBlank(msg.getId())) {
-            commandSettingsOpt = this.propertiesProvider.getCommandSettings(msg.getId());
-        } else {
-            commandSettingsOpt = this.propertiesProvider.getEmptyCommandSettings();
-        }
+        lock.lock();
+        try {
+            Optional<ViewModel> commandSettingsOpt;
+            if (StringUtils.isNotBlank(msg.getId())) {
+                commandSettingsOpt = this.propertiesProvider.getCommandSettings(msg.getId());
+            } else {
+                commandSettingsOpt = this.propertiesProvider.getEmptyCommandSettings();
+            }
 
-        return msg.toBuilder()
-                .type(MediaType.APPLICATION_JSON_VALUE)
-                .data(commandSettingsOpt
-                        .map(viewModel -> jsonFormatter.encodeAndCreateJson(viewModel.getHtml(), Status.OK))
-                        .orElseGet(() -> jsonFormatter.encodeAndCreateJson("", Status.FAIL))
-                )
-                .timestamp(String.valueOf(Instant.now().toEpochMilli()))
-                .build();
+            return msg.toBuilder()
+                    .data(commandSettingsOpt
+                            .map(viewModel -> jsonFormatter.createAndEncodeHtml(viewModel.getHtml(), Status.OK))
+                            .orElseGet(() -> jsonFormatter.createAndEncodeHtml("", Status.FAIL))
+                    )
+                    .type(MediaTypes.TEXT_HTML_BASE64.getValue())
+                    .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                    .build();
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
     public void saveItemSettings(Msg msg) {
+        lock.lock();
         try {
             CommandEntity commandEntity = mapper.readValue(msg.getData(), CommandEntity.class);
             var entity = this.propertiesProvider.saveCommandEntity(commandEntity);
             logger.debug("Saved command settings {}.", entity);
         } catch (JsonProcessingException | NoSuchElementException ex) {
             logger.warn("Could not save data={}. {}", msg, ex);
+        } finally {
+            lock.unlock();
         }
     }
 
     @Override
     public void deleteItem(Msg msg) {
+        lock.lock();
         try {
             JsonNode root = mapper.readTree(msg.getData());
             String id = root.path(CommandEntity.JSON_FIELD_ID).asText();
@@ -131,6 +148,8 @@ public class DashboardItemCommandManagerImpl implements DashboardItemManager {
         } catch (JsonProcessingException | NoSuchElementException ex) {
             logger.warn("Could not delete data={}. {}", msg, ex);
 
+        } finally {
+            lock.unlock();
         }
     }
 

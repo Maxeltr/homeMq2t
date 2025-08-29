@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import java.util.List;
 import java.util.Optional;
 import ru.maxeltr.homeMq2t.Model.Status;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
@@ -56,10 +57,12 @@ public interface UIJsonFormatter {
      * @return a Json string with the event name, status, content type and
      * Base64-encoded HTML with optional error or unknown status prefix.
      */
-    public String encodeAndCreateJson(String data, Status status);
+//    public String encodeAndCreateJson(String data, Status status);
 
     public String parseAndCreateJson(String msg, String jsonPathExpression);
 
-//    public <T extends ViewModel> String createJson(Optional<T> modelOpt, String name);
+    public String parseAndCreateJson(String msg, List<String> jsonPathExpressions);
+
+    public String createAndEncodeHtml(String dashboard, Status status);
 
 }
