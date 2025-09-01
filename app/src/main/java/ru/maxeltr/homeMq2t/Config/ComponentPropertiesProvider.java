@@ -24,12 +24,35 @@
 package ru.maxeltr.homeMq2t.Config;
 
 import java.util.List;
+import java.util.Optional;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
+import ru.maxeltr.homeMq2t.Repository.ComponentRepository;
+
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public interface ComponentPropertiesProvider {
+
+    public final static String COMPONENT_TEMPLATE_PATH = "component-template-path";
+
+    public final static String COMPONENT_SETTINGS_TEMPLATE_PATH = "component-settings-template-path";
+
+    public final static String COMPONENT_LIST_NAME = "Component List";
+
+    public ComponentEntity saveComponentEntity(ComponentEntity entity);
+
+    public void deleteComponent(String id);
+
+    public Optional<ViewModel> getComponentSettings(String number);
+
+    public Optional<ViewModel> getEmptyComponentSettings();
 
     /**
      * Retrieves the name of a component based on its number.

@@ -28,45 +28,40 @@ import java.util.Objects;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Tag;
-import org.slf4j.LoggerFactory;
-import ru.maxeltr.homeMq2t.Entity.CommandEntity;
+import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
 
-/**
- *
- * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
- */
-public class CommandSettingsImpl extends ViewModel<CommandEntity> {
+public class ComponentSettingsImpl extends ViewModel<ComponentEntity> {
 
     private final List<String> mediaTypes;
 
-    public CommandSettingsImpl(CommandEntity commandEntity, String pathname, List<String> mediaTypes) {
-        super(commandEntity, pathname);
+    public ComponentSettingsImpl(ComponentEntity componentEntity, String pathname, List<String> mediaTypes) {
+        super(componentEntity, pathname);
         this.mediaTypes = mediaTypes;
     }
 
     @Override
     void configureTemplate(Document document) {
-        Element el = document.getElementById("settingsCommand-number");
+        Element el = document.getElementById("settingsComponent-number");
         if (el != null) {
             el.attr("value", this.getNumber());
         }
 
-        el = document.getElementById("settingsCommand-id");
+        el = document.getElementById("settingsComponent-id");
         if (el != null) {
             el.attr("value", String.valueOf(this.getEntity().getId()));
         }
 
-        el = document.getElementById("settingsCommand-name");
+        el = document.getElementById("settingsComponent-name");
         if (el != null) {
             el.attr("value", Objects.requireNonNullElse(this.getEntity().getName(), ""));
         }
 
-        el = document.getElementById("settingsCommand-subscriptionTopic");
+        el = document.getElementById("settingsComponent-subscriptionTopic");
         if (el != null) {
             el.attr("value", Objects.requireNonNullElse(this.getEntity().getSubscriptionTopic(), ""));
         }
 
-        el = document.getElementById("settingsCommand-subscriptionQos");
+        el = document.getElementById("settingsComponent-subscriptionQos");
         if (el != null) {
             for (Element option : el.getElementsByTag("option")) {
                 if (Objects.requireNonNullElse(this.getEntity().getSubscriptionQos(), "").equals(option.val())) {
@@ -77,12 +72,12 @@ public class CommandSettingsImpl extends ViewModel<CommandEntity> {
             }
         }
 
-        el = document.getElementById("settingsCommand-publicationTopic");
+        el = document.getElementById("settingsComponent-publicationTopic");
         if (el != null) {
             el.attr("value", Objects.requireNonNullElse(this.getEntity().getPublicationTopic(), ""));
         }
 
-        el = document.getElementById("settingsCommand-publicationQos");
+        el = document.getElementById("settingsComponent-publicationQos");
         if (el != null) {
             for (Element option : el.getElementsByTag("option")) {
                 if (Objects.requireNonNullElse(this.getEntity().getPublicationQos(), "").equals(option.val())) {
@@ -93,7 +88,7 @@ public class CommandSettingsImpl extends ViewModel<CommandEntity> {
             }
         }
 
-        el = document.getElementById("settingsCommand-publicationRetain");
+        el = document.getElementById("settingsComponent-publicationRetain");
         if (el != null) {
             for (Element option : el.getElementsByTag("option")) {
                 if (String.valueOf(this.getEntity().getPublicationRetain()).equals(option.val())) {
@@ -104,7 +99,7 @@ public class CommandSettingsImpl extends ViewModel<CommandEntity> {
             }
         }
 
-        el = document.getElementById("settingsCommand-publicationDataType");
+        el = document.getElementById("settingsComponent-publicationDataType");
         if (el != null) {
             for (String mediaType : mediaTypes) {
                 Element option = new Element(Tag.valueOf("option"), "").attr("value", mediaType).text(mediaType);
@@ -115,19 +110,24 @@ public class CommandSettingsImpl extends ViewModel<CommandEntity> {
             }
         }
 
-        el = document.getElementById("settingsCommand-path");
+        el = document.getElementById("settingsComponent-publicationLocalCardId");
         if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getEntity().getPath(), ""));
+            el.attr("value", Objects.requireNonNullElse(this.getEntity().getPublicationLocalCardId(), ""));
         }
 
-        el = document.getElementById("settingsCommand-arguments");
+        el = document.getElementById("settingsComponent-provider");
         if (el != null) {
-            el.attr("value", Objects.requireNonNullElse(this.getEntity().getArguments(), ""));
+            el.attr("value", Objects.requireNonNullElse(this.getEntity().getProvider(), ""));
         }
 
-        el = document.getElementById("settingsCommand-title");
+        el = document.getElementById("settingsComponent-providerArgs");
         if (el != null) {
-            el.text("Settings for command " + this.getNumber());
+            el.attr("value", Objects.requireNonNullElse(this.getEntity().getProviderArgs(), ""));
+        }
+
+        el = document.getElementById("settingsComponent-title");
+        if (el != null) {
+            el.text("Settings for component " + this.getNumber());
             el.attr("id", this.getNumber() + "-title");
         }
 

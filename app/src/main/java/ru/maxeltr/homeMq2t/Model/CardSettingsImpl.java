@@ -171,9 +171,10 @@ public class CardSettingsImpl extends ViewModel<CardEntity> {
             }
         }
 
-        el = document.select(".card-title").first();
+        el = document.getElementById("settingsCard-title");
         if (el != null) {
             el.text("Settings for card " + this.getNumber());
+            el.attr("id", this.getNumber() + "-title");
         }
 
         el = document.getElementById("settingsCard-dashboardNumber");

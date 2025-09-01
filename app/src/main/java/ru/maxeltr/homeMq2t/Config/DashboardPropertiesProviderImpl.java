@@ -31,16 +31,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
+import ru.maxeltr.homeMq2t.Entity.BaseEntity;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.CommandEntity;
+import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
 import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
 import ru.maxeltr.homeMq2t.Model.CardImpl;
 import ru.maxeltr.homeMq2t.Model.CommandImpl;
+import ru.maxeltr.homeMq2t.Model.ComponentImpl;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.DashboardImpl;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Repository.CardRepository;
 import ru.maxeltr.homeMq2t.Repository.CommandRepository;
+import ru.maxeltr.homeMq2t.Repository.ComponentRepository;
 import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
 import ru.maxeltr.homeMq2t.Utils.AppUtils;
 
@@ -62,22 +66,14 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
     @Autowired
     private CardRepository cardRepository;
 
+    @Autowired
+    private ComponentRepository componentRepository;
+
     @Override
     public Optional<ViewModel<DashboardEntity>> getCommandDashboard() {
         String commandPathname = env.getProperty(CommandPropertiesProvider.COMMAND_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(commandPathname)) {
             logger.warn("No value defined for command template pathname.");
-            return Optional.empty();
-        }
-
-        String dashboardPathname = env.getProperty(DASHBOARD_TEMPLATE_PATH, "");
-        if (StringUtils.isEmpty(dashboardPathname)) {
-            logger.warn("No value defined for dashboard template pathname.");
-            return Optional.empty();
-        }
-
-        Optional<DashboardEntity> dashboardEntityOpt = dashboardRepository.findByName(AppProperties.COMMAND_LIST_NAME);
-        if (dashboardEntityOpt.isEmpty()) {
             return Optional.empty();
         }
 
@@ -90,7 +86,27 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
         });
         logger.debug("Create command list with size={}.", commands.size());
 
-        return Optional.of(new DashboardImpl(dashboardEntityOpt.get(), commands, dashboardPathname));
+        return getDashboardByName(commands, CommandPropertiesProvider.COMMAND_LIST_NAME);
+    }
+
+    @Override
+    public Optional<ViewModel<DashboardEntity>> getComponentDashboard() {
+        String componentPathname = env.getProperty(ComponentPropertiesProvider.COMPONENT_TEMPLATE_PATH, "");
+        if (StringUtils.isEmpty(componentPathname)) {
+            logger.warn("No value defined for component template pathname.");
+            return Optional.empty();
+        }
+
+        List<ViewModel<ComponentEntity>> components = new ArrayList<>();
+        List<ComponentEntity> componentEntities = componentRepository.findAll();
+        componentEntities.forEach(ComponentEntity -> {
+            ViewModel<ComponentEntity> component = new ComponentImpl(ComponentEntity, componentPathname);
+            components.add(component);
+            logger.debug("Component={} has been created and added to component list. Number={}", component.getName(), component.getNumber());
+        });
+        logger.debug("Create component list with size={}.", components.size());
+
+        return getDashboardByName(components, ComponentPropertiesProvider.COMPONENT_LIST_NAME);
     }
 
     @Override
@@ -106,11 +122,6 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
             return Optional.empty();
         }
 
-//        String cardPathname = env.getProperty(CardPropertiesProvider.CARD_TEMPLATE_PATH, "");
-//        if (StringUtils.isEmpty(cardPathname)) {
-//            logger.warn("No value defined for card template pathname.");
-//            return Optional.empty();
-//        }
         Optional<DashboardEntity> dashboardEntityOpt = AppUtils.safeParseInt(number).flatMap(dashboardRepository::findByNumber);
         if (dashboardEntityOpt.isEmpty()) {
             logger.warn("No dashboard found with number={}", number);
@@ -118,14 +129,6 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
         }
         DashboardEntity dashboardEntity = dashboardEntityOpt.get();
 
-//        List<ViewModel<CardEntity>> cards = new ArrayList<>();
-//        List<CardEntity> cardEntities = cardRepository.findByDashboardNumber(dashboardEntity.getNumber());
-//        cardEntities.forEach(cardEntity -> {
-//            ViewModel<CardEntity> card = new CardImpl(cardEntity, cardPathname);
-//            cards.add(card);
-//            logger.debug("Card={} has been created and added to card list. Number={}", card.getName(), card.getNumber());
-//        });
-//        logger.debug("Create card list with size={}.", cards.size());
         List<ViewModel<CardEntity>> cards = getCardsByDashboardNumber(dashboardEntity.getNumber());
         ViewModel<DashboardEntity> dashboard = new DashboardImpl(dashboardEntity, cards, dashboardPathname);
         logger.debug("Dashboard={} has been created.", dashboard.getName());
@@ -157,21 +160,9 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
             return dashboards;
         }
 
-//        String cardPathname = env.getProperty(CardPropertiesProvider.CARD_TEMPLATE_PATH, "");
-//        if (StringUtils.isEmpty(cardPathname)) {
-//            logger.info("No value defined for card template pathname.");
-//            return dashboards;
-//        }
         List<DashboardEntity> dashboardEntities = dashboardRepository.findAll();
         dashboardEntities.forEach(dashboardEntity -> {
-//            List<ViewModel<CardEntity>> cards = new ArrayList<>();
-//            List<CardEntity> cardEntities = cardRepository.findByDashboardNumber(dashboardEntity.getNumber());
-//            cardEntities.forEach(cardEntity -> {
-//                ViewModel<CardEntity> card = new CardImpl(cardEntity, cardPathname);
-//                cards.add(card);
-//                logger.info("Card={} has been created and added to card list. Number={}", card.getName(), card.getNumber());
-//            });
-//            logger.info("Create card list with size={}.", cards.size());
+
             List<ViewModel<CardEntity>> cards = getCardsByDashboardNumber(dashboardEntity.getNumber());
             ViewModel<DashboardEntity> dashboard = new DashboardImpl(dashboardEntity, cards, dashboardPathname);
             dashboards.add(dashboard);
@@ -202,4 +193,18 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
         return cards;
     }
 
+    private <T extends BaseEntity> Optional<ViewModel<DashboardEntity>> getDashboardByName(List<ViewModel<T>> entities, String dashboardName) {
+        String dashboardPathname = env.getProperty(DASHBOARD_TEMPLATE_PATH, "");
+        if (StringUtils.isEmpty(dashboardPathname)) {
+            logger.warn("No value defined for dashboard template pathname.");
+            return Optional.empty();
+        }
+
+        Optional<DashboardEntity> dashboardEntityOpt = dashboardRepository.findByName(dashboardName);
+        if (dashboardEntityOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new DashboardImpl(dashboardEntityOpt.get(), entities, dashboardPathname));
+    }
 }

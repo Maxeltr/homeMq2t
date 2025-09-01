@@ -62,6 +62,10 @@ public class UIServiceImpl implements UIService {
     private DashboardItemManager commandManager;
 
     @Autowired
+    @Qualifier("getDashboardItemComponentManager")
+    private DashboardItemManager componentManager;
+
+    @Autowired
     private PublishManager publishManager;
 
     @Autowired
@@ -116,6 +120,18 @@ public class UIServiceImpl implements UIService {
     public void displayCommandSettings(Msg msg) {
         logger.debug("Do edit command settings {}.", msg);
         this.display(this.commandManager.getItemSettings(msg), "");
+    }
+
+    @Override
+    public void displayComponentSettings(Msg msg) {
+        logger.debug("Do edit component settings {}.", msg);
+        this.display(this.componentManager.getItemSettings(msg), "");
+    }
+
+    @Override
+    public void displayMqttSettings(Msg msg) {
+        logger.debug("Do edit mqtt settings {}.", msg);
+        this.display(this.componentManager.getItemSettings(msg), "");
     }
 
     @Override

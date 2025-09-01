@@ -73,9 +73,15 @@ public class InputUIControllerImpl implements InputUIController {
         uiService.launch(msg.build());
     }
 
+    @MessageMapping("/getMqttSettings")
+    public void getMqttSettings(Msg.Builder msg) {
+        logger.debug("Do edit mqtt settings. Msg.Builder was received - {}.", msg);
+        uiService.displayMqttSettings(msg.build());
+    }
+
     @MessageMapping("/getCardSettings")
     public void getCardSettings(Msg.Builder msg) {
-        logger.debug("Do edit settings. Msg.Builder was received - {}.", msg);
+        logger.debug("Do edit card settings. Msg.Builder was received - {}.", msg);
         uiService.displayCardSettings(msg.build());
     }
 
@@ -83,6 +89,12 @@ public class InputUIControllerImpl implements InputUIController {
     public void getCommandSettings(Msg.Builder msg) {
         logger.debug("Do edit command settings. Msg.Builder was received - {}.", msg);
         uiService.displayCommandSettings(msg.build());
+    }
+
+    @MessageMapping("/getComponentSettings")
+    public void getComponentSettings(Msg.Builder msg) {
+        logger.debug("Do edit component settings. Msg.Builder was received - {}.", msg);
+        uiService.displayComponentSettings(msg.build());
     }
 
     @MessageMapping("/saveCard")
