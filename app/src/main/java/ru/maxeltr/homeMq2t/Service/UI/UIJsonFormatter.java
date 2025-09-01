@@ -24,40 +24,9 @@
 package ru.maxeltr.homeMq2t.Service.UI;
 
 import java.util.List;
-import java.util.Optional;
 import ru.maxeltr.homeMq2t.Model.Status;
-import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 public interface UIJsonFormatter {
-
-    /**
-     * Construct a Json-romatted response string containing the given HTML,
-     * event name, and status. The HTML is optionally prefixed with an error or
-     * unknown status message, then Base64 encoded and embedded in the JSON
-     * payload. If the status is "ok", the HTML is included as is. If the status
-     * is "fail", an error message is prepended. For any other status value, an
-     * "undefined status" message is prepended.
-     *
-     * <p>
-     * The generated JSON has the following structure
-     * <pre>{@code
-     * {
-     * 		"name": "<event>",
-     * 		"status": "<status>",
-     * 		"type": "<text/html;base64>",
-     * 		"data": "<base64-encoded HTML with opitonal prefix>"
-     * }
-     * }</pre>
-     * </p>
-     *
-     * @param data the raw HTML content to include in the response
-     * @param status the status of the last action, expected values are "ok" or
-     * "fail".
-     *
-     * @return a Json string with the event name, status, content type and
-     * Base64-encoded HTML with optional error or unknown status prefix.
-     */
-//    public String encodeAndCreateJson(String data, Status status);
 
     public String parseAndCreateJson(String msg, String jsonPathExpression);
 

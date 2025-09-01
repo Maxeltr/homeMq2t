@@ -23,7 +23,6 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
-import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +39,6 @@ import ru.maxeltr.homeMq2t.Model.CommandSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.homeMq2t.Repository.CommandRepository;
-import ru.maxeltr.homeMq2t.Service.UI.DashboardItemCardManagerImpl;
 import ru.maxeltr.homeMq2t.Utils.AppUtils;
 
 /**
@@ -121,14 +119,14 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
             return Optional.empty();
         }
 
-        CommandEntity CommandEntity = new CommandEntity();
-        CommandEntity.setName("default");
-        CommandEntity.setSubscriptionQos("AT_MOST_ONCE");	//TODO use MqttQoS
-        CommandEntity.setPublicationQos("AT_MOST_ONCE");
-        CommandEntity.setPublicationRetain(false);
-        CommandEntity.setPublicationDataType(MediaType.TEXT_PLAIN_VALUE);
+        CommandEntity commandEntity = new CommandEntity();
+        commandEntity.setName("default");
+        commandEntity.setSubscriptionQos("AT_MOST_ONCE");	//TODO use MqttQoS
+        commandEntity.setPublicationQos("AT_MOST_ONCE");
+        commandEntity.setPublicationRetain(false);
+        commandEntity.setPublicationDataType(MediaType.TEXT_PLAIN_VALUE);
 
-        return Optional.of(new CommandSettingsImpl(CommandEntity, commandSettingsPathname, MEDIA_TYPES));
+        return Optional.of(new CommandSettingsImpl(commandEntity, commandSettingsPathname, MEDIA_TYPES));
     }
 
     /**

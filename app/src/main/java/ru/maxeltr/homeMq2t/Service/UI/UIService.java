@@ -57,4 +57,8 @@ public interface UIService {
     public void displayCardDashboard(Msg msg);
 
     public void displayCommandDashboard(Msg msg);
+
+    public void displayComponentSettings(Msg msg);
+
+    public void displayMqttSettings(Msg msg);
 }

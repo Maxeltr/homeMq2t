@@ -33,7 +33,9 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "component_settings")
-public class ComponentEntity {
+public class ComponentEntity extends BaseEntity {
+
+    public static final String JSON_FIELD_ID = "ID";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -60,6 +62,7 @@ public class ComponentEntity {
         this.id = id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -140,11 +143,12 @@ public class ComponentEntity {
         this.providerArgs = providerArgs;
     }
 
-    public int getNumber() {
+    @Override
+    public Integer getNumber() {
         return number;
     }
 
-    public void setNumber(int number) {
+    public void setNumber(Integer number) {
         this.number = number;
     }
 

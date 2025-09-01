@@ -80,6 +80,7 @@ import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizer;
 import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.Base64HtmlJsonFormatterImpl;
 import ru.maxeltr.homeMq2t.Service.UI.DashboardItemCommandManagerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.DashboardItemComponentManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManager;
 import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.PublishManager;
@@ -263,6 +264,11 @@ public class AppAnnotationConfig {
     @Bean
     public DashboardItemCommandManagerImpl getDashboardItemCommandManager() {
         return new DashboardItemCommandManagerImpl();
+    }
+
+    @Bean
+    public DashboardItemComponentManagerImpl getDashboardItemComponentManager() {
+        return new DashboardItemComponentManagerImpl();
     }
 
     @Bean

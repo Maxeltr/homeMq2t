@@ -26,12 +26,17 @@ package ru.maxeltr.homeMq2t.Config;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
+import static ru.maxeltr.homeMq2t.Config.AppProperties.MEDIA_TYPES;
 import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
+import ru.maxeltr.homeMq2t.Model.ComponentSettingsImpl;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.homeMq2t.Repository.ComponentRepository;
 import ru.maxeltr.homeMq2t.Utils.AppUtils;
@@ -45,7 +50,54 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
     private static final Logger logger = LoggerFactory.getLogger(ComponentPropertiesProviderImpl.class);
 
     @Autowired
+    private Environment env;
+
+    @Autowired
     private ComponentRepository componentRepository;
+
+    @Override
+    public ComponentEntity saveComponentEntity(ComponentEntity entity) {
+        return this.componentRepository.save(entity);
+    }
+
+    @Override
+    public void deleteComponent(String id) {
+        this.componentRepository.deleteById(Long.valueOf(id));
+    }
+
+    @Override
+    public Optional<ViewModel> getComponentSettings(String number) {
+        String commandSettingsPathname = env.getProperty(CommandPropertiesProvider.COMMAND_SETTINGS_TEMPLATE_PATH, "");
+        if (StringUtils.isEmpty(commandSettingsPathname)) {
+            logger.info("No value defined for component settings template pathname.");
+            return Optional.empty();
+        }
+
+        Optional<ComponentEntity> componentEntity = AppUtils.safeParseInt(number).flatMap(componentRepository::findByNumber);
+        if (componentEntity.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(new ComponentSettingsImpl(componentEntity.get(), commandSettingsPathname, MEDIA_TYPES));
+    }
+
+    @Override
+    public Optional<ViewModel> getEmptyComponentSettings() {
+        String componentSettingsPathname = env.getProperty(ComponentPropertiesProvider.COMPONENT_SETTINGS_TEMPLATE_PATH, "");
+        if (StringUtils.isEmpty(componentSettingsPathname)) {
+            logger.error("No value defined for component settings template pathname.");
+            return Optional.empty();
+        }
+
+        ComponentEntity componentEntity = new ComponentEntity();
+        componentEntity.setName("default");
+        componentEntity.setSubscriptionQos("AT_MOST_ONCE");	//TODO use MqttQoS
+        componentEntity.setPublicationQos("AT_MOST_ONCE");
+        componentEntity.setPublicationRetain(false);
+        componentEntity.setPublicationDataType(MediaType.TEXT_PLAIN_VALUE);
+
+        return Optional.of(new ComponentSettingsImpl(componentEntity, componentSettingsPathname, MEDIA_TYPES));
+    }
 
     /**
      * Retrieves the name of a component based on its number.
