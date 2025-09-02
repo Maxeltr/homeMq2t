@@ -41,6 +41,10 @@ function goToCommandDashboard() {
     stompClient.send("/app/displayCommandDashboard", {}, JSON.stringify({'id': ""}));
 }
 
+function goToComponentDashboard() {
+    stompClient.send("/app/displayComponentDashboard", {}, JSON.stringify({'id': ""}));
+}
+
 function disconnect() {
     if (stompClient !== null) {
         stompClient.send("/app/disconnect", {}, JSON.stringify({'id': "disconnect"}));
@@ -77,48 +81,67 @@ function saveCommand(data) {
     stompClient.send("/app/saveCommand", {}, JSON.stringify({'data': data}));
 }
 
+function saveComponent(data) {
+    stompClient.send("/app/saveComponent", {}, JSON.stringify({'data': data}));
+}
+
 function deleteDashboardCard(data) {
     stompClient.send("/app/deleteCard", {}, JSON.stringify({'data': data}));
 }
 
-function showImage(message, cardNumber) {
+function deleteCommand(data) {
+    stompClient.send("/app/deleteCommand", {}, JSON.stringify({'data': data}));
+}
+
+function deleteComponent(data) {
+    stompClient.send("/app/deleteComponent", {}, JSON.stringify({'data': data}));
+}
+
+function showImage(message, receiverId) {
     let image = new Image();
     image.src = 'data:image/jpeg;base64,' + message.data;
 
-    setInnerHtml(cardNumber + '-payload', '<img src="' + image.src + '" class="img-fluid" alt="...">');
+    setInnerHtml(receiverId + '-payload', '<img src="' + image.src + '" class="img-fluid" alt="...">');
 
-    let saveButton = document.getElementById(cardNumber + '-save');
+    let saveButton = document.getElementById(receiverId + '-save');
     if (saveButton !== null) {
         saveButton.setAttribute('href', image.src);
         saveButton.classList.remove("disabled");
     }
 }
 
-function showPlainText(message, cardNumber) {
-    setInnerHtml(cardNumber + '-payload', '<p>' + message.data + '</p>');
+function showPlainText(message, receiverId) {
+    setInnerHtml(receiverId + '-payload', '<p>' + message.data + '</p>');
 }
 
-function showTimestamp(message, cardNumber) {
+function showTimestamp(message, receiverId) {
     if (typeof message.timestamp === 'undefined') {
-        setInnerHtml(cardNumber + '-timestamp', 'undefined');
+        setInnerHtml(receiverId + '-timestamp', 'undefined');
     } else {
         let date = new Date(parseInt(message.timestamp, 10));
         let hours = date.getHours();
         let minutes = '0' + date.getMinutes();
         let seconds = '0' + date.getSeconds();
-        setInnerHtml(cardNumber + '-timestamp', hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2));
+        setInnerHtml(receiverId + '-timestamp', hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2));
     }
 }
 
-function showBase64(payload) {
+function showBase64(payload, receiverId) {
+    let str = '';
     try {
-        if (null === setInnerHtml('dashboard', b64ToUtf8(payload))) {
-            console.error("Error. No dashboard available.");
-            setInnerHtml('errors', "<div style=\"color:red;\">Error. No dashboard available.</div>");
+        str = b64ToUtf8(payload);
+        if (receiverId === 'dashboard') {
+            setInnerHtml('dashboard', str);
+        } else {
+            setInnerHtml(receiverId + '-payload', '<p>' + str + '</p>');
         }
     } catch (err) {
-        console.error('Error while showing base64 payload:', err);
-        setInnerHtml('errors', "<div style=\"color:red;\">Error. The Base64 string to be decoded is not correctly encoded.</div>");
+        console.error('Error. The Base64 string to be decoded is not correctly encoded. ', err);
+        if (receiverId === 'dashboard') {
+            setInnerHtml('errors', "<div style=\"color:red;\">Error. The Base64 string to be decoded is not correctly encoded.</div>");
+        } else {
+            setInnerHtml(receiverId + '-payload', '<p style=\"color:red;\">Error. The Base64 string to be decoded is not correctly encoded</p>');
+        }
     }
 }
 
@@ -133,52 +156,56 @@ function b64ToUtf8(str) {
     return new TextDecoder('utf-8').decode(bytes);
 }
 
-function showData(message, cardNumber) {
-    let el, payload;
+function showJson(message, receiverId) {
+    try {
+        payload = JSON.parse(message.data);
+    } catch (SyntaxError) {
+        console.error('Error. Not valid Json for card=' + receiverId);
+        setInnerHtml(receiverId + '-payload', '<p style=\"color:red;\">Error parsing JSON</p>');
+        return;
+    }
+    setInnerHtml(receiverId + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
+}
 
-    showTimestamp(message, cardNumber);
+function showData(message, receiverId) {
+    let payload;
+    if (!message) {
+        setInnerHtml(receiverId + '-payload', '<p style=\"color:red;\">Error. Message is null/undefined</p>');
+        console.error('Message is null/undefined for card=' + receiverId);
+        return;
+    }
 
-    if (typeof message.type !== 'undefined') {
-        if (message.type.toUpperCase() === 'IMAGE/JPEG;BASE64') {
-            showImage(message, cardNumber);
+    showTimestamp(message, receiverId);
 
-        } else if (message.type.toUpperCase() === 'TEXT/PLAIN') {
-            showPlainText(message, cardNumber);
+    let type = (typeof message.type === 'string') ? message.type.toUpperCase() : '';
+    switch (type) {
+        case 'IMAGE/JPEG;BASE64':
+            showImage(message, receiverId);
+            break;
 
-        } else if (message.type.toUpperCase() === 'TEXT/HTML;BASE64') {
-            showBase64(message.data);
+        case 'TEXT/PLAIN':
+            showPlainText(message, receiverId);
+            break;
 
-        } else if (message.type.toUpperCase() === 'APPLICATION/JSON') {
-            try {
-                payload = JSON.parse(message.data);
-            } catch (SyntaxError) {
-                console.error('Error. Not valid Json for card=' + cardNumber + '. Shows as plain text.');
-                //setInnerHtml('errors', "<div style=\"color:red;\">Error. Invalid json. Card=" + cardNumber + ".</div>");
-                showPlainText(message, cardNumber);
-                return;
-            }
+        case 'TEXT/HTML;BASE64':
+            showBase64(message.data, receiverId);
+            break;
 
-            if (payload.hasOwnProperty("data")) {
-                setInnerHtml(cardNumber + '-payload', '<p>' + payload.data + '</p>');
-            } else {
-                setInnerHtml(cardNumber + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
-                console.log("No data property for card=" + cardNumber + ' - showing full JSON.');
-            }
+        case 'APPLICATION/JSON':
+            showJson(message, receiverId);
+            break;
 
-        } else {
-            console.error("Error. Incorrect payload type for card=" + cardNumber + ". Message type is " + message.type);
-            setInnerHtml('errors', "<div style=\"color:red;\">Error. Incorrect payload type for card=" + cardNumber + ".</div>");
-        }
-    } else {
-        console.error('Error: message type is undefined');
-        setInnerHtml('errors', "<div style=\"color:red;\">Error: message type is undefined.</div>");
+        default:
+            setInnerHtml(receiverId + '-payload', '<p style=\"color:red;\">Error. Incorrect payload type</p>');
+            console.error("Error. Incorrect payload type for card=" + receiverId + ". Type is " + message.type);
     }
 }
 
 function setInnerHtml(selector, html) {
     let el = document.getElementById(selector);
-    if (el)
+    if (el) {
         el.innerHTML = safeHtml(html);
+    }
 
     return el;
 }
@@ -194,12 +221,15 @@ $(function () {
     $("form").on('submit', function (e) {
         e.preventDefault();
     });
+    
     $("#connect").click(function () {
         connect();
     });
+    
     $("#disconnect").click(function () {
         disconnect();
     });
+    
     $("#shutdown").click(function () {
         shutdown();
     });
@@ -228,6 +258,11 @@ $(function () {
         const arg = $(this).val();
         getCommandSettings(arg);
     });
+    
+    $(document).on("click", "#editComponentSettings", function () {
+        const arg = $(this).val();
+        getComponentSettings(arg);
+    });
 
     $(document).on("click", "#addCard", function () {
         const arg = $(this).val();
@@ -239,6 +274,11 @@ $(function () {
         getCommandSettings(arg);
     });
 
+    $(document).on("click", "#addComponent", function () {
+        const arg = $(this).val();
+        getComponentSettings(arg);
+    });
+    
     function getFormData(name) {
         let el = document.getElementById(name);
         let formData = new FormData(el);
@@ -254,16 +294,23 @@ $(function () {
         saveCard(JSON.stringify(getFormData('cardSettingsForm')));
         setTimeout(() => {
             goToStartDashboard();
-        }, 300);
+        }, 100);
     });
 
     $(document).on("click", "#saveCommand", function () {
         saveCommand(JSON.stringify(getFormData('commandSettingsForm')));
         setTimeout(() => {
             goToCommandDashboard();
-        }, 300);
+        }, 100);
     });
 
+    $(document).on("click", "#saveComponent", function () {
+        saveComponent(JSON.stringify(getFormData('componentSettingsForm')));
+        setTimeout(() => {
+            goToComponentDashboard();
+        }, 100);
+    });
+    
     $(document).on("click", "#cancel", function () {
         goToStartDashboard();
     });
@@ -275,12 +322,39 @@ $(function () {
         deleteDashboardCard(JSON.stringify(getFormData('cardSettingsForm')));
         setTimeout(() => {
             goToStartDashboard();
-        }, 300);
-
+        }, 100);
+    });
+    
+    $(document).on("click", "#deleteCommand", function () {
+        if (!confirm('Delete command?')) {
+            return;
+        }
+        deleteCommand(JSON.stringify(getFormData('commandSettingsForm')));
+        setTimeout(() => {
+            goToCommandDashboard();
+        }, 100);
+    });
+    
+    $(document).on("click", "#deleteComponent", function () {
+        if (!confirm('Delete component?')) {
+            return;
+        }
+        deleteComponent(JSON.stringify(getFormData('componentSettingsForm')));
+        setTimeout(() => {
+            goToComponentDashboard();
+        }, 100);
     });
 
+    $(document).on("click", "#viewCards", function () {
+        goToStartDashboard();
+    });
+    
     $(document).on("click", "#viewCommands", function () {
         goToCommandDashboard();
+    });
+    
+    $(document).on("click", "#viewComponents", function () {
+        goToComponentDashboard();
     });
 
 });

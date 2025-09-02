@@ -90,48 +90,54 @@ public class UIServiceImpl implements UIService {
     @Override
     public void connect() {
         logger.debug("Do connect.");
-        this.display(this.connectManager.connect(), "");
+        this.display(this.connectManager.connect(), "dashboard");
     }
 
     @Override
     public void displayCardDashboard(Msg msg) {
         logger.debug("Do display dashboard {}.", msg);
-        this.display(this.cardManager.getItemsByDashboard(msg), "");
+        this.display(this.cardManager.getItemsByDashboard(msg), "dashboard");
     }
 
     public void displayStartDashboard(Msg msg) {
         logger.debug("Do display start dashboard {}.", msg);
-        this.display(this.cardManager.getItemsByDashboard(msg.toBuilder().id("").build()), "");
+        this.display(this.cardManager.getItemsByDashboard(msg.toBuilder().id("").build()), "dashboard");
     }
 
     @Override
     public void displayCommandDashboard(Msg msg) {
         logger.debug("Do display command dashboard {}.", msg);
-        this.display(this.commandManager.getItemsByDashboard(msg), "");
+        this.display(this.commandManager.getItemsByDashboard(msg), "dashboard");
+    }
+
+    @Override
+    public void displayComponentDashboard(Msg msg) {
+        logger.debug("Do display component dashboard {}.", msg);
+        this.display(this.componentManager.getItemsByDashboard(msg), "dashboard");
     }
 
     @Override
     public void displayCardSettings(Msg msg) {
         logger.debug("Do edit card settings {}.", msg);
-        this.display(this.cardManager.getItemSettings(msg), "");
+        this.display(this.cardManager.getItemSettings(msg), "dashboard");
     }
 
     @Override
     public void displayCommandSettings(Msg msg) {
         logger.debug("Do edit command settings {}.", msg);
-        this.display(this.commandManager.getItemSettings(msg), "");
+        this.display(this.commandManager.getItemSettings(msg), "dashboard");
     }
 
     @Override
     public void displayComponentSettings(Msg msg) {
         logger.debug("Do edit component settings {}.", msg);
-        this.display(this.componentManager.getItemSettings(msg), "");
+        this.display(this.componentManager.getItemSettings(msg), "dashboard");
     }
 
     @Override
     public void displayMqttSettings(Msg msg) {
         logger.debug("Do edit mqtt settings {}.", msg);
-        this.display(this.componentManager.getItemSettings(msg), "");
+        this.display(this.componentManager.getItemSettings(msg), "dashboard");
     }
 
     @Override
@@ -147,6 +153,12 @@ public class UIServiceImpl implements UIService {
     }
 
     @Override
+    public void saveComponentSettings(Msg msg) {
+        logger.debug("Do save component settings {}.", msg.getData());
+        this.componentManager.saveItemSettings(msg);
+    }
+
+    @Override
     public void deleteCard(Msg msg) {
         logger.debug("Do delete card {}.", msg.getData());
         this.cardManager.deleteItem(msg);
@@ -156,6 +168,12 @@ public class UIServiceImpl implements UIService {
     public void deleteCommand(Msg msg) {
         logger.debug("Do delete command {}.", msg.getData());
         this.commandManager.deleteItem(msg);
+    }
+
+    @Override
+    public void deleteComponent(Msg msg) {
+        logger.debug("Do delete component {}.", msg.getData());
+        this.componentManager.deleteItem(msg);
     }
 
     @Override

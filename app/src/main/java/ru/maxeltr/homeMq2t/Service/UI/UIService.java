@@ -36,13 +36,19 @@ public interface UIService {
 
     public void displayCommandSettings(Msg msg);
 
+    public void displayComponentDashboard(Msg msg);
+
     public void saveCardSettings(Msg msg);
 
     public void saveCommandSettings(Msg msg);
 
+    public void saveComponentSettings(Msg msg);
+
     public void deleteCard(Msg msg);
 
     public void deleteCommand(Msg msg);
+
+    public void deleteComponent(Msg msg);
 
     public void disconnect(byte reasonCode);
 

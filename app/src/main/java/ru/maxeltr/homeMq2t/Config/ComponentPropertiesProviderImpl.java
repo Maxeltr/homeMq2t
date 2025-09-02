@@ -67,7 +67,7 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
 
     @Override
     public Optional<ViewModel> getComponentSettings(String number) {
-        String commandSettingsPathname = env.getProperty(CommandPropertiesProvider.COMMAND_SETTINGS_TEMPLATE_PATH, "");
+        String commandSettingsPathname = env.getProperty(ComponentPropertiesProvider.COMPONENT_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(commandSettingsPathname)) {
             logger.info("No value defined for component settings template pathname.");
             return Optional.empty();
