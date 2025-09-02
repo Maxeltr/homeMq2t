@@ -109,6 +109,12 @@ public class InputUIControllerImpl implements InputUIController {
         uiService.saveCommandSettings(msg.build());
     }
 
+    @MessageMapping("/saveComponent")
+    public void saveComponent(Msg.Builder msg) {
+        logger.debug("Do save component settings. Msg.Builder was received - {}.", msg.getData());
+        uiService.saveComponentSettings(msg.build());
+    }
+
     @MessageMapping("/deleteCard")
     public void deleteCard(Msg.Builder msg) {
         logger.debug("Do delete card. Msg.Builder was received - {}.", msg.getData());
@@ -121,6 +127,12 @@ public class InputUIControllerImpl implements InputUIController {
         uiService.deleteCommand(msg.build());
     }
 
+    @MessageMapping("/deleteComponent")
+    public void deleteComponent(Msg.Builder msg) {
+        logger.debug("Do delete component. Msg.Builder was received - {}.", msg.getData());
+        uiService.deleteComponent(msg.build());
+    }
+
     @MessageMapping("/displayCardDashboard")
     public void displayCards(Msg.Builder msg) {
         logger.debug("Do display cards. {}", msg.getData());
@@ -131,5 +143,11 @@ public class InputUIControllerImpl implements InputUIController {
     public void displayCommands(Msg.Builder msg) {
         logger.debug("Do display commands. {}", msg.getData());
         uiService.displayCommandDashboard(msg.build());
+    }
+
+    @MessageMapping("/displayComponentDashboard")
+    public void displayComponents(Msg.Builder msg) {
+        logger.debug("Do display components. {}", msg.getData());
+        uiService.displayComponentDashboard(msg.build());
     }
 }
