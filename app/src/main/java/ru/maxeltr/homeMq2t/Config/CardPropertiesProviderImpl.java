@@ -61,7 +61,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
     private CardRepository cardRepository;
 
     @Autowired
-    private DashboardRepository dashboardRepository;
+    private DashboardRepository<CardEntity> dashboardRepository;
 
     @Autowired
     @Qualifier("getDashboardPropertiesProvider")
@@ -125,7 +125,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
             return Optional.empty();
         }
 
-        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, dashboardPropertiesProvider.getAllCardDashboards(), MEDIA_TYPES));
+        return Optional.of(new CardSettingsImpl(cardEntity.get(), cardSettingsPathname, dashboardPropertiesProvider.getAllDashboards(), MEDIA_TYPES));
     }
 
     /**
@@ -164,7 +164,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
         cardEntity.setLocalTaskDataType(MediaType.TEXT_PLAIN_VALUE);
         cardEntity.setDashboard(startDashboardEntityOpt.get());
 
-        return Optional.of(new CardSettingsImpl(cardEntity, cardSettingsPathname, dashboardPropertiesProvider.getAllCardDashboards(), MEDIA_TYPES));
+        return Optional.of(new CardSettingsImpl(cardEntity, cardSettingsPathname, dashboardPropertiesProvider.getAllDashboards(), MEDIA_TYPES));
     }
 
     /**

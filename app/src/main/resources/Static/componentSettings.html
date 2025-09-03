@@ -1,0 +1,68 @@
+<div class="card text-center text-white bg-secondary shadow-sm" id="settingsComponent">
+    <div class="card-body">
+        <h5 class="card-title"></h5>
+        <form id="componentSettingsForm">
+            <input type="hidden" id="settingsComponent-id" name="ID" value="">
+            <div class="mb-3">
+                <label for="settingsComponent-name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="settingsComponent-name" name="NAME" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsComponent-subscriptionTopic" class="form-label">Subscription Topic</label>
+                <input type="text" class="form-control" id="settingsComponent-subscriptionTopic" name="subscriptionTopic" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsComponent-subscriptionQos" class="form-label">Subscription QoS</label>
+                <select class="form-select" id="settingsComponent-subscriptionQos" name="subscriptionQos">
+                    <option value="AT_MOST_ONCE" selected>AT_MOST_ONCE</option>
+                    <option value="AT_LEAST_ONCE">AT_LEAST_ONCE</option>
+                    <option value="EXACTLY_ONCE">EXACTLY_ONCE</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsComponent-publicationTopic" class="form-label">Publication Topic</label>
+                <input type="text" class="form-control" id="settingsComponent-publicationTopic" name="publicationTopic" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsComponent-publicationQos" class="form-label">Publication QoS</label>
+                <select class="form-select" id="settingsComponent-publicationQos" name="publicationQos">
+                    <option value="AT_MOST_ONCE" selected>AT_MOST_ONCE</option>
+                    <option value="AT_LEAST_ONCE">AT_LEAST_ONCE</option>
+                    <option value="EXACTLY_ONCE">EXACTLY_ONCE</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsComponent-publicationRetain" class="form-label">Publication Retain</label>
+                <select class="form-select" id="settingsComponent-publicationRetain" name="publicationRetain">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsComponent-publicationDataType" class="form-label">Publication Data Type</label>
+                <select class="form-select" id="settingsComponent-publicationDataType" name="publicationDataType">	
+                </select>
+            </div>
+			<div class="mb-3">
+                <label for="settingsComponent-publicationLocalCardId" class="form-label">Path</label>
+                <input type="text" class="form-control" id="settingsComponent-publicationLocalCardId" name="publicationLocalCardId" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsComponent-provider" class="form-label">Provider</label>
+                <input type="text" class="form-control" id="settingsComponent-provider" name="provider" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsComponent-providerArgs" class="form-label">Arguments</label>
+                <input type="text" class="form-control" id="settingsComponent-providerArgs" name="providerArgs" value="">
+            </div>
+            <input type="hidden" id="settingsComponent-number" name="number" value="">
+            <div class="d-flex align-items-center">
+                <button type="button" class="btn btn-danger" id="deleteComponent" value="component">Delete</button>
+                <div class="ms-auto">
+                    <button type="button" class="btn btn-secondary me-2" id="cancel" value="component">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveComponent" value="">Save</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
