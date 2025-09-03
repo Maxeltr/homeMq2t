@@ -1,7 +1,17 @@
 let stompClient = null;
 let subDataTopic = '/topic/data';
 let connectTopic = '/app/connect';
-let dataSuscription = null;
+let dataSubscription = null;
+let sendCommandTopic = "/app/publish";	
+let getCardSettingsTopic = "/app/getCardSettings";		
+let getCommandSettingsTopic = "/app/getCommandSettings";	
+let getComponentSettingsTopic = "/app/getComponentSettings";	
+let saveCardTopic = "/app/saveCard";
+let saveCommandTopic = "/app/saveCommand";
+let saveComponentTopic = "/app/saveComponent";
+let deleteCardTopic = "/app/deleteCard";
+let deleteCommandTopic = "/app/deleteCommand";
+let deleteComponentTopic = "/app/deleteComponent";
 
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
@@ -59,42 +69,6 @@ function disconnect() {
 function shutdown() {
     stompClient.send("/app/shutdownApp", {}, JSON.stringify({'id': "shutdown"}));
     document.body.innerHTML = "<div style=\"color:green;\">Bye!</div>";
-}
-
-function createCommand(id) {
-    stompClient.send("/app/publish", {}, JSON.stringify({'id': id}));
-}
-
-function getCardSettings(id) {
-    stompClient.send("/app/getCardSettings", {}, JSON.stringify({'id': id}));
-}
-
-function getCommandSettings(id) {
-    stompClient.send("/app/getCommandSettings", {}, JSON.stringify({'id': id}));
-}
-
-function saveCard(data) {
-    stompClient.send("/app/saveCard", {}, JSON.stringify({'data': data}));
-}
-
-function saveCommand(data) {
-    stompClient.send("/app/saveCommand", {}, JSON.stringify({'data': data}));
-}
-
-function saveComponent(data) {
-    stompClient.send("/app/saveComponent", {}, JSON.stringify({'data': data}));
-}
-
-function deleteDashboardCard(data) {
-    stompClient.send("/app/deleteCard", {}, JSON.stringify({'data': data}));
-}
-
-function deleteCommand(data) {
-    stompClient.send("/app/deleteCommand", {}, JSON.stringify({'data': data}));
-}
-
-function deleteComponent(data) {
-    stompClient.send("/app/deleteComponent", {}, JSON.stringify({'data': data}));
 }
 
 function showImage(message, receiverId) {
@@ -164,7 +138,12 @@ function showJson(message, receiverId) {
         setInnerHtml(receiverId + '-payload', '<p style=\"color:red;\">Error parsing JSON</p>');
         return;
     }
-    setInnerHtml(receiverId + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
+    
+    if (payload.hasOwnProperty("data")) {
+        setInnerHtml(receiverId + '-payload', '<p>' + payload.data + '</p>');
+    } else {
+        setInnerHtml(receiverId + '-payload', '<p>' + JSON.stringify(payload) + '</p>');
+    }
 }
 
 function showData(message, receiverId) {
@@ -246,37 +225,37 @@ $(function () {
 
     $(document).on("click", "#sendCommand", function () {
         const arg = $(this).val();
-        createCommand(arg);
+        stompClient.send(sendCommandTopic, {}, JSON.stringify({'id': arg}));
     });
 
     $(document).on("click", "#editCardSettings", function () {
         const arg = $(this).val();
-        getCardSettings(arg);
+        stompClient.send(getCardSettingsTopic, {}, JSON.stringify({'id': arg}));
     });
 
     $(document).on("click", "#editCommandSettings", function () {
         const arg = $(this).val();
-        getCommandSettings(arg);
+        stompClient.send(getCommandSettingsTopic, {}, JSON.stringify({'id': arg}));
     });
     
     $(document).on("click", "#editComponentSettings", function () {
         const arg = $(this).val();
-        getComponentSettings(arg);
+        stompClient.send(getComponentSettingsTopic, {}, JSON.stringify({'id': arg}));
     });
 
     $(document).on("click", "#addCard", function () {
         const arg = $(this).val();
-        getCardSettings(arg);
+        stompClient.send(getCardSettingsTopic, {}, JSON.stringify({'id': arg}));
     });
 
     $(document).on("click", "#addCommand", function () {
         const arg = $(this).val();
-        getCommandSettings(arg);
+        stompClient.send(getCommandSettingsTopic, {}, JSON.stringify({'id': arg}));
     });
 
     $(document).on("click", "#addComponent", function () {
         const arg = $(this).val();
-        getComponentSettings(arg);
+        stompClient.send(getComponentSettingsTopic, {}, JSON.stringify({'id': arg}));
     });
     
     function getFormData(name) {
@@ -291,55 +270,64 @@ $(function () {
     }
 
     $(document).on("click", "#saveCard", function () {
-        saveCard(JSON.stringify(getFormData('cardSettingsForm')));
+        stompClient.send(saveCardTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('cardSettingsForm'))}));
         setTimeout(() => {
             goToStartDashboard();
         }, 100);
     });
 
     $(document).on("click", "#saveCommand", function () {
-        saveCommand(JSON.stringify(getFormData('commandSettingsForm')));
+        stompClient.send(saveCommandTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('commandSettingsForm'))}));
         setTimeout(() => {
             goToCommandDashboard();
         }, 100);
     });
 
     $(document).on("click", "#saveComponent", function () {
-        saveComponent(JSON.stringify(getFormData('componentSettingsForm')));
+        stompClient.send(saveComponentTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('componentSettingsForm'))}));
         setTimeout(() => {
             goToComponentDashboard();
         }, 100);
     });
-    
+
     $(document).on("click", "#cancel", function () {
-        goToStartDashboard();
+        const arg = $(this).val();
+        if (arg === 'card') {
+            goToStartDashboard();
+        } else if (arg === 'command') {
+            goToCommandDashboard();
+        } else if (arg === 'component') {
+            goToComponentDashboard();
+        } else {
+            console.error('Invalid value for cancel button - ' + arg);
+        }
     });
 
     $(document).on("click", "#deleteCard", function () {
         if (!confirm('Delete card?')) {
             return;
         }
-        deleteDashboardCard(JSON.stringify(getFormData('cardSettingsForm')));
+        stompClient.send(deleteCardTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('cardSettingsForm'))}));
         setTimeout(() => {
             goToStartDashboard();
         }, 100);
     });
-    
+
     $(document).on("click", "#deleteCommand", function () {
         if (!confirm('Delete command?')) {
             return;
         }
-        deleteCommand(JSON.stringify(getFormData('commandSettingsForm')));
+        stompClient.send(deleteCommandTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('commandSettingsForm'))}));
         setTimeout(() => {
             goToCommandDashboard();
         }, 100);
     });
-    
+
     $(document).on("click", "#deleteComponent", function () {
         if (!confirm('Delete component?')) {
             return;
         }
-        deleteComponent(JSON.stringify(getFormData('componentSettingsForm')));
+        stompClient.send(deleteComponentTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('componentSettingsForm'))}));
         setTimeout(() => {
             goToComponentDashboard();
         }, 100);
@@ -348,16 +336,13 @@ $(function () {
     $(document).on("click", "#viewCards", function () {
         goToStartDashboard();
     });
-    
+
     $(document).on("click", "#viewCommands", function () {
         goToCommandDashboard();
     });
-    
+
     $(document).on("click", "#viewComponents", function () {
         goToComponentDashboard();
     });
 
 });
-
-
-

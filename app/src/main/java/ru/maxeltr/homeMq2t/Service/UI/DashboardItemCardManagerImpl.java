@@ -88,7 +88,7 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
         try {
             Optional<ViewModel<DashboardEntity>> dashboardOpt;
             if (StringUtils.isNotBlank(msg.getId())) {
-                dashboardOpt = this.dashboardPropertiesProvider.getCardDashboard(msg.getId());
+                dashboardOpt = this.dashboardPropertiesProvider.getDashboard(msg.getId());
             } else {
                 dashboardOpt = this.dashboardPropertiesProvider.getStartDashboard();
             }

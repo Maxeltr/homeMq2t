@@ -39,6 +39,7 @@ public class CommandEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty(JSON_FIELD_ID)
     private long id;
     @JsonProperty("NAME")
     private String name;

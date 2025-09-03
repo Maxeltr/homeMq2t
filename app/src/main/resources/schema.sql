@@ -106,7 +106,13 @@ SELECT 'Command List'
 WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Command List');
 VALUES
   ('Command List');
-  
+ 
+INSERT INTO dashboard_settings (name)
+SELECT 'Component List'
+WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Component List');
+VALUES
+  ('Component List');
+
 -- INSERT INTO card_settings (
 --     name,
 --     subscription_topic,
