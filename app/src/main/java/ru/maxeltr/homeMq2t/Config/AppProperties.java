@@ -27,6 +27,7 @@ import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -41,14 +42,18 @@ import ru.maxeltr.homeMq2t.Repository.StartupTaskRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
+import ru.maxeltr.homeMq2t.Entity.MqttSettingsEntity;
 import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
+import ru.maxeltr.homeMq2t.Repository.MqttSettingsRepository;
 
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
 public class AppProperties implements StartupTaskPropertiesProvider {
+
+    private final static String NAME_OF_MQTT_SETTINGS = "Mqtt Settings";
 
     @Autowired
     private Environment env;
@@ -68,6 +73,9 @@ public class AppProperties implements StartupTaskPropertiesProvider {
 
     @Autowired
     private StartupTaskRepository startupTaskRepository;
+
+    @Autowired
+    private MqttSettingsRepository mqttSettingsRepository;
 
     @Autowired
     private DashboardRepository dashboardRepository;
@@ -732,4 +740,7 @@ public class AppProperties implements StartupTaskPropertiesProvider {
         return subscriptions;
     }
 
+    public Optional<MqttSettingsEntity> getMqttSettingsEntity() {
+        return mqttSettingsRepository.findByName(NAME_OF_MQTT_SETTINGS);
+    }
 }

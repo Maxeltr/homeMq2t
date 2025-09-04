@@ -65,14 +65,12 @@ public class DashboardItemCommandManagerImpl implements DashboardItemManager {
 
     private final ObjectMapper mapper;
 
+    @Autowired
+    private MqttManagerImpl mqttManager;
+
     public DashboardItemCommandManagerImpl() {
         this.mapper = new ObjectMapper();
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
-
-    @Override
-    public Msg getItem(Msg msg) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
@@ -100,7 +98,7 @@ public class DashboardItemCommandManagerImpl implements DashboardItemManager {
     }
 
     @Override
-    public Msg getItemSettings(Msg msg) {
+    public Msg getItem(Msg msg) {
         lock.lock();
         try {
             Optional<ViewModel> commandSettingsOpt;
@@ -124,12 +122,14 @@ public class DashboardItemCommandManagerImpl implements DashboardItemManager {
     }
 
     @Override
-    public void saveItemSettings(Msg msg) {
+    public void saveItem(Msg msg) {
         lock.lock();
         try {
             CommandEntity commandEntity = mapper.readValue(msg.getData(), CommandEntity.class);
+            CommandEntity before = this.propertiesProvider.getCommandEntity(String.valueOf(commandEntity.getId())).orElse(null);
             var entity = this.propertiesProvider.saveCommandEntity(commandEntity);
             logger.debug("Saved command settings {}.", entity);
+            this.mqttManager.updateSubscription(before, entity);
         } catch (JsonProcessingException | NoSuchElementException ex) {
             logger.warn("Could not save data={}. {}", msg, ex);
         } finally {
@@ -143,8 +143,10 @@ public class DashboardItemCommandManagerImpl implements DashboardItemManager {
         try {
             JsonNode root = mapper.readTree(msg.getData());
             String id = root.path(CommandEntity.JSON_FIELD_ID).asText();
+            CommandEntity before = this.propertiesProvider.getCommandEntity(id).orElse(null);
             this.propertiesProvider.deleteCommand(id);
             logger.debug("Deleted command {}.", msg);
+            this.mqttManager.updateSubscription(before, null);
         } catch (JsonProcessingException | NoSuchElementException ex) {
             logger.warn("Could not delete data={}. {}", msg, ex);
 

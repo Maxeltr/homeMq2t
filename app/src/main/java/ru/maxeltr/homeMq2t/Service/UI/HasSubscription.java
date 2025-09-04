@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2025 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ * Copyright 2025 Dev.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,16 +23,13 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
-import ru.maxeltr.homeMq2t.Model.Msg;
+/**
+ *
+ * @author Dev
+ */
+public interface HasSubscription {
 
-public interface DashboardItemManager {
+    String getSubscriptionTopic();
 
-    public Msg getItem(Msg msg);
-
-    public Msg getItemsByDashboard(Msg msg);
-
-    public void saveItem(Msg msg);
-
-    public void deleteItem(Msg msg);
-
+    String getSubscriptionQos();
 }

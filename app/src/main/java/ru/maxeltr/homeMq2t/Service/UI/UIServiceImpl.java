@@ -23,18 +23,13 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
-import java.util.Arrays;
-import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
-import ru.maxeltr.homeMq2t.Controller.OutputUIController;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 public class UIServiceImpl implements UIService {
@@ -44,11 +39,7 @@ public class UIServiceImpl implements UIService {
     private ServiceMediator mediator;
 
     @Autowired
-    @Qualifier("getCardPropertiesProvider")
-    private CardPropertiesProvider appProperties;
-
-    @Autowired
-    private OutputUIController uiController;
+    private AppProperties appProperties;
 
     @Autowired
     private ConnectManager connectManager;
@@ -66,16 +57,15 @@ public class UIServiceImpl implements UIService {
     private DashboardItemManager componentManager;
 
     @Autowired
-    private PublishManager publishManager;
+    private MqttManager publishManager;
 
     @Autowired
     private LocalTaskManager localTaskManager;
 
-    @Autowired
-    private HtmlSanitizer htmlSanitizer;
 
     @Autowired
-    private UIJsonFormatter jsonFormatter;
+    @Qualifier("getDisplayManager")
+    private DisplayManager displayManager;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
@@ -119,43 +109,43 @@ public class UIServiceImpl implements UIService {
     @Override
     public void displayCardSettings(Msg msg) {
         logger.debug("Do edit card settings {}.", msg);
-        this.display(this.cardManager.getItemSettings(msg), "dashboard");
+        this.display(this.cardManager.getItem(msg), "dashboard");
     }
 
     @Override
     public void displayCommandSettings(Msg msg) {
         logger.debug("Do edit command settings {}.", msg);
-        this.display(this.commandManager.getItemSettings(msg), "dashboard");
+        this.display(this.commandManager.getItem(msg), "dashboard");
     }
 
     @Override
     public void displayComponentSettings(Msg msg) {
         logger.debug("Do edit component settings {}.", msg);
-        this.display(this.componentManager.getItemSettings(msg), "dashboard");
+        this.display(this.componentManager.getItem(msg), "dashboard");
     }
 
     @Override
     public void displayMqttSettings(Msg msg) {
         logger.debug("Do edit mqtt settings {}.", msg);
-        this.display(this.componentManager.getItemSettings(msg), "dashboard");
+        //this.display(this.componentManager.getItem(msg), "dashboard");
     }
 
     @Override
     public void saveCardSettings(Msg msg) {
         logger.debug("Do save card settings {}.", msg.getData());
-        this.cardManager.saveItemSettings(msg);
+        this.cardManager.saveItem(msg);
     }
 
     @Override
     public void saveCommandSettings(Msg msg) {
         logger.debug("Do save command settings {}.", msg.getData());
-        this.commandManager.saveItemSettings(msg);
+        this.commandManager.saveItem(msg);
     }
 
     @Override
     public void saveComponentSettings(Msg msg) {
         logger.debug("Do save component settings {}.", msg.getData());
-        this.componentManager.saveItemSettings(msg);
+        this.componentManager.saveItem(msg);
     }
 
     @Override
@@ -203,33 +193,8 @@ public class UIServiceImpl implements UIService {
     @Async("processExecutor")
     @Override
     public void display(Msg msg, String cardNumber) {
-        var message = msg.toBuilder();
-        String type = this.appProperties.getCardSubDataType(cardNumber);
-        if (StringUtils.isNotEmpty(type)) {
-            message.type(type);
-            logger.info("Changed type to defined in properties for card={}. Set type={}.", cardNumber, type);
-        } else {
-            if (StringUtils.isEmpty(message.getType())) {
-                message.type(MediaType.APPLICATION_JSON_VALUE);
-                logger.info("Type is undefined for card={}. Set {}.", cardNumber, message.getType());
-            }
-        }
-
-        if (message.getType().equalsIgnoreCase(MediaType.APPLICATION_JSON_VALUE)) {
-            List<String> jsonPathExpressions = Arrays.asList(StringUtils.split(this.appProperties.getCardJsonPathExpression(cardNumber), " "));
-            if (!jsonPathExpressions.isEmpty()) {
-                if (jsonPathExpressions.size() == 1) {
-                    message.data(this.jsonFormatter.parseAndCreateJson(message.getData(), jsonPathExpressions.get(0)));
-                } else {
-                    message.data(this.jsonFormatter.parseAndCreateJson(message.getData(), jsonPathExpressions));
-                }
-            }
-        }
-
-        message.data(this.htmlSanitizer.sanitize(message.getData()));
-
-        logger.debug("Display data={}. Card={}", message, cardNumber);
-        this.uiController.display(message.build(), cardNumber);
+        logger.debug("Do display message id={} to card {}.", msg.getId(), cardNumber);
+        this.displayManager.display(msg, cardNumber);
     }
 
 }

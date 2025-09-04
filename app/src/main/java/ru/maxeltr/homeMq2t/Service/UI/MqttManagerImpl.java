@@ -24,7 +24,12 @@
 package ru.maxeltr.homeMq2t.Service.UI;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
+import io.netty.util.concurrent.Promise;
 import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,13 +38,16 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.MediaType;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Entity.BaseEntity;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
-public class PublishManagerImpl implements PublishManager {
+public class MqttManagerImpl implements MqttManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(PublishManagerImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(MqttManagerImpl.class);
+
+    private final static long ACK_TIMEOUT_MILLIS = 5000L;
 
     @Autowired
     @Lazy               //TODO
@@ -48,6 +56,11 @@ public class PublishManagerImpl implements PublishManager {
     @Autowired
     @Qualifier("getCardPropertiesProvider")
     private CardPropertiesProvider appProperties;
+
+    @Override
+    public void setMediator(ServiceMediator mediator) {
+        this.mediator = mediator;
+    }
 
     @Override
     public void publish(Msg msg) {
@@ -77,4 +90,38 @@ public class PublishManagerImpl implements PublishManager {
         this.mediator.publish(message.build(), topic, qos, retain);
     }
 
+    @Override
+    public <T extends BaseEntity & HasSubscription> void updateSubscription(T before, T after) {
+        String oldTopic;
+        oldTopic = before != null ? before.getSubscriptionTopic() : "";
+        String newTopic = after != null ? after.getSubscriptionTopic() : "";
+        String oldQos = before != null ? before.getSubscriptionQos() : "";
+        String newQos = after != null ? after.getSubscriptionQos() : "";
+
+        boolean topicChanged = !equalsNullSafe(oldTopic, newTopic);
+        boolean qosChanged = !equalsNullSafe(oldQos, newQos);
+
+        if (!topicChanged && !qosChanged) {
+            return;
+        }
+
+        if (StringUtils.isNotEmpty(oldTopic) && this.mediator.isConnected() && (topicChanged || qosChanged)) {
+            Promise<MqttUnsubAckMessage> promise = this.mediator.unsubscribe(List.of(oldTopic));
+            promise.awaitUninterruptibly(ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+        }
+
+        if (StringUtils.isNotBlank(newTopic) && mediator.isConnected()) {
+            this.mediator.subscribe(List.of(new MqttTopicSubscription(newTopic, MqttUtils.convertToMqttQos(newQos))));
+        }
+    }
+
+    private boolean equalsNullSafe(String a, String b) {
+        if (a == null && b == null) {
+            return true;
+        }
+        if (a == null || b == null) {
+            return false;
+        }
+        return a.equals(b);
+    }
 }

@@ -63,6 +63,9 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
     @Autowired
     private UIJsonFormatter jsonFormatter;
 
+    @Autowired
+    private MqttManager mqttManager;
+
     private final ObjectMapper mapper;
 
     public DashboardItemCardManagerImpl() {
@@ -79,8 +82,7 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
      * @param msg incoming message containing optional dashboard number
      * @return a new Msg built from the incoming with JSON payload, type set to
      * APPLICATION/JSON and an updated timestamp. Json payload contains the
-     * event name, status, content type and Base64-encoded HTML with optional
-     * error or unknown status prefix
+     * content type and Base64-encoded HTML with optional     * error or unknown status prefix
      */
     @Override
     public Msg getItemsByDashboard(Msg msg) {
@@ -116,14 +118,13 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
      * @param msg incoming message containing optional card id
      * @return a new Msg built from incoming message with JSON payload, type set
      * to APPLICATION/JSON and an updated timestamp. Json payload contains the
-     * event name, status, content type and Base64-encoded HTML with optional
-     * error or unknown status prefix
+     * content type and Base64-encoded HTML with optional     * error or unknown status prefix
      */
     @Override
-    public Msg getItemSettings(Msg msg) {
+    public Msg getItem(Msg msg) {
         lock.lock();
         try {
-            Optional<ViewModel> cardSettingsOpt;
+            Optional<ViewModel<CardEntity>> cardSettingsOpt;
             if (StringUtils.isNotBlank(msg.getId())) {
                 cardSettingsOpt = this.propertiesProvider.getCardSettings(msg.getId());
             } else {
@@ -152,19 +153,21 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
      * CardEntity.
      */
     @Override
-    public void saveItemSettings(Msg msg) {
+    public void saveItem(Msg msg) {
         lock.lock();
         try {
             JsonNode root = mapper.readTree(msg.getData());
-            DashboardEntity dashboardEntity = dashboardPropertiesProvider.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
+            DashboardEntity<CardEntity> dashboardEntity = dashboardPropertiesProvider.getDashboardEntity(root.path("dashboardNumber").asText()).orElseThrow();
             CardEntity cardEntity = mapper.readValue(msg.getData(), CardEntity.class);
             cardEntity.setDashboard(dashboardEntity);
+            CardEntity before = this.propertiesProvider.getCardEntity(String.valueOf(cardEntity.getId())).orElse(null);
             var entity = this.propertiesProvider.saveCardEntity(cardEntity);
             logger.debug("Saved card settings {}.", entity);
+            this.mqttManager.updateSubscription(before, entity);
         } catch (JsonProcessingException ex) {
             logger.warn("Could not convert json data={} to map. {}", msg, ex);
         } catch (NoSuchElementException ex) {
-            logger.warn("Could not find entity for id={}. {}", msg.getId(), ex);
+            logger.warn("Could not find dashboard entity for message id={}. {}", msg.getId(), ex);
         } finally {
             lock.unlock();
         }
@@ -181,19 +184,16 @@ public class DashboardItemCardManagerImpl implements DashboardItemManager {
         try {
             JsonNode root = mapper.readTree(msg.getData());
             String id = root.path(CardEntity.JSON_FIELD_ID).asText();
+            CardEntity before = this.propertiesProvider.getCardEntity(id).orElse(null);
             this.propertiesProvider.deleteCard(id);
             logger.debug("Deleted card {}.", msg);
+            this.mqttManager.updateSubscription(before, null);
         } catch (JsonProcessingException ex) {
             logger.warn("Could not delete data={}. {}", msg, ex);
 
         } finally {
             lock.unlock();
         }
-    }
-
-    @Override
-    public Msg getItem(Msg msg) {
-        throw new UnsupportedOperationException("Not supported yet.");
     }
 
 }

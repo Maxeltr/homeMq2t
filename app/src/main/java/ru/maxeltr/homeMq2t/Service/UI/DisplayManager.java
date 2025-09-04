@@ -25,14 +25,8 @@ package ru.maxeltr.homeMq2t.Service.UI;
 
 import ru.maxeltr.homeMq2t.Model.Msg;
 
-public interface DashboardItemManager {
+public interface DisplayManager {
 
-    public Msg getItem(Msg msg);
-
-    public Msg getItemsByDashboard(Msg msg);
-
-    public void saveItem(Msg msg);
-
-    public void deleteItem(Msg msg);
+    public void display(Msg msg, String cardNumber);
 
 }

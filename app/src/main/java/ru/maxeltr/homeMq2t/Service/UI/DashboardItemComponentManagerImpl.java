@@ -64,14 +64,12 @@ public class DashboardItemComponentManagerImpl implements DashboardItemManager {
 
     private final ObjectMapper mapper;
 
+    @Autowired
+    private MqttManagerImpl mqttManager;
+
     public DashboardItemComponentManagerImpl() {
         this.mapper = new ObjectMapper();
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
-
-    @Override
-    public Msg getItem(Msg msg) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
@@ -99,7 +97,7 @@ public class DashboardItemComponentManagerImpl implements DashboardItemManager {
     }
 
     @Override
-    public Msg getItemSettings(Msg msg) {
+    public Msg getItem(Msg msg) {
         lock.lock();
         try {
             Optional<ViewModel> componentSettingsOpt;
@@ -123,12 +121,14 @@ public class DashboardItemComponentManagerImpl implements DashboardItemManager {
     }
 
     @Override
-    public void saveItemSettings(Msg msg) {
+    public void saveItem(Msg msg) {
         lock.lock();
         try {
             ComponentEntity componentEntity = mapper.readValue(msg.getData(), ComponentEntity.class);
+            ComponentEntity before = this.propertiesProvider.getComponentEntity(String.valueOf(componentEntity.getId())).orElse(null);
             var entity = this.propertiesProvider.saveComponentEntity(componentEntity);
             logger.debug("Saved component settings {}.", entity);
+            this.mqttManager.updateSubscription(before, entity);
         } catch (JsonProcessingException ex) {
             logger.warn("Could not save data={}. {}", msg, ex);
         } finally {
@@ -142,8 +142,10 @@ public class DashboardItemComponentManagerImpl implements DashboardItemManager {
         try {
             JsonNode root = mapper.readTree(msg.getData());
             String id = root.path(ComponentEntity.JSON_FIELD_ID).asText();
+            ComponentEntity before = this.propertiesProvider.getComponentEntity(id).orElse(null);
             this.propertiesProvider.deleteComponent(id);
             logger.debug("Deleted component {}.", msg);
+            this.mqttManager.updateSubscription(before, null);
         } catch (JsonProcessingException ex) {
             logger.warn("Could not delete data={}. {}", msg, ex);
 

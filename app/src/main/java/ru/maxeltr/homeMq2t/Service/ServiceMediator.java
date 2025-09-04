@@ -27,6 +27,9 @@ import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttSubAckMessage;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 import io.netty.util.concurrent.Promise;
 import java.util.List;
 import ru.maxeltr.homeMq2t.Model.Msg;
@@ -59,4 +62,7 @@ public interface ServiceMediator {
 
     boolean isConnected();
 
+    public Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions);
+
+    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics);
 }
