@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import static ru.maxeltr.homeMq2t.Config.AppProperties.MEDIA_TYPES;
+import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
 import ru.maxeltr.homeMq2t.Model.ComponentSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
@@ -54,6 +55,11 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
 
     @Autowired
     private ComponentRepository componentRepository;
+
+    @Override
+    public Optional<ComponentEntity> getComponentEntity(String number) {
+        return AppUtils.safeParseInt(number).flatMap(componentRepository::findByNumber);
+    }
 
     @Override
     public ComponentEntity saveComponentEntity(ComponentEntity entity) {

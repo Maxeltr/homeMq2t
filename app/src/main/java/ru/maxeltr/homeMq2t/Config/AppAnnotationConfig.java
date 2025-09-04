@@ -81,11 +81,13 @@ import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.Base64HtmlJsonFormatterImpl;
 import ru.maxeltr.homeMq2t.Service.UI.DashboardItemCommandManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.DashboardItemComponentManagerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.DisplayManager;
+import ru.maxeltr.homeMq2t.Service.UI.DisplayManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManager;
 import ru.maxeltr.homeMq2t.Service.UI.LocalTaskManagerImpl;
-import ru.maxeltr.homeMq2t.Service.UI.PublishManager;
-import ru.maxeltr.homeMq2t.Service.UI.PublishManagerImpl;
+import ru.maxeltr.homeMq2t.Service.UI.MqttManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.UIJsonFormatter;
+import ru.maxeltr.homeMq2t.Service.UI.MqttManager;
 
 /**
  *
@@ -144,7 +146,7 @@ public class AppAnnotationConfig {
     @Bean(name = "processExecutor")
     public TaskExecutor workExecutor() {
         ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
-        threadPoolTaskExecutor.setThreadNamePrefix("Async-");
+        threadPoolTaskExecutor.setThreadNamePrefix("Mq2tAsync-");
         threadPoolTaskExecutor.setCorePoolSize(10);
         threadPoolTaskExecutor.setMaxPoolSize(20);
         threadPoolTaskExecutor.setQueueCapacity(600);
@@ -287,8 +289,8 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public PublishManager getPublishManager() {
-        return new PublishManagerImpl();
+    public MqttManager getPublishManager() {
+        return new MqttManagerImpl();
     }
 
     @Bean
@@ -314,5 +316,10 @@ public class AppAnnotationConfig {
     @Bean
     public DashboardPropertiesProvider getDashboardPropertiesProvider() {
         return new DashboardPropertiesProviderImpl();
+    }
+
+    @Bean
+    public DisplayManager getDisplayManager() {
+        return new DisplayManagerImpl();
     }
 }

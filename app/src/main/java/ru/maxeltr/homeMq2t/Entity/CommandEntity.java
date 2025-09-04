@@ -30,10 +30,11 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import ru.maxeltr.homeMq2t.Service.UI.HasSubscription;
 
 @Entity
 @Table(name = "command_settings")
-public class CommandEntity extends BaseEntity {
+public class CommandEntity extends BaseEntity implements HasSubscription {
 
     public static final String JSON_FIELD_ID = "ID";
 

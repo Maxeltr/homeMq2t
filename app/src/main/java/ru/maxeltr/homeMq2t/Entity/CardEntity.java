@@ -33,10 +33,11 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import ru.maxeltr.homeMq2t.Service.UI.HasSubscription;
 
 @Entity
 @Table(name = "card_settings")
-public class CardEntity extends BaseEntity {
+public class CardEntity extends BaseEntity implements HasSubscription {
 
     public static final String JSON_FIELD_ID = "ID";
 
@@ -66,7 +67,7 @@ public class CardEntity extends BaseEntity {
     //@JsonBackReference("dashboard-cards")
     @ManyToOne
     @JoinColumn(name = "dashboard_id", nullable = false)
-    private DashboardEntity dashboard;
+    private DashboardEntity<CardEntity> dashboard;
 
     public Long getId() {
         return id;
@@ -198,11 +199,11 @@ public class CardEntity extends BaseEntity {
         this.number = number;
     }
 
-    public DashboardEntity getDashboard() {
+    public DashboardEntity<CardEntity> getDashboard() {
         return dashboard;
     }
 
-    public void setDashboard(DashboardEntity dashboard) {
+    public void setDashboard(DashboardEntity<CardEntity> dashboard) {
         this.dashboard = dashboard;
     }
 

@@ -113,7 +113,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * returned.
      */
     @Override
-    public Optional<ViewModel> getCardSettings(String number) {
+    public Optional<ViewModel<CardEntity>> getCardSettings(String number) {
         String cardSettingsPathname = env.getProperty(CardPropertiesProvider.CARD_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
             logger.info("No value defined for card settings template pathname.");
@@ -136,7 +136,7 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      * settings-template-path
      */
     @Override
-    public Optional<ViewModel> getEmptyCardSettings() {
+    public Optional<ViewModel<CardEntity>> getEmptyCardSettings() {
         String cardSettingsPathname = env.getProperty(CardPropertiesProvider.CARD_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(cardSettingsPathname)) {
             logger.error("No value defined for card settings template pathname.");

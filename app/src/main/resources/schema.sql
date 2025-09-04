@@ -113,6 +113,12 @@ WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Component List'
 VALUES
   ('Component List');
 
+INSERT INTO mqtt_settings (name)
+SELECT 'Mqtt Settings'
+WHERE NOT EXISTS (SELECT 1 FROM mqtt_settings WHERE name = 'Mqtt Settings');
+VALUES
+  ('Mqtt Settings');
+
 -- INSERT INTO card_settings (
 --     name,
 --     subscription_topic,

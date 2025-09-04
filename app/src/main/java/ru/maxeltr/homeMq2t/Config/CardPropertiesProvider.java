@@ -26,8 +26,6 @@ package ru.maxeltr.homeMq2t.Config;
 import java.util.List;
 import java.util.Optional;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
-import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
-import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 /**
@@ -48,7 +46,7 @@ public interface CardPropertiesProvider {
 
     public CardEntity saveCardEntity(CardEntity cardEntity);
 
-    public Optional<ViewModel> getEmptyCardSettings();
+    public Optional<ViewModel<CardEntity>> getEmptyCardSettings();
 
     public void deleteCard(String id);
 
@@ -76,7 +74,7 @@ public interface CardPropertiesProvider {
 
     public Optional<CardEntity> getCardEntity(String number);
 
-    public Optional<ViewModel> getCardSettings(String number);		//TODO rename to getCardSettingsModel or getCardSettingsForm
+    public Optional<ViewModel<CardEntity>> getCardSettings(String number);		//TODO rename to getCardSettingsModel or getCardSettingsForm
 
 
     /**

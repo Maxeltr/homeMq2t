@@ -34,6 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import static ru.maxeltr.homeMq2t.Config.AppProperties.MEDIA_TYPES;
+import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 import ru.maxeltr.homeMq2t.Model.CommandSettingsImpl;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
@@ -54,6 +55,11 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
 
     @Autowired
     private CommandRepository commandRepository;
+
+    @Override
+    public Optional<CommandEntity> getCommandEntity(String number) {
+        return AppUtils.safeParseInt(number).flatMap(commandRepository::findByNumber);
+    }
 
     /**
      * Persist the given CommandEntity

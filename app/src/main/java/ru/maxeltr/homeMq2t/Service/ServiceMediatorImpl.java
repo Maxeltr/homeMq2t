@@ -31,6 +31,9 @@ import io.netty.handler.codec.mqtt.MqttConnAckMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
+import io.netty.handler.codec.mqtt.MqttSubAckMessage;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 import io.netty.util.concurrent.Promise;
 import jakarta.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
@@ -49,6 +52,7 @@ import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
+import ru.maxeltr.homeMq2t.Service.UI.MqttManager;
 import ru.maxeltr.homeMq2t.Service.UI.UIService;
 
 /**
@@ -92,6 +96,9 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Autowired
     private ComponentPropertiesProvider componentPropertiesProvider;
 
+    @Autowired
+    private MqttManager mqttManager;
+
     @Value("${wait-disconnect-while-shutdown:1000}")
     private int waitDisconnect;
 
@@ -116,6 +123,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         uiService.setMediator(this);
         hmMq2t.setMediator(this);
         mqttChannelInitializer.setMediator(this);
+        mqttManager.setMediator(this);
     }
 
     @Override
@@ -274,5 +282,15 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Override
     public boolean isConnected() {
         return this.hmMq2t.isConnected();
+    }
+
+    @Override
+    public Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions) {
+        return this.hmMq2t.subscribe(subscriptions);
+    }
+
+    @Override
+    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
+        return this.hmMq2t.unsubscribe(topics);
     }
 }

@@ -46,6 +46,8 @@ public interface ComponentPropertiesProvider {
 
     public final static String COMPONENT_LIST_NAME = "Component List";
 
+    public Optional<ComponentEntity> getComponentEntity(String number);
+
     public ComponentEntity saveComponentEntity(ComponentEntity entity);
 
     public void deleteComponent(String id);

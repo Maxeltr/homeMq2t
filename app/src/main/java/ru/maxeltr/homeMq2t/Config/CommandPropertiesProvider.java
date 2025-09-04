@@ -40,6 +40,8 @@ public interface CommandPropertiesProvider {
 
     public final static String COMMAND_LIST_NAME = "Command List";
 
+    public Optional<CommandEntity> getCommandEntity(String number);
+
     public Optional<ViewModel> getCommandSettings(String number);
 
     public Optional<ViewModel> getEmptyCommandSettings();

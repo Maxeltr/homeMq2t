@@ -23,10 +23,15 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import ru.maxeltr.homeMq2t.Entity.BaseEntity;
 import ru.maxeltr.homeMq2t.Model.Msg;
+import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
-public interface PublishManager {
+public interface MqttManager {
 
     public void publish(Msg msg);
 
+    public void setMediator(ServiceMediator mediator);
+
+    public <T extends BaseEntity & HasSubscription> void updateSubscription(T before, T after);
 }
