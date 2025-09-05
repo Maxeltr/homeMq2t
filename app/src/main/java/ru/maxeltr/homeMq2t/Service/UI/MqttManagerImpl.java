@@ -42,6 +42,7 @@ import ru.maxeltr.homeMq2t.Entity.BaseEntity;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import ru.maxeltr.homeMq2t.Service.SubscriptionService;
 
 public class MqttManagerImpl implements MqttManager {
 
@@ -49,13 +50,16 @@ public class MqttManagerImpl implements MqttManager {
 
     private final static long ACK_TIMEOUT_MILLIS = 5000L;
 
-    @Autowired
-    @Lazy               //TODO
+    //@Autowired
+    //@Lazy               //TODO
     private ServiceMediator mediator;
 
     @Autowired
     @Qualifier("getCardPropertiesProvider")
     private CardPropertiesProvider appProperties;
+
+    @Autowired
+    private SubscriptionService subscriptionService;
 
     @Override
     public void setMediator(ServiceMediator mediator) {
@@ -106,12 +110,14 @@ public class MqttManagerImpl implements MqttManager {
         }
 
         if (StringUtils.isNotEmpty(oldTopic) && this.mediator.isConnected() && (topicChanged || qosChanged)) {
-            Promise<MqttUnsubAckMessage> promise = this.mediator.unsubscribe(List.of(oldTopic));
-            promise.awaitUninterruptibly(ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            Promise<MqttUnsubAckMessage> promise = this.subscriptionService.unsubscribe(oldTopic);
+            if (promise != null) {
+                promise.awaitUninterruptibly(ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+            }
         }
 
         if (StringUtils.isNotBlank(newTopic) && mediator.isConnected()) {
-            this.mediator.subscribe(List.of(new MqttTopicSubscription(newTopic, MqttUtils.convertToMqttQos(newQos))));
+            this.subscriptionService.subscribe(List.of(new MqttTopicSubscription(newTopic, MqttUtils.convertToMqttQos(newQos))));
         }
     }
 

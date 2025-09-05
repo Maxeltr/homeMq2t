@@ -29,6 +29,7 @@ import com.jayway.jsonpath.JsonPath;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,10 +87,13 @@ public class Base64HtmlJsonFormatterImpl implements UIJsonFormatter {
     public String parseAndCreateJson(String msg, List<String> jsonPathExpressions) {
         StringBuilder sb = new StringBuilder();
         for (String exp : jsonPathExpressions) {
-            sb.append(exp)
-                    .append(SEPARATOR_EQ)
-                    .append(this.parseJson(msg, exp))
-                    .append(System.lineSeparator());
+            var val = this.parseJson(msg, exp);
+            if (StringUtils.isNotBlank(val)) {
+                sb.append(exp)
+                        .append(SEPARATOR_EQ)
+                        .append(val)
+                        .append(System.lineSeparator());
+            }
 
         }
         logger.debug("Parsed data by using jsonPath. {}.", sb.toString());

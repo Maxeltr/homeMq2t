@@ -24,6 +24,12 @@
 package ru.maxeltr.homeMq2t.Mqtt;
 
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttTopicSubscription;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MqttUtils {
 
@@ -47,5 +53,31 @@ public class MqttUtils {
         }
 
         return qos;
+    }
+
+    public static List<MqttTopicSubscription> removeCopiesAndSelectMaxQos(List<MqttTopicSubscription> subscriptions) {
+        if (subscriptions == null || subscriptions.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        Map<String, MqttTopicSubscription> merged = new LinkedHashMap<>(subscriptions.size());
+        for (MqttTopicSubscription s : subscriptions) {
+            if (s == null) {
+                continue;
+            }
+            String topic = s.topicName();
+            int qos = s.qualityOfService().value();
+
+            MqttTopicSubscription existing = merged.get(topic);
+            if (existing == null) {
+                merged.put(topic, s);
+            } else {
+                if (qos > existing.qualityOfService().value()) {
+                    merged.put(topic, s);
+                }
+            }
+        }
+
+        return new ArrayList<>(merged.values());
     }
 }
