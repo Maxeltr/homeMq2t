@@ -38,6 +38,7 @@ import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Model.Status;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import ru.maxeltr.homeMq2t.Service.SubscriptionService;
 
 /**
  *
@@ -56,6 +57,9 @@ public class ConnectManagerImpl implements ConnectManager {
 
     @Autowired
     private UIJsonFormatter jsonFormatter;
+
+    @Autowired
+    private SubscriptionService subscriptionService;
 
     @Autowired
     //@Qualifier("getCardPropertiesProvider")
@@ -77,6 +81,7 @@ public class ConnectManagerImpl implements ConnectManager {
         } else {
             logger.info("Connection established successfully.");
             msg.data(this.jsonFormatter.createAndEncodeHtml(dashboardHtml, Status.OK));
+            this.subscriptionService.subscribeFromConfig();
         }
 
         msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));

@@ -174,7 +174,7 @@ public class ComponentServiceImpl implements ComponentService {
      * initialized callback components are stored in the list for further
      * proccessing.
      */
-    private void initializeCallbackComponents() {
+    private void initializeCallbackComponents() {   //TODO get all providers from repo by 1 query. then iterate
         int i = 0;
         String componentName;
         while (StringUtils.isNotEmpty(componentName = componentPropertiesProvider.getComponentName(String.valueOf(i)))) {
@@ -485,7 +485,7 @@ public class ComponentServiceImpl implements ComponentService {
 
             int i = 0;
             String componentName;
-            while (StringUtils.isNotEmpty(componentName = componentPropertiesProvider.getComponentName(String.valueOf(i)))) {
+            while (StringUtils.isNotEmpty(componentName = componentPropertiesProvider.getComponentName(String.valueOf(i)))) {   //TODO get all providers from repo by 1 query. then iterate
                 logger.debug("Polling component={}.", componentName);
                 readAndPublish(componentName);
                 i++;

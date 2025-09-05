@@ -72,6 +72,8 @@ import ru.maxeltr.homeMq2t.Service.Command.ProcessExecutor;
 import ru.maxeltr.homeMq2t.Service.Command.ProcessExecutorImpl;
 import ru.maxeltr.homeMq2t.Service.Command.ReplySender;
 import ru.maxeltr.homeMq2t.Service.Command.ReplySenderImpl;
+import ru.maxeltr.homeMq2t.Service.SubscriptionService;
+import ru.maxeltr.homeMq2t.Service.SubscriptionServiceImpl;
 import ru.maxeltr.homeMq2t.Service.UI.ConnectManager;
 import ru.maxeltr.homeMq2t.Service.UI.ConnectManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.DashboardItemManager;
@@ -321,5 +323,10 @@ public class AppAnnotationConfig {
     @Bean
     public DisplayManager getDisplayManager() {
         return new DisplayManagerImpl();
+    }
+
+    @Bean
+    public SubscriptionService getSubscriptionService() {
+        return new SubscriptionServiceImpl();
     }
 }
