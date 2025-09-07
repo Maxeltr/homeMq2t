@@ -88,7 +88,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         int v = count.incrementAndGet();
         logger.debug("Incremented refcount for {} -> {}", topic, v);
         if (v == 1) {
-            logger.debug("Refcount={}. Subscribing to {}", topic);
+            logger.debug("Refcount={}. Subscribing to {}", v, topic);
             mediator.subscribe(List.of(subscription));
             return true;
         }
@@ -137,7 +137,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
 
         AtomicInteger count = counts.get(topic);
-
         if (count == null) {
             logger.debug("Unsubscribe called for absent key {}", topic);
             return null;
