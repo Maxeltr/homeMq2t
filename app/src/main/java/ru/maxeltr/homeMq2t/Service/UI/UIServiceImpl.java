@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,7 +62,6 @@ public class UIServiceImpl implements UIService {
 
     @Autowired
     private LocalTaskManager localTaskManager;
-
 
     @Autowired
     @Qualifier("getDisplayManager")
@@ -187,7 +187,10 @@ public class UIServiceImpl implements UIService {
     @Override
     public void launch(Msg msg) {
         logger.debug("Do run local task from card {}.", msg.getId());
-        this.display(this.localTaskManager.run(msg), msg.getId());
+        Msg result = this.localTaskManager.run(msg);
+        if (StringUtils.isNotBlank(result.getData())) {
+            this.display(result, msg.getId());
+        }
     }
 
     @Async("processExecutor")

@@ -36,6 +36,8 @@ public interface SubscriptionService {
 
     public Promise<MqttUnsubAckMessage> unsubscribe(String topic);
 
+    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics);
+
     public void subscribeFromConfig();
 
 }
