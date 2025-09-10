@@ -2,10 +2,11 @@ let stompClient = null;
 let subDataTopic = '/topic/data';
 let connectTopic = '/app/connect';
 let dataSubscription = null;
-let sendCommandTopic = "/app/publish";	
-let getCardSettingsTopic = "/app/getCardSettings";		
-let getCommandSettingsTopic = "/app/getCommandSettings";	
-let getComponentSettingsTopic = "/app/getComponentSettings";	
+let sendCommandTopic = "/app/publish";
+let getCardSettingsTopic = "/app/getCardSettings";
+let getCommandSettingsTopic = "/app/getCommandSettings";
+let getComponentSettingsTopic = "/app/getComponentSettings";
+let getMqttSettingsTopic = "/app/getMqttSettings";
 let saveCardTopic = "/app/saveCard";
 let saveCommandTopic = "/app/saveCommand";
 let saveComponentTopic = "/app/saveComponent";
@@ -242,7 +243,7 @@ $(function () {
         const arg = $(this).val();
         stompClient.send(getComponentSettingsTopic, {}, JSON.stringify({'id': arg}));
     });
-
+    
     $(document).on("click", "#addCard", function () {
         const arg = $(this).val();
         stompClient.send(getCardSettingsTopic, {}, JSON.stringify({'id': arg}));
@@ -343,6 +344,10 @@ $(function () {
 
     $(document).on("click", "#viewComponents", function () {
         goToComponentDashboard();
+    });
+    
+    $(document).on("click", "#viewMqttSettings", function () {
+        stompClient.send(getMqttSettingsTopic, {}, JSON.stringify({'id': ""}));
     });
 
 });
