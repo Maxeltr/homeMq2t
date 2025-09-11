@@ -1,0 +1,110 @@
+/*
+ * The MIT License
+ *
+ * Copyright 2025 Maxim Eltratov <<Maxim.Eltratov@ya.ru>>.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+package ru.maxeltr.homeMq2t.Service.UI;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import ru.maxeltr.homeMq2t.Config.AppProperties;
+import ru.maxeltr.homeMq2t.Config.DashboardPropertiesProvider;
+import ru.maxeltr.homeMq2t.Config.MediaTypes;
+import ru.maxeltr.homeMq2t.Model.Msg;
+import ru.maxeltr.homeMq2t.Model.Status;
+import ru.maxeltr.homeMq2t.Model.ViewModel;
+
+public class DashboardItemMqttSettingManagerImpl implements DashboardItemManager {
+
+    private static final Logger logger = LoggerFactory.getLogger(DashboardItemMqttSettingManagerImpl.class);
+
+    private final Lock lock = new ReentrantLock();
+
+    @Autowired
+    private AppProperties propertiesProvider;
+
+    @Autowired
+    @Qualifier("getDashboardPropertiesProvider")
+    private DashboardPropertiesProvider dashboardPropertiesProvider;
+
+    @Autowired
+    private UIJsonFormatter jsonFormatter;
+
+    private final ObjectMapper mapper;
+
+    @Autowired
+    private MqttManagerImpl mqttManager;
+
+    public DashboardItemMqttSettingManagerImpl() {
+        this.mapper = new ObjectMapper();
+        this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
+    @Override
+    public Msg getItem(Msg msg) {
+        lock.lock();
+        try {
+            Optional<ViewModel> componentSettingsOpt;
+            if (StringUtils.isNotBlank(msg.getId())) {
+                componentSettingsOpt = this.propertiesProvider.getMqttSettings(msg.getId());
+            } else {
+                componentSettingsOpt = this.propertiesProvider.getEmptyMqttSettings();
+            }
+
+            return msg.toBuilder()
+                    .data(componentSettingsOpt
+                            .map(viewModel -> jsonFormatter.createAndEncodeHtml(viewModel.getHtml(), Status.OK))
+                            .orElseGet(() -> jsonFormatter.createAndEncodeHtml("", Status.FAIL))
+                    )
+                    .type(MediaTypes.TEXT_HTML_BASE64.getValue())
+                    .timestamp(String.valueOf(Instant.now().toEpochMilli()))
+                    .build();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public Msg getItemsByDashboard(Msg msg) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void saveItem(Msg msg) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+    @Override
+    public void deleteItem(Msg msg) {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+
+
+}

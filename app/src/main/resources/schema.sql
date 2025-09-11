@@ -75,6 +75,10 @@ CREATE TABLE IF NOT EXISTS startup_task_settings (
     number BIGINT DEFAULT NEXT VALUE FOR startup_task_number_seq NOT NULL	
 );
 
+CREATE SEQUENCE IF NOT EXISTS mqtt_settings_number_seq
+  START WITH 1
+  INCREMENT BY 1;
+
 CREATE TABLE IF NOT EXISTS mqtt_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
@@ -92,7 +96,8 @@ CREATE TABLE IF NOT EXISTS mqtt_settings (
     auto_connect BOOLEAN,
     will_topic VARCHAR(255),
     will_message VARCHAR(10000),
-    reconnect BOOLEAN
+    reconnect BOOLEAN,
+    number BIGINT DEFAULT NEXT VALUE FOR mqtt_settings_number_seq NOT NULL
 );
 
 INSERT INTO dashboard_settings (name)

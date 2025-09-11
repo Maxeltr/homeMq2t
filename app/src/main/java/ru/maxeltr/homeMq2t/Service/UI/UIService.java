@@ -67,4 +67,8 @@ public interface UIService {
     public void displayComponentSettings(Msg msg);
 
     public void displayMqttSettings(Msg msg);
+
+    public void saveMqttSettings(Msg msg);
+
+    public void deleteMqttSettings(Msg msg);
 }

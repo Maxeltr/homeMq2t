@@ -58,6 +58,10 @@ public class UIServiceImpl implements UIService {
     private DashboardItemManager componentManager;
 
     @Autowired
+    @Qualifier("getDashboardItemMqttSettingManager")
+    private DashboardItemManager mqttSettingManager;
+
+    @Autowired
     private MqttManager publishManager;
 
     @Autowired
@@ -127,7 +131,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void displayMqttSettings(Msg msg) {
         logger.debug("Do edit mqtt settings {}.", msg);
-        //this.display(this.componentManager.getItem(msg), "dashboard");
+        this.display(this.mqttSettingManager.getItem(msg), "dashboard");
     }
 
     @Override
@@ -149,6 +153,12 @@ public class UIServiceImpl implements UIService {
     }
 
     @Override
+    public void saveMqttSettings(Msg msg) {
+        logger.debug("Do save component settings {}.", msg.getData());
+        //this.componentManager.saveItem(msg);
+    }
+
+    @Override
     public void deleteCard(Msg msg) {
         logger.debug("Do delete card {}.", msg.getData());
         this.cardManager.deleteItem(msg);
@@ -164,6 +174,12 @@ public class UIServiceImpl implements UIService {
     public void deleteComponent(Msg msg) {
         logger.debug("Do delete component {}.", msg.getData());
         this.componentManager.deleteItem(msg);
+    }
+
+    @Override
+    public void deleteMqttSettings(Msg msg) {
+        logger.debug("Do delete mqtt settings {}.", msg.getData());
+        //this.componentManager.deleteItem(msg);
     }
 
     @Override
