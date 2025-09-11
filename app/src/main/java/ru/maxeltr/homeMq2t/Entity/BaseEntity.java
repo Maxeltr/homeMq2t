@@ -25,6 +25,10 @@ package ru.maxeltr.homeMq2t.Entity;
 
 public abstract class BaseEntity {
 
+    public static final String JSON_FIELD_ID = "ID";
+
+    public static final String JSON_FIELD_NAME = "NAME";
+
     public abstract String getName();
 
     public abstract Integer getNumber();

@@ -23,20 +23,24 @@
  */
 package ru.maxeltr.homeMq2t.Entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import static ru.maxeltr.homeMq2t.Entity.ComponentEntity.JSON_FIELD_ID;
 
 @Entity
 @Table(name = "mqtt_settings")
-public class MqttSettingsEntity {
+public class MqttSettingsEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty(JSON_FIELD_ID)
     private long id;
-
+    @JsonProperty(JSON_FIELD_NAME)
     private String name;
     private String host;
     private String port;
@@ -53,6 +57,8 @@ public class MqttSettingsEntity {
     private String willTopic;
     private String willMessage;
     private Boolean reconnect;
+    @Column(name = "number", insertable = false)
+    private Integer number;
 
     public long getId() {
         return id;
@@ -62,6 +68,7 @@ public class MqttSettingsEntity {
         this.id = id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -188,6 +195,15 @@ public class MqttSettingsEntity {
 
     public void setReconnect(boolean reconnect) {
         this.reconnect = reconnect;
+    }
+
+    @Override
+    public Integer getNumber() {
+        return this.number;
+    }
+
+    public void setNumber(Integer number) {
+        this.number = number;
     }
 
 }

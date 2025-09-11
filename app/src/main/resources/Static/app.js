@@ -13,6 +13,8 @@ let saveComponentTopic = "/app/saveComponent";
 let deleteCardTopic = "/app/deleteCard";
 let deleteCommandTopic = "/app/deleteCommand";
 let deleteComponentTopic = "/app/deleteComponent";
+let saveMqttSettingsTopic = "/app/saveMqttSettings";
+let deleteMqttSettingsTopic = "/app/deleteMqttSettings";
 
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
@@ -290,6 +292,13 @@ $(function () {
             goToComponentDashboard();
         }, 100);
     });
+    
+    $(document).on("click", "#saveMqttSettings", function () {
+        stompClient.send(saveMqttSettingsTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('mqttSettingsForm'))}));
+        setTimeout(() => {
+            //goToComponentDashboard();
+        }, 100);
+    });
 
     $(document).on("click", "#cancel", function () {
         const arg = $(this).val();
@@ -333,6 +342,13 @@ $(function () {
             goToComponentDashboard();
         }, 100);
     });
+    
+    $(document).on("click", "#deleteMqttSettings", function () {
+        stompClient.send(deleteMqttSettingsTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('mqttSettingsForm'))}));
+        setTimeout(() => {
+            //goToComponentDashboard();
+        }, 100);
+    });
 
     $(document).on("click", "#viewCards", function () {
         goToStartDashboard();
@@ -347,7 +363,7 @@ $(function () {
     });
     
     $(document).on("click", "#viewMqttSettings", function () {
-        stompClient.send(getMqttSettingsTopic, {}, JSON.stringify({'id': ""}));
+        stompClient.send(getMqttSettingsTopic, {}, JSON.stringify({'id': "Mqtt Settings"}));
     });
 
 });

@@ -23,21 +23,24 @@
  */
 package ru.maxeltr.homeMq2t.Entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import static ru.maxeltr.homeMq2t.Entity.MqttSettingsEntity.JSON_FIELD_ID;
 
 @Entity
 @Table(name = "startup_task_settings")
-public class StartupTaskEntity {
+public class StartupTaskEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty(JSON_FIELD_ID)
     private long id;
-
+    @JsonProperty(JSON_FIELD_NAME)
     private String name;
     private String path;
     private String arguments;
@@ -52,6 +55,7 @@ public class StartupTaskEntity {
         this.id = id;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -76,11 +80,12 @@ public class StartupTaskEntity {
         this.arguments = arguments;
     }
 
-    public int getNumber() {
+    @Override
+    public Integer getNumber() {
         return number;
     }
 
-    public void setNumber(int number) {
+    public void setNumber(Integer number) {
         this.number = number;
     }
 

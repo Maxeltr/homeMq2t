@@ -36,13 +36,11 @@ import ru.maxeltr.homeMq2t.Service.UI.HasSubscription;
 @Table(name = "command_settings")
 public class CommandEntity extends BaseEntity implements HasSubscription {
 
-    public static final String JSON_FIELD_ID = "ID";
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonProperty(JSON_FIELD_ID)
     private long id;
-    @JsonProperty("NAME")
+    @JsonProperty(JSON_FIELD_NAME)
     private String name;
     private String subscriptionTopic;
     private String subscriptionQos;

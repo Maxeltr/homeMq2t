@@ -115,6 +115,12 @@ public class InputUIControllerImpl implements InputUIController {
         uiService.saveComponentSettings(msg.build());
     }
 
+    @MessageMapping("/saveMqttSettings")
+    public void saveMqttSettings(Msg.Builder msg) {
+        logger.debug("Do save mqtt settings. Msg.Builder was received - {}.", msg.getData());
+        uiService.saveMqttSettings(msg.build());
+    }
+
     @MessageMapping("/deleteCard")
     public void deleteCard(Msg.Builder msg) {
         logger.debug("Do delete card. Msg.Builder was received - {}.", msg.getData());
@@ -131,6 +137,12 @@ public class InputUIControllerImpl implements InputUIController {
     public void deleteComponent(Msg.Builder msg) {
         logger.debug("Do delete component. Msg.Builder was received - {}.", msg.getData());
         uiService.deleteComponent(msg.build());
+    }
+
+    @MessageMapping("/deleteMqttSettings")
+    public void deleteMqttSettings(Msg.Builder msg) {
+        logger.debug("Do delete mqtt. Msg.Builder was received - {}.", msg.getData());
+        uiService.deleteMqttSettings(msg.build());
     }
 
     @MessageMapping("/displayCardDashboard")

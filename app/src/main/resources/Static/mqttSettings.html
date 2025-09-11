@@ -1,0 +1,93 @@
+<div class="card text-center text-white bg-secondary shadow-sm" id="settingsMqtt">
+    <div class="card-body">
+        <h5 class="card-title"></h5>
+        <form id="mqttSettingsForm">
+            <input type="hidden" id="settingsMqtt-id" name="ID" value="">
+            <div class="mb-3">
+                <label for="settingsMqtt-name" class="form-label">Name</label>
+                <input type="text" class="form-control" id="settingsMqtt-name" name="NAME" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-host" class="form-label">Host</label>
+                <input type="text" class="form-control" id="settingsMqtt-host" name="host" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-port" class="form-label">Port</label>
+                <input type="text" class="form-control" id="settingsMqtt-port" name="port" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-mq2tPassword" class="form-label">Password</label>
+                <input type="text" class="form-control" id="settingsMqtt-mq2tPassword" name="mq2tPassword" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-mq2tUsername" class="form-label">Username</label>
+                <input type="text" class="form-control" id="settingsMqtt-mq2tUsername" name="mq2tUsername" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-clientId" class="form-label">Client id</label>
+                <input type="text" class="form-control" id="settingsMqtt-clientId" name="clientId" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-hasUsername" class="form-label">Has username</label>
+                <select class="form-select" id="settingsMqtt-hasUsername" name="hasUsername">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-hasPassword" class="form-label">Has password</label>
+                <select class="form-select" id="settingsMqtt-hasPassword" name="hasPassword">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-willQos" class="form-label">Will QoS</label>
+                <input type="text" class="form-control" id="settingsMqtt-willQos" name="willQos" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-willRetain" class="form-label">Will retain</label>
+                <select class="form-select" id="settingsMqtt-willRetain" name="willRetain">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-willFlag" class="form-label">Will flag</label>
+                <select class="form-select" id="settingsMqtt-willFlag" name="willFlag">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-cleanSession" class="form-label">Clean session</label>
+                <select class="form-select" id="settingsMqtt-cleanSession" name="cleanSession">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-autoConnect" class="form-label">Auto connect</label>
+                <select class="form-select" id="settingsMqtt-autoConnect" name="autoConnect">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-willTopic" class="form-label">Will topic</label>
+                <input type="text" class="form-control" id="settingsMqtt-willTopic" name="willTopic" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-willMessage" class="form-label">Will message</label>
+                <input type="text" class="form-control" id="settingsMqtt-willMessage" name="willMessage" value="">
+            </div>
+            <div class="mb-3">
+                <label for="settingsMqtt-reconnect" class="form-label">Reconnect</label>
+                <select class="form-select" id="settingsMqtt-reconnect" name="reconnect">
+                    <option value="false" selected>No</option>
+                    <option value="true">Yes</option>
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
