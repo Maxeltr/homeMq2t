@@ -75,6 +75,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.support.PeriodicTrigger;
 import org.springframework.boot.CommandLineRunner;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
+import ru.maxeltr.homeMq2t.Utils.AppUtils;
 
 /**
  *
@@ -100,32 +101,17 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     @Autowired
     private MqttChannelInitializer mqttChannelInitializer;
 
-    @Value("${host:127.0.0.1}")
-    private String host;
-
-    @Value("${port:1883}")
-    private Integer port;
-
     @Value("${connect-timeout:5000}")
     private Integer connectTimeout;
 
     @Value("${wait-disconnect-while-shutdown:1000}")
     private Integer waitDisconnect;
 
-    @Value("${clean-session:true}")
-    private boolean cleanSession;
-
-    @Value("${reconnect:true}")
-    private boolean reconnect;
-
     @Value("${reconnect-delay:3000}")
     private int reconnectDelay;
 
     @Value("${reconnect-delay-max:1800000}")
     private int reconnectDelayMax;
-
-    @Value("${auto-connect:false}")
-    private boolean autoConnect;
 
     @Autowired
     private AppProperties appProperties;
@@ -147,7 +133,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     @Override
     public void run(String... args) {
         logger.info("Start app with args={}.", Arrays.toString(args));
-        if (this.autoConnect) {
+        if (this.appProperties.getAutoConnect()) {
             logger.info("Start auto connect.");
             this.connect();
         }
@@ -183,7 +169,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         });
         mqttAckMediator.setConnectFuture(authFuture);
 
-        bootstrap.remoteAddress(this.host, this.port);
+        bootstrap.remoteAddress(this.appProperties.getHost(), AppUtils.safeParseInt(this.appProperties.getPort()).orElse(1883));
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.connectTimeout);
         ChannelFuture channelFuture = bootstrap.connect();
         channelFuture.addListener((ChannelFutureListener) f -> {
@@ -191,7 +177,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
             logger.debug("Waiting for ConnAckMessage. ChannelFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
         });
 
-        logger.info("Connecting to {} via port {}.", this.host, this.port);
+        logger.info("Connecting to {} via port {}.", this.appProperties.getHost(), this.appProperties.getPort());
         channelFuture.awaitUninterruptibly();
         if (channelFuture.isCancelled()) {
             logger.info("Connection attempt cancelled.");
@@ -200,7 +186,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
             logger.info("Connection attempt failed {}.", channelFuture.cause().getMessage());
             this.cancelConnect();
         } else {
-            logger.info("Connected to {} via port {}.", this.host, this.port);
+            logger.info("Connected to {} via port {}.", this.appProperties.getHost(), this.appProperties.getPort());
         }
 
         return authFuture;
@@ -220,7 +206,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     @Override
     public void reconnect() {
         logger.debug("Start reconnect method.");
-        if (!this.reconnect) {
+        if (!this.appProperties.getReconnect()) {
             logger.info("Reconnect is not allowed by config.");
             return;
         }
@@ -261,7 +247,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     }
 
     private Optional<MqttPingScheduleHandler> getPingHandler() {
-        return Optional.ofNullable(((MqttPingScheduleHandler) channel.pipeline().get("mqttPingHandler")));
+        return Optional.ofNullable(((MqttPingScheduleHandler) channel.pipeline().get(MqttPingScheduleHandler.NAME)));
     }
 
     @Override
@@ -281,7 +267,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
         this.stopRetransmitTask();
 
-        if (this.cleanSession) {
+        if (this.appProperties.getCleanSession()) {
             this.mqttAckMediator.clear();
         }
 

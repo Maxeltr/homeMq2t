@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Mqtt;
 
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
@@ -48,6 +49,8 @@ import org.springframework.beans.factory.annotation.Value;
 public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttPingScheduleHandler.class);
+
+    public static String NAME = "mqttPingHandler";
 
     @Autowired
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
@@ -134,7 +137,7 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter {
             }
 
             if (pingRespTimeout.get()) {
-                logger.info("Ping response was not received within the keep-alive period. {}", this);
+                logger.warn("Ping response was not received within the keep-alive period. {}", this);
                 stopPing();
                 if (reconnect) {
                     logger.info("Start the reconnection attempt.");
@@ -147,7 +150,10 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter {
                 return;
             }
 
-            ctx.writeAndFlush(pingReqMsg);
+            ChannelFuture f = ctx.writeAndFlush(pingReqMsg);
+            if (!f.isSuccess()) {
+                logger.error("Error to write and flush message. {}", f.cause()); //TODO reconnect
+            }
             pingRespTimeout.set(true);
             logger.info("Sent ping request. {}.", this);
 

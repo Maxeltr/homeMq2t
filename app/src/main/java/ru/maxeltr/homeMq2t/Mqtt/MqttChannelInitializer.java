@@ -53,7 +53,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
     @Autowired
     private MqttAckMediator mqttAckMediator;
-       
+
     private ServiceMediator serviceMediator;
 
     @Value("${max-bytes-in-message:8092000}")
@@ -67,7 +67,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
         ch.pipeline().addLast("mqttDecoder", this.createMqttDecoder());
         ch.pipeline().addLast("mqttEncoder", this.createMqttEncoder());
         ch.pipeline().addLast("idleStateHandler", this.createIdleStateHandler());
-        ch.pipeline().addLast("mqttPingHandler", this.createMqttPingHandler());
+        ch.pipeline().addLast(MqttPingScheduleHandler.NAME, this.createMqttPingHandler());
         ch.pipeline().addLast("mqttConnectHandler", this.createMqttConnectHandler());
         //ch.pipeline().addLast("mqttConnectHandler", this.mqttConnectHandler);
         ch.pipeline().addLast("mqttSubscriptionHandler", this.createMqttSubscriptionHandler());
@@ -128,7 +128,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
         return mqttPublishHandler;
     }
-    
+
 //    private MqttPingHandler createMqttPingHandler(ServiceMediator serviceMediator) {
 //        MqttPingHandler mqttPingHandler = new MqttPingHandler(serviceMediator);
 //
@@ -138,12 +138,12 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 //
 //        return mqttPingHandler;
 //    }
-    
+
     private MqttPingScheduleHandler createMqttPingHandler() {
         MqttPingScheduleHandler mqttPingHandler = new MqttPingScheduleHandler(this.serviceMediator);
         AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
         autowireCapableBeanFactory.autowireBean(mqttPingHandler);
-        autowireCapableBeanFactory.initializeBean(mqttPingHandler, "mqttPingHandler");
+        autowireCapableBeanFactory.initializeBean(mqttPingHandler, MqttPingScheduleHandler.NAME);
 
         return mqttPingHandler;
     }

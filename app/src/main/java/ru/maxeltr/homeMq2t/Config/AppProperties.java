@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -205,5 +206,65 @@ public class AppProperties implements StartupTaskPropertiesProvider {
         mqttSettingsEntity.setReconnect(false);
 
         return Optional.of(new MqttSettingsImpl(mqttSettingsEntity, templatePathname));
+    }
+
+    public String getHost() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getHost).get();
+    }
+
+    public String getPort() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getPort).orElse("1883");
+    }
+
+    public Boolean getCleanSession() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getCleanSession).orElse(false);
+    }
+
+    public Boolean getReconnect() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getReconnect).orElse(false);
+    }
+
+    public Boolean getAutoConnect() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getAutoConnect).orElse(false);
+    }
+
+    public Boolean getHasUsername() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getHasUsername).orElse(false);
+    }
+
+    public Boolean getHasPassword() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getHasPassword).orElse(false);
+    }
+
+    public Boolean getWillRetain() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillRetain).orElse(false);
+    }
+
+    public Integer getWillQos() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillQos).flatMap(AppUtils::safeParseInt).orElse(0);
+    }
+
+    public Boolean getWillFlag() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillFlag).orElse(false);
+    }
+
+    public String getClientId() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getClientId).orElse(UUID.randomUUID().toString());
+    }
+
+    public String getWillTopic() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillTopic).orElse("");
+    }
+
+    public String getWillMessage() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillMessage).orElse("");
+    }
+
+    public String getUsername() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getMq2tUsername).orElse("");
+    }
+
+    public String getPassword() {
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getMq2tPassword).orElse("");
     }
 }

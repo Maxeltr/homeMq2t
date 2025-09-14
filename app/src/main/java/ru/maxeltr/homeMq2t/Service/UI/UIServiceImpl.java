@@ -155,7 +155,7 @@ public class UIServiceImpl implements UIService {
     @Override
     public void saveMqttSettings(Msg msg) {
         logger.debug("Do save component settings {}.", msg.getData());
-        //this.componentManager.saveItem(msg);
+        this.mqttSettingManager.saveItem(msg);
     }
 
     @Override
