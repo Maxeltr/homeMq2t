@@ -36,6 +36,8 @@ import static ru.maxeltr.homeMq2t.Entity.ComponentEntity.JSON_FIELD_ID;
 @Table(name = "mqtt_settings")
 public class MqttSettingsEntity extends BaseEntity {
 
+    public static final String TABLE_NAME = "Mqtt Settings";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @JsonProperty(JSON_FIELD_ID)

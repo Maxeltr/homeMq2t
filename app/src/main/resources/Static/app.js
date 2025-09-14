@@ -296,7 +296,7 @@ $(function () {
     $(document).on("click", "#saveMqttSettings", function () {
         stompClient.send(saveMqttSettingsTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('mqttSettingsForm'))}));
         setTimeout(() => {
-            //goToComponentDashboard();
+            goToStartDashboard();
         }, 100);
     });
 
@@ -308,6 +308,8 @@ $(function () {
             goToCommandDashboard();
         } else if (arg === 'component') {
             goToComponentDashboard();
+        } else if (arg === 'mqttSettings') {
+            goToStartDashboard();
         } else {
             console.error('Invalid value for cancel button - ' + arg);
         }
