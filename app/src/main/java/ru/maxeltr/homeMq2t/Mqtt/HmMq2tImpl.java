@@ -65,6 +65,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -125,6 +126,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     private final static AtomicBoolean connected = new AtomicBoolean();
 
     private final static AtomicBoolean reconnecting = new AtomicBoolean();
+
+    private final AtomicLong writeFailureCount = new AtomicLong(0);
+
+    private final AtomicInteger consecutiveWriteFailerCount = new AtomicInteger(0);
 
     private static int reconnectAttempts = 0;
 
@@ -279,7 +284,6 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 //            unSubscribeFuture.awaitUninterruptibly(this.connectTimeout);
 //        }
 //        this.subscribedTopics.clear();
-
         MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
         MqttReasonCodeAndPropertiesVariableHeader mqttDisconnectVariableHeader = new MqttReasonCodeAndPropertiesVariableHeader(reasonCode, MqttProperties.NO_PROPERTIES);
         MqttMessage message = new MqttMessage(mqttFixedHeader, mqttDisconnectVariableHeader);
@@ -303,6 +307,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         this.shutdown();
 
         connected.set(false);
+        consecutiveWriteFailerCount.set(0);
+        writeFailureCount.set(0);
     }
 
     private void shutdown() {
@@ -508,13 +514,31 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
     private ChannelFuture writeAndFlush(Object message) {
         if (this.channel == null) {
-            logger.error("Cannot write and flush message. Channel is null");
+            logger.error("Cannot write and flush message. Channel is null. Total failures={}, consecutive failures={}.",
+                    writeFailureCount.incrementAndGet(),
+                    consecutiveWriteFailerCount.incrementAndGet()
+            );
             return null;
         }
         if (this.channel.isActive()) {
-            return this.channel.writeAndFlush(message);
+            ChannelFuture future = this.channel.writeAndFlush(message);
+            future.addListener((ChannelFutureListener) f -> {
+                if (!f.isSuccess()) {
+                    logger.error("Write failed. Total failures={}, consecutive failures={}. {}",
+                            writeFailureCount.incrementAndGet(),
+                            consecutiveWriteFailerCount.incrementAndGet(),
+                            f.cause()
+                    );
+                } else {
+                    consecutiveWriteFailerCount.set(0);
+                }
+            });
+            return future;
         }
-        logger.error("Cannot write and flush message. Channel is closed.");
+        logger.error("Cannot write and flush message. Channel is closed. Total failures={}, consecutive failures={}.",
+                writeFailureCount.incrementAndGet(),
+                consecutiveWriteFailerCount.incrementAndGet()
+        );
         return this.channel.newFailedFuture(new RuntimeException("Cannot write and flush message. Channel is closed."));
     }
 

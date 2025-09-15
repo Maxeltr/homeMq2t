@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
@@ -37,6 +38,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Config.DashboardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.MediaTypes;
+import ru.maxeltr.homeMq2t.Entity.MqttSettingsEntity;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.Status;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
@@ -71,15 +73,15 @@ public class DashboardItemMqttSettingManagerImpl implements DashboardItemManager
     public Msg getItem(Msg msg) {
         lock.lock();
         try {
-            Optional<ViewModel> componentSettingsOpt;
+            Optional<ViewModel> mqttSettingsOpt;
             if (StringUtils.isNotBlank(msg.getId())) {
-                componentSettingsOpt = this.propertiesProvider.getMqttSettings(msg.getId());
+                mqttSettingsOpt = this.propertiesProvider.getMqttSettings(msg.getId());
             } else {
-                componentSettingsOpt = this.propertiesProvider.getEmptyMqttSettings();
+                mqttSettingsOpt = this.propertiesProvider.getEmptyMqttSettings();
             }
 
             return msg.toBuilder()
-                    .data(componentSettingsOpt
+                    .data(mqttSettingsOpt
                             .map(viewModel -> jsonFormatter.createAndEncodeHtml(viewModel.getHtml(), Status.OK))
                             .orElseGet(() -> jsonFormatter.createAndEncodeHtml("", Status.FAIL))
                     )
@@ -98,13 +100,23 @@ public class DashboardItemMqttSettingManagerImpl implements DashboardItemManager
 
     @Override
     public void saveItem(Msg msg) {
-
+        lock.lock();
+        try {
+            MqttSettingsEntity mqttSettingsEntity = mapper.readValue(msg.getData(), MqttSettingsEntity.class);
+            MqttSettingsEntity before = this.propertiesProvider.getMqttSettingsEntity().orElse(null);
+            var entity = this.propertiesProvider.saveMqttSettingsEntity(mqttSettingsEntity);
+            logger.debug("Saved mqtt settings {}.", entity);
+            //this.mqttManager.updateSubscription(before, entity); //TODO update will message topic... or reconnect?
+        } catch (JsonProcessingException ex) {
+            logger.warn("Could not save data={}. {}", msg, ex);
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
     public void deleteItem(Msg msg) {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
-
 
 }

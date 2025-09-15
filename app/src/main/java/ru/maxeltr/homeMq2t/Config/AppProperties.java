@@ -165,6 +165,10 @@ public class AppProperties implements StartupTaskPropertiesProvider {
         return mqttSettingsRepository.findByName(NAME_OF_MQTT_SETTINGS);
     }
 
+    public MqttSettingsEntity saveMqttSettingsEntity(MqttSettingsEntity entity) {
+        return this.mqttSettingsRepository.save(entity);
+    }
+
     public Optional<ViewModel> getMqttSettings(String name) {
         String templatePathname = env.getProperty(MQTT_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(templatePathname)) {
