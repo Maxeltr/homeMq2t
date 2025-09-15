@@ -24,6 +24,7 @@
 package ru.maxeltr.homeMq2t.Mqtt;
 
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.mqtt.MqttFixedHeader;
@@ -41,6 +42,7 @@ import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.springframework.beans.factory.annotation.Value;
+import ru.maxeltr.homeMq2t.Service.SubscriptionService;
 
 /**
  *
@@ -57,6 +59,9 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter {
 
     @Autowired
     private PeriodicTrigger pingPeriodicTrigger;
+
+    @Autowired
+    private SubscriptionService subscriptionService;
 
     @Value("${reconnect:true}")
     private boolean reconnect;
@@ -139,24 +144,32 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter {
             if (pingRespTimeout.get()) {
                 logger.warn("Ping response was not received within the keep-alive period. {}", this);
                 stopPing();
-                if (reconnect) {
-                    logger.info("Start the reconnection attempt.");
-                    serviceMediator.reconnect();
-                } else {
-                    logger.info("Disconnect without the reconnection.");
-                    serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
-                }
+                disconnectOrReconnect();
 
                 return;
             }
 
             ChannelFuture f = ctx.writeAndFlush(pingReqMsg);
-            if (!f.isSuccess()) {
-                logger.error("Error to write and flush message. {}", f.cause()); //TODO reconnect
-            }
+            f.addListener((ChannelFutureListener) future -> {
+                if (!future.isSuccess()) {
+                    logger.error("Ping write failed. {}", f.cause()); //TODO reconnect
+                    disconnectOrReconnect();
+                }
+            });
             pingRespTimeout.set(true);
             logger.info("Sent ping request. {}.", this);
 
+        }
+
+        private void disconnectOrReconnect() {
+            if (reconnect) {
+                logger.info("Start the reconnection attempt.");
+                serviceMediator.reconnect();
+                subscriptionService.subscribeFromConfig();
+            } else {
+                logger.info("Disconnect without the reconnection.");
+                serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
+            }
         }
     }
 }

@@ -23,11 +23,8 @@
  */
 package ru.maxeltr.homeMq2t.Model;
 
-import java.util.Objects;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import ru.maxeltr.homeMq2t.Entity.CommandEntity;
 
 /**
@@ -52,30 +49,23 @@ public class CommandImpl extends ViewModel<CommandEntity> {
             el.attr("value", this.getNumber());
         }
 
-        el = document.getElementById("command1-payload");
-        if (el != null) {
-            el.attr("id", this.getNumber() + "-payload");
-        }
-
-        el = document.getElementById("command1-timestamp");
-        if (el != null) {
-            el.attr("id", this.getNumber() + "-timestamp");
-        }
-
-        el = document.getElementById("command1-status");
-        if (el != null) {
-            el.attr("id", this.getNumber() + "-status");
-        }
-
         el = document.getElementById("command1-title");
         if (el != null) {
             el.text(this.getName());
             el.attr("id", this.getNumber() + "-title");
         }
 
-//        el = document.select(".command-title").first();
-//        if (el != null) {
-//            el.text(this.getName());
-//        }
+        el = document.getElementById("command1-subscriptionTopic");
+        if (el != null) {
+            el.text(this.getEntity().getSubscriptionTopic());
+            el.attr("id", this.getNumber() + "-subscriptionTopic");
+        }
+
+        el = document.getElementById("command1-publicationTopic");
+        if (el != null) {
+            el.text(this.getEntity().getPublicationTopic());
+            el.attr("id", this.getNumber() + "-publicationTopic");
+        }
+
     }
 }

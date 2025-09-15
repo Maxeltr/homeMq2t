@@ -84,6 +84,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             return false;
         }
 
+        logger.debug("Start to subscribe to topic {}", subscription.topicName());
         String topic = subscription.topicName();
 
         int qos = subscription.qualityOfService().value();
@@ -127,6 +128,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             return;
         }
 
+        logger.debug("Start to subscribe to topics {}", subscriptions);
         ConcurrentMap<String, Integer> groupedMaxQos = subscriptions.stream()
                 .collect(Collectors.toConcurrentMap(
                         MqttTopicSubscription::topicName, s -> s.qualityOfService().value(), Integer::max));
@@ -154,6 +156,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             List<MqttTopicSubscription> prepared = toSubscribe.stream().map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(states.get(t).getMaxQos()))).collect(Collectors.toList());
             logger.debug("Prepared list of subscriptions {}", prepared);
             mediator.subscribe(prepared);
+        } else {
+            logger.debug("List to subscribe is empty.");
         }
 
 //        List<String> tempSubList = new ArrayList<>();
