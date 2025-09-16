@@ -30,14 +30,10 @@ import java.util.List;
 
 public interface SubscriptionService {
 
-    public boolean subscribe(MqttTopicSubscription subscription);
-
     public void subscribe(List<MqttTopicSubscription> subscriptions);
-
-    public Promise<MqttUnsubAckMessage> unsubscribe(String topic);
 
     public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics);
 
-    public void subscribeFromConfig();
+    public void clearSubscriptionsAndSubscribeFromConfig();
 
 }

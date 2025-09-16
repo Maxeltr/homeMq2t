@@ -68,10 +68,18 @@ public class ConnectManagerImpl implements ConnectManager {
     @Override
     public Msg connect() {
         var msg = new MsgImpl.MsgBuilder("onConnect").type(MediaTypes.TEXT_HTML_BASE64.getValue());
+        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
+
+        String dashboardHtml = this.appProperties.getStartDashboard().map(ViewModel::getHtml).orElse("");
+        if (this.mediator.isConnected()) {
+            logger.info("Connected already");
+            msg.data(this.jsonFormatter.createAndEncodeHtml(dashboardHtml, Status.OK));
+            return msg.build();
+        }
 
         Promise<MqttConnAckMessage> authFuture = this.mediator.connect();
         authFuture.awaitUninterruptibly(this.connectTimeout);
-        String dashboardHtml = this.appProperties.getStartDashboard().map(ViewModel::getHtml).orElse("");
+
         if (authFuture.isCancelled()) {
             logger.info("Connection attempt to remote server was canceled.");
             msg.data(this.jsonFormatter.createAndEncodeHtml(dashboardHtml, Status.FAIL));
@@ -81,10 +89,8 @@ public class ConnectManagerImpl implements ConnectManager {
         } else {
             logger.info("Connection established successfully.");
             msg.data(this.jsonFormatter.createAndEncodeHtml(dashboardHtml, Status.OK));
-            this.subscriptionService.subscribeFromConfig();
+            this.subscriptionService.clearSubscriptionsAndSubscribeFromConfig();
         }
-
-        msg.timestamp(String.valueOf(Instant.now().toEpochMilli()));
 
         return msg.build();
     }
@@ -92,12 +98,14 @@ public class ConnectManagerImpl implements ConnectManager {
     @Override
     public void disconnect(byte reasonCode) {
         logger.info("Do disconnect with reason code {}.", reasonCode);
+        //this.subscriptionService.unsubscribeFromConfig(); //TODO
         this.mediator.disconnect(reasonCode);
     }
 
     @Override
     public void shutdownApp() {
         logger.info("Do shutdown application.");
+        //this.subscriptionService.unsubscribeFromConfig();     //TODO
         this.mediator.shutdown();   //disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
     }
 }

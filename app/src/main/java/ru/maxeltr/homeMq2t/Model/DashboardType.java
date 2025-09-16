@@ -21,28 +21,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Repository;
+package ru.maxeltr.homeMq2t.Model;
 
-import java.util.List;
+import java.util.Arrays;
 import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import ru.maxeltr.homeMq2t.Entity.BaseEntity;
-import ru.maxeltr.homeMq2t.Entity.CardEntity;
-import ru.maxeltr.homeMq2t.Entity.DashboardEntity;
-import ru.maxeltr.homeMq2t.Model.DashboardType;
 
-public interface DashboardRepository<T extends BaseEntity> extends JpaRepository<DashboardEntity<T>, Long> {
+public enum DashboardType {
+    CARD("card"),
+    COMMAND("command"),
+    COMPONENT("component");
 
-    List<DashboardEntity<T>> findByType(DashboardType dashboardType);
+    private final String value;
 
-    Optional<DashboardEntity<T>> findByNumber(int number);
+    DashboardType(String value) {
+        this.value = value;
+    }
 
-    Optional<DashboardEntity> findByName(String name);
+    public String getValue() {
+        return value;
+    }
 
-    @Override
-    List<DashboardEntity<T>> findAll();
-
-    @Override
-    Optional<DashboardEntity<T>> findById(Long id);
-
+    public static Optional<DashboardType> fromString(String name) {
+        if (name == null) {
+            return Optional.empty();
+        }
+        return Arrays.stream(values()).filter(t -> t.value.equalsIgnoreCase(name)).findFirst();
+    }
 }

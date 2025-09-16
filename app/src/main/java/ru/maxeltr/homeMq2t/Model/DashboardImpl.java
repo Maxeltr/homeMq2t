@@ -49,7 +49,7 @@ public class DashboardImpl extends ViewModel<DashboardEntity> implements Dashboa
     }
 
     @Override
-    public List<ViewModel<?>> getCards() {
+    public List<ViewModel<?>> getItems() {
         return this.dashboardCards;
     }
 
@@ -57,7 +57,7 @@ public class DashboardImpl extends ViewModel<DashboardEntity> implements Dashboa
     void configureTemplate(Document document) {
         Element el = document.getElementById(CARD_ELEMENT_ID);
         if (el != null) {
-            for (ViewModel card : this.getCards()) {
+            for (ViewModel card : this.getItems()) {
                 el.append(card.getHtml());
             }
             el.attr("data-dashboardName", getName());

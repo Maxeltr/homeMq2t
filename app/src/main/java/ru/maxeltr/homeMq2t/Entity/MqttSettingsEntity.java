@@ -72,7 +72,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Override
     public String getName() {
-        return name;
+        return name != null ? name : "";
     }
 
     public void setName(String name) {
@@ -80,7 +80,7 @@ public class MqttSettingsEntity extends BaseEntity {
     }
 
     public String getHost() {
-        return host;
+        return host != null ? host : "";
     }
 
     public void setHost(String host) {
@@ -88,7 +88,7 @@ public class MqttSettingsEntity extends BaseEntity {
     }
 
     public String getPort() {
-        return port;
+        return port != null ? port : "";
     }
 
     public void setPort(String port) {
@@ -96,7 +96,7 @@ public class MqttSettingsEntity extends BaseEntity {
     }
 
     public String getMq2tPassword() {
-        return mq2tPassword;
+        return mq2tPassword != null ? mq2tPassword : "";
     }
 
     public void setMq2tPassword(String mq2tPassword) {
@@ -104,7 +104,7 @@ public class MqttSettingsEntity extends BaseEntity {
     }
 
     public String getMq2tUsername() {
-        return mq2tUsername;
+        return mq2tUsername != null ? mq2tUsername : "";
     }
 
     public void setMq2tUsername(String mq2tUsername) {
@@ -112,7 +112,7 @@ public class MqttSettingsEntity extends BaseEntity {
     }
 
     public String getClientId() {
-        return clientId;
+        return clientId != null ? clientId : "";
     }
 
     public void setClientId(String clientId) {
@@ -120,63 +120,63 @@ public class MqttSettingsEntity extends BaseEntity {
     }
 
     public boolean getHasUsername() {
-        return hasUsername;
+        return hasUsername != null && hasUsername;
     }
 
-    public void setHasUsername(boolean hasUsername) {
+    public void setHasUsername(Boolean hasUsername) {
         this.hasUsername = hasUsername;
     }
 
-    public boolean getHasPassword() {
-        return hasPassword;
+    public Boolean getHasPassword() {
+        return hasPassword != null && hasPassword;
     }
 
-    public void setHasPassword(boolean hasPassword) {
+    public void setHasPassword(Boolean hasPassword) {
         this.hasPassword = hasPassword;
     }
 
     public String getWillQos() {
-        return willQos;
+        return willQos != null ? willQos : "";
     }
 
     public void setWillQos(String willQos) {
         this.willQos = willQos;
     }
 
-    public boolean getWillRetain() {
-        return willRetain;
+    public Boolean getWillRetain() {
+        return willRetain != null && willRetain;
     }
 
-    public void setWillRetain(boolean willRetain) {
+    public void setWillRetain(Boolean willRetain) {
         this.willRetain = willRetain;
     }
 
-    public boolean getWillFlag() {
-        return willFlag;
+    public Boolean getWillFlag() {
+        return willFlag != null && willFlag;
     }
 
-    public void setWillFlag(boolean willFlag) {
+    public void setWillFlag(Boolean willFlag) {
         this.willFlag = willFlag;
     }
 
-    public boolean getCleanSession() {
-        return cleanSession;
+    public Boolean getCleanSession() {
+        return cleanSession != null && cleanSession;
     }
 
-    public void setCleanSession(boolean cleanSession) {
+    public void setCleanSession(Boolean cleanSession) {
         this.cleanSession = cleanSession;
     }
 
-    public boolean getAutoConnect() {
-        return autoConnect;
+    public Boolean getAutoConnect() {
+        return autoConnect != null && autoConnect;
     }
 
-    public void setAutoConnect(boolean autoConnect) {
+    public void setAutoConnect(Boolean autoConnect) {
         this.autoConnect = autoConnect;
     }
 
     public String getWillTopic() {
-        return willTopic;
+        return willTopic != null ? willTopic : "";
     }
 
     public void setWillTopic(String willTopic) {
@@ -184,18 +184,18 @@ public class MqttSettingsEntity extends BaseEntity {
     }
 
     public String getWillMessage() {
-        return willMessage;
+        return willMessage != null ? willMessage : "";
     }
 
     public void setWillMessage(String willMessage) {
         this.willMessage = willMessage;
     }
 
-    public boolean getReconnect() {
-        return reconnect;
+    public Boolean getReconnect() {
+        return reconnect != null && reconnect;
     }
 
-    public void setReconnect(boolean reconnect) {
+    public void setReconnect(Boolean reconnect) {
         this.reconnect = reconnect;
     }
 

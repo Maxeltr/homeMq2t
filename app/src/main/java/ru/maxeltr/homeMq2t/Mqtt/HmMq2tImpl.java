@@ -358,7 +358,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
         if (subAckQos.size() != topics.size()) {
             logger.warn("Number of topics to subscribe is not match number of returned granted QOS. QoS size={}. Topics size={}", subAckQos.size(), topics.size());
-            this.disconnect((byte) 1);  //TODO resub?
+            //this.disconnect((byte) 1);  //TODO resub?
         } else {
             for (int i = 0; i < subAckQos.size(); i++) {
                 if (subAckQos.get(i) == 128) {

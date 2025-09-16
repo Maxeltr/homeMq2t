@@ -6,6 +6,7 @@ CREATE SEQUENCE IF NOT EXISTS dashboard_number_seq
 CREATE TABLE IF NOT EXISTS dashboard_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    type VARCHAR(255),
     number BIGINT DEFAULT NEXT VALUE FOR dashboard_number_seq NOT NULL
 );
 
@@ -100,11 +101,11 @@ CREATE TABLE IF NOT EXISTS mqtt_settings (
     number BIGINT DEFAULT NEXT VALUE FOR mqtt_settings_number_seq NOT NULL
 );
 
-INSERT INTO dashboard_settings (name)
-SELECT 'Start dashboard'
-WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Start dashboard');
-VALUES
-  ('Start dashboard');
+INSERT INTO dashboard_settings (name, type)
+SELECT 'Start dashboard', 'CARD'
+WHERE NOT EXISTS (
+  SELECT 1 FROM dashboard_settings WHERE name = 'Start dashboard'
+);
 
 INSERT INTO dashboard_settings (name)
 SELECT 'Command List'

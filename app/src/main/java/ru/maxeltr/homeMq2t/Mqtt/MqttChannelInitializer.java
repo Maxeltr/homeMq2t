@@ -90,7 +90,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
     private MqttDecoder createMqttDecoder() {
         var handler = new MqttDecoder(maxBytesInMessage);
-        logger.debug("Create MqttDecoder {}. Max bytes in message {}.", maxBytesInMessage, handler.getClass());
+        logger.debug("Create MqttDecoder {}. Max bytes in message {}.", handler.getClass(), maxBytesInMessage);
         return handler;
     }
 
