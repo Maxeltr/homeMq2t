@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.jsoup.Jsoup;
@@ -34,7 +35,7 @@ public class HtmlSanitizerImpl implements HtmlSanitizer {
 
     @Override
     public String sanitize(String data) {
-        logger.debug("Sanitizing html data={}.", data);
+        logger.debug("Sanitizing html data={}.", StringUtils.abbreviate(data, 128));
         return Jsoup.clean(data, Safelist.basic());
     }
 }

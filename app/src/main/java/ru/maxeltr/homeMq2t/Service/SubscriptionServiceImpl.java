@@ -43,7 +43,6 @@ import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.ComponentPropertiesProvider;
-import ru.maxeltr.homeMq2t.Mqtt.MqttUtils;
 
 public class SubscriptionServiceImpl implements SubscriptionService {
 
@@ -70,55 +69,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private ComponentPropertiesProvider componentPropertiesProvider;
 
     @Override
-    public void subscribeFromConfig() {
+    public void clearSubscriptionsAndSubscribeFromConfig() {
         List<MqttTopicSubscription> subs = appProperties.getAllSubscriptions();
         logger.debug("List of subscriptions {}", subs);
         //var clearSusbs = MqttUtils.removeCopiesAndSelectMaxQos(subs);
         //logger.debug("List of subscription after removing copies {}", clearSusbs);
+        states.clear();
         subscribe(subs);
-    }
-
-    @Override
-    public boolean subscribe(MqttTopicSubscription subscription) {
-        if (subscription == null) {
-            return false;
-        }
-
-        logger.debug("Start to subscribe to topic {}", subscription.topicName());
-        String topic = subscription.topicName();
-
-        int qos = subscription.qualityOfService().value();
-
-        final boolean shouldSubscribe = states.compute(topic, (k, s) -> {
-            SubscriptionState oldState = s;
-            if (oldState == null) {
-                oldState = new SubscriptionState();
-            }
-            oldState.updateMaxQos(qos);
-            int refcount = oldState.increment();
-            logger.debug("Incremented refcount for {} -> {}", topic, refcount);
-            return oldState;
-        }).getRefCount() == 1;
-
-        if (shouldSubscribe) {
-            int effectiveQos = states.get(topic).getMaxQos();
-            logger.debug("Refcount=1. Subscribing to {} with qos {}", topic, effectiveQos);
-            mediator.subscribe(List.of(new MqttTopicSubscription(topic, MqttQoS.valueOf(effectiveQos))));
-            return true;
-        }
-
-        return false;
-
-//        AtomicInteger count = counts.computeIfAbsent(topic, k -> new AtomicInteger(0));
-//
-//        int v = count.incrementAndGet();
-//        logger.debug("Incremented refcount for {} -> {}", topic, v);
-//        if (v == 1) {
-//            logger.debug("Refcount={}. Subscribing to {}", v, topic);
-//            mediator.subscribe(List.of(subscription));
-//            return true;
-//        }
-//        return false;
     }
 
     @Override
@@ -128,15 +85,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             return;
         }
 
-        logger.debug("Start to subscribe to topics {}", subscriptions);
-        ConcurrentMap<String, Integer> groupedMaxQos = subscriptions.stream()
-                .collect(Collectors.toConcurrentMap(
-                        MqttTopicSubscription::topicName, s -> s.qualityOfService().value(), Integer::max));
+        logger.debug("Prepare list to subscribe to topics {}", subscriptions);
+
         List<String> toSubscribe = new ArrayList<>();
 
-        for (var entry : groupedMaxQos.entrySet()) {
-            String topic = entry.getKey();
-            int qos = entry.getValue();
+        for (var sub : subscriptions) {
+            String topic = sub.topicName();
+            int qos = sub.qualityOfService().value();
             boolean shouldSubscribe = states.compute(topic, (k, s) -> {
                 SubscriptionState oldState = s;
                 if (oldState == null) {
@@ -157,75 +112,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             logger.debug("Prepared list of subscriptions {}", prepared);
             mediator.subscribe(prepared);
         } else {
-            logger.debug("List to subscribe is empty.");
+            logger.info("List to subscribe is empty.");
         }
-
-//        List<String> tempSubList = new ArrayList<>();
-//        for (MqttTopicSubscription subscription : subscriptions) {
-//            String topic = subscription.topicName();
-//            Integer newQos = subscription.qualityOfService().value();
-//
-//            Integer prevQos = maxQos.computeIfAbsent(topic, k -> newQos);
-//            if (newQos > prevQos) {
-//                maxQos.put(topic, newQos);
-//                logger.debug("Incremented QoS for {}. {} -> {}", topic, prevQos, newQos);
-//            }
-//
-//            AtomicInteger count = counts.computeIfAbsent(topic, k -> new AtomicInteger(0));
-//            int v = count.incrementAndGet();
-//            logger.debug("Incremented refcount for {} -> {}", topic, v);
-//            if (v == 1) {
-//                logger.debug("Refcount={}. Add to list for subscribing to {}", v, topic);
-//                tempSubList.add(topic);
-//            }
-//        }
-//
-//        List<MqttTopicSubscription> prepearedSubList = new ArrayList<>();
-//        for (String subscription : tempSubList) {
-//            prepearedSubList.add(new MqttTopicSubscription(subscription, MqttQoS.valueOf(maxQos.get(subscription))));
-//        }
-//
-//        logger.debug("Prepeared list of subscriptions {}", prepearedSubList);
-//        mediator.subscribe(prepearedSubList);
-    }
-
-    @Override
-    public Promise<MqttUnsubAckMessage> unsubscribe(String topic) {
-        if (StringUtils.isBlank(topic)) {
-            return null;
-        }
-
-        AtomicBoolean removed = new AtomicBoolean(false);
-        states.computeIfPresent(topic, (k, state) -> {
-            int count = state.decrement();
-            logger.debug("Decremented refcount for {} -> {}", topic, count);
-            if (count <= 0) {
-                removed.set(true);
-                return null;
-            }
-            return state;
-        });
-
-        if (removed.get()) {
-            logger.debug("Refcount for {} droppes to 0, unsubscribing", topic);
-            return mediator.unsubscribe(List.of(topic));
-        }
-
-        return null;
-
-//        AtomicInteger count = counts.get(topic);
-//        if (count == null) {
-//            logger.debug("Unsubscribe called for absent key {}", topic);
-//            return null;
-//        }
-//        int v = count.decrementAndGet();
-//        logger.debug("Decremented refcount for {} -> {}", topic, v);
-//        if (v <= 0) {
-//            counts.remove(topic, count);
-//            logger.debug("Refcount for {} dropped to {}, remove entry", topic, v);
-//            return mediator.unsubscribe(List.of(topic));
-//        }
-//        return null;
     }
 
     @Override

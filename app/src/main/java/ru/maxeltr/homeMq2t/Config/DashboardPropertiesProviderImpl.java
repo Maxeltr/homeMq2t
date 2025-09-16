@@ -41,6 +41,7 @@ import ru.maxeltr.homeMq2t.Model.CommandImpl;
 import ru.maxeltr.homeMq2t.Model.ComponentImpl;
 import ru.maxeltr.homeMq2t.Model.Dashboard;
 import ru.maxeltr.homeMq2t.Model.DashboardImpl;
+import ru.maxeltr.homeMq2t.Model.DashboardType;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Repository.CardRepository;
 import ru.maxeltr.homeMq2t.Repository.CommandRepository;
@@ -139,7 +140,7 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
 
     @Override
     public Optional<ViewModel<DashboardEntity>> getStartDashboard() {
-        return this.getAllDashboards().stream().findFirst();
+        return this.getCardDashboards().stream().findFirst();
     }
 
     /**
@@ -151,7 +152,7 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
      * are defined, an empty list is returned.
      */
     @Override
-    public List<ViewModel<DashboardEntity>> getAllDashboards() {
+    public List<ViewModel<DashboardEntity>> getCardDashboards() {
         List<ViewModel<DashboardEntity>> dashboards = new ArrayList<>();
 
         String dashboardPathname = env.getProperty(DASHBOARD_TEMPLATE_PATH, "");
@@ -160,7 +161,7 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
             return dashboards;
         }
 
-        List<DashboardEntity<CardEntity>> dashboardEntities = dashboardRepository.findAll();
+        List<DashboardEntity<CardEntity>> dashboardEntities = dashboardRepository.findByType(DashboardType.CARD);
         dashboardEntities.forEach(dashboardEntity -> {
             List<ViewModel<CardEntity>> cards = getCardsFromDashboardEntity(dashboardEntity);
             ViewModel<DashboardEntity> dashboard = new DashboardImpl(dashboardEntity, cards, dashboardPathname);
@@ -181,7 +182,7 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
             return cards;
         }
 
-        List<CardEntity> cardEntities = dashboardEntity.getCards();
+        List<CardEntity> cardEntities = dashboardEntity.getItems();
         cardEntities.forEach(cardEntity -> {
             ViewModel<CardEntity> card = new CardImpl(cardEntity, cardPathname);
             cards.add(card);

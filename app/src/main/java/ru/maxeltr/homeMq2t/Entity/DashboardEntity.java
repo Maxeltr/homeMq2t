@@ -26,6 +26,8 @@ package ru.maxeltr.homeMq2t.Entity;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -34,6 +36,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.List;
 import java.util.stream.Collectors;
+import ru.maxeltr.homeMq2t.Model.DashboardType;
 
 @Entity
 @Table(name = "dashboard_settings")
@@ -47,9 +50,13 @@ public class DashboardEntity<T extends BaseEntity> extends BaseEntity {
     @Column(name = "number", insertable = false)
     private Integer number;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", length = 50)
+    private DashboardType type;
+
     //@JsonManagedReference("dashboard-cards")
     @OneToMany(mappedBy = "dashboard", fetch = FetchType.EAGER, targetEntity = CardEntity.class)
-    private List<T> cards;
+    private List<T> items;
 
     public Long getId() {
         return id;
@@ -77,23 +84,23 @@ public class DashboardEntity<T extends BaseEntity> extends BaseEntity {
         this.number = number;
     }
 
-    public List<T> getCards() {
-        return cards;
+    public List<T> getItems() {
+        return items;
     }
 
-    public void setCards(List<T> cards) {
-        this.cards = cards;
+    public void setItems(List<T> items) {
+        this.items = items;
     }
 
     @Override
     public String toString() {
-        String cardNames = (cards != null)
-                ? cards.stream()
+        String itemNames = (items != null)
+                ? items.stream()
                         .map(BaseEntity::getName)
                         .collect(Collectors.joining(", "))
                 : "[]";
 
-        return "DashboardEntity{" + "id=" + id + ", name=" + name + ", number=" + number + ", cards=" + cardNames + '}';
+        return "DashboardEntity{" + "id=" + id + ", name=" + name + ", number=" + number + ", items=" + itemNames + '}';
     }
 
 }

@@ -165,7 +165,7 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter {
             if (reconnect) {
                 logger.info("Start the reconnection attempt.");
                 serviceMediator.reconnect();
-                subscriptionService.subscribeFromConfig();
+                subscriptionService.clearSubscriptionsAndSubscribeFromConfig();
             } else {
                 logger.info("Disconnect without the reconnection.");
                 serviceMediator.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);

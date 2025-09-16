@@ -39,7 +39,7 @@ public interface DashboardPropertiesProvider {
 
     public Optional<ViewModel<DashboardEntity>> getStartDashboard();
 
-    public List<ViewModel<DashboardEntity>> getAllDashboards();
+    public List<ViewModel<DashboardEntity>> getCardDashboards();
 
     public Optional<ViewModel<DashboardEntity>> getComponentDashboard();
 }

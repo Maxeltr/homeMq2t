@@ -110,7 +110,7 @@ public class MqttManagerImpl implements MqttManager {
         }
 
         if (StringUtils.isNotEmpty(oldTopic) && this.mediator.isConnected() && (topicChanged || qosChanged)) {
-            Promise<MqttUnsubAckMessage> promise = this.subscriptionService.unsubscribe(oldTopic);
+            Promise<MqttUnsubAckMessage> promise = this.subscriptionService.unsubscribe(List.of(oldTopic));
             if (promise != null) {
                 promise.awaitUninterruptibly(ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
             }
