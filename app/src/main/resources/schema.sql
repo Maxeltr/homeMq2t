@@ -107,17 +107,13 @@ WHERE NOT EXISTS (
   SELECT 1 FROM dashboard_settings WHERE name = 'Start dashboard'
 );
 
-INSERT INTO dashboard_settings (name)
-SELECT 'Command List'
+INSERT INTO dashboard_settings (name, type)
+SELECT 'Command List', 'COMMAND'
 WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Command List');
-VALUES
-  ('Command List');
  
-INSERT INTO dashboard_settings (name)
-SELECT 'Component List'
+INSERT INTO dashboard_settings (name, type)
+SELECT 'Component List', 'COMPONENT'
 WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Component List');
-VALUES
-  ('Component List');
 
 INSERT INTO mqtt_settings (name)
 SELECT 'Mqtt Settings'

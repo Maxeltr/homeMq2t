@@ -92,6 +92,14 @@ public class DashboardEntity<T extends BaseEntity> extends BaseEntity {
         this.items = items;
     }
 
+    public DashboardType getType() {
+        return type;
+    }
+
+    public void setType(DashboardType type) {
+        this.type = type;
+    }
+
     @Override
     public String toString() {
         String itemNames = (items != null)
