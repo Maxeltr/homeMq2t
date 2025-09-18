@@ -49,7 +49,7 @@ has-password = A flag indicating whether a password is required for connecting t
 will-qos = The Quality of Service (QoS) level for the "Last Will and Testament" (LWT) message. It determines how the server should handle this message in case of an unexpected client disconnection.
 will-retain = A flag indicating whether the LWT message should be retained on the server for new subscribers.
 will-flag = A flag indicating whether the last will message should be sent when the client disconnects.
-clean-session = A flag indicating whether the server should delete all subscriptions and messages associated with the client upon disconnection. If set to true, the server will not retain the client's state.
+clean-session = A flag indicating whether the server should delete all subscriptions and messages associated with the client upon disconnection. If set to true, the server will not retain the client state.
 auto-connect = A flag indicating whether to automatically connect to the server when the application starts.
 will-topic = The topic to which the LWT message will be sent in case of client disconnection.
 will-message = The message that will be sent to the will-topic if the client disconnects unexpectedly.
@@ -101,7 +101,7 @@ retain - A boolean value indicating whether the published message should be reta
 publication data type - The MIME type of the data being published, indicating the format of the content (e.g., "text/plain").
 publication local card - The name of the local card associated with the component, which displays the data locally on the dashboard card. This functionality works without an internet connection.
 provider - The Java plugin that is dynamically loaded by the Java ClassLoader and is responsible for polling the sensors or executing specific tasks. This is a plugin that implements the interfaces `Mq2tHttpPollableComponent` or `Mq2tHttpCallbackComponent`.
-component[0].provider.args = The arguments or parameters required by the provider.
+provider args - The arguments or parameters required by the provider.
 ```
 
 Persistence:
