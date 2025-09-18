@@ -24,6 +24,7 @@
 package ru.maxeltr.homeMq2t.Entity;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -70,6 +71,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.id = id;
     }
 
+    @Nullable
     @Override
     public String getName() {
         return name != null ? name : "";
@@ -79,6 +81,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.name = name;
     }
 
+    @Nullable
     public String getHost() {
         return host != null ? host : "";
     }
@@ -87,6 +90,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.host = host;
     }
 
+    @Nullable
     public String getPort() {
         return port != null ? port : "";
     }
@@ -95,6 +99,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.port = port;
     }
 
+    @Nullable
     public String getMq2tPassword() {
         return mq2tPassword != null ? mq2tPassword : "";
     }
@@ -103,6 +108,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.mq2tPassword = mq2tPassword;
     }
 
+    @Nullable
     public String getMq2tUsername() {
         return mq2tUsername != null ? mq2tUsername : "";
     }
@@ -111,6 +117,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.mq2tUsername = mq2tUsername;
     }
 
+    @Nullable
     public String getClientId() {
         return clientId != null ? clientId : "";
     }
@@ -119,6 +126,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.clientId = clientId;
     }
 
+    @Nullable
     public boolean getHasUsername() {
         return hasUsername != null && hasUsername;
     }
@@ -127,6 +135,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.hasUsername = hasUsername;
     }
 
+    @Nullable
     public Boolean getHasPassword() {
         return hasPassword != null && hasPassword;
     }
@@ -135,6 +144,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.hasPassword = hasPassword;
     }
 
+    @Nullable
     public String getWillQos() {
         return willQos != null ? willQos : "";
     }
@@ -143,6 +153,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.willQos = willQos;
     }
 
+    @Nullable
     public Boolean getWillRetain() {
         return willRetain != null && willRetain;
     }
@@ -151,6 +162,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.willRetain = willRetain;
     }
 
+    @Nullable
     public Boolean getWillFlag() {
         return willFlag != null && willFlag;
     }
@@ -159,6 +171,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.willFlag = willFlag;
     }
 
+    @Nullable
     public Boolean getCleanSession() {
         return cleanSession != null && cleanSession;
     }
@@ -167,6 +180,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.cleanSession = cleanSession;
     }
 
+    @Nullable
     public Boolean getAutoConnect() {
         return autoConnect != null && autoConnect;
     }
@@ -175,6 +189,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.autoConnect = autoConnect;
     }
 
+    @Nullable
     public String getWillTopic() {
         return willTopic != null ? willTopic : "";
     }
@@ -183,6 +198,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.willTopic = willTopic;
     }
 
+    @Nullable
     public String getWillMessage() {
         return willMessage != null ? willMessage : "";
     }
@@ -191,6 +207,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.willMessage = willMessage;
     }
 
+    @Nullable
     public Boolean getReconnect() {
         return reconnect != null && reconnect;
     }
@@ -199,6 +216,7 @@ public class MqttSettingsEntity extends BaseEntity {
         this.reconnect = reconnect;
     }
 
+    @Nullable
     @Override
     public Integer getNumber() {
         return this.number;
