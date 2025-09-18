@@ -5,16 +5,37 @@ This application allows for the subscription and publication of messages to vari
 ## Features
 
 - Support for MQTT 3.1.1 protocol.
+- Netty for scalable non-blocking network I/O.
 - Support subscribing, publishing, authentication, will messages, keep alive pings and all 3 QoS levels.
 - Web UI built on WebSocket and STOMP.
 - Data is transmitted in JSON format (including fields: `data`, `type`, and `timestamp`) via MQTT.
 - Images must be encoded in Base64 due to JSON constraints.
 - Executes commands (scripts) on the host it's running on.
 - Executes processes and publishes stdout of the launched program to the configured topic.
+- Extensible via Java providers loaded dynamically by ClassLoader.
 - Polling sensors (they should implement `Mq2tHttpPollableComponent` or `Mq2tHttpCallbackComponent`).
 - The application displays data from topics in cards, with each card representing a single topic.
 - From each card, you can send a message to the configured topic.
 - The number of cards is determined by the configuration settings.
+
+## Architecture
+The app is built as a Spring Boot service that uses Netty for network I/O. MQTT client/server interactions are handled inside the Netty pipeline and integrated with application services. The Web UI communicates using WebSocket + STOMP to provide real-time updates and controls. Components (sensors, pollers, local tasks) are implemented as pluggable Java providers.
+
+## Cards & Commands
+Card: visual unit mapping to one MQTT topic for display and interactions. Cards extract data via JSONPath and can publish configured payloads or arbitrary JSON messages from UI.
+Command: subscribes for execution requests, runs configured local executable/script, publishes stdout (and optionally exit status) to a configured MQTT topic.
+
+## Extending with plugins
+Implement provider interfaces: Mq2tHttpPollableComponent or Mq2tHttpCallbackComponent.
+Package providers as jars and place them on the application classpath or configured plugin directory.
+Provide provider class name and args in components configuration; the app loads them via ClassLoader.
+
+## Security & best practices
+Use TLS for MQTT/WebSocket in production and strong credentials.
+Ensure executed scripts are trusted and run with appropriate user permissions.
+Limit plugin directories and validate provider classes to reduce risk.
+
+
 
 ## MQTT Settings Description
 ```properties
