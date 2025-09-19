@@ -233,13 +233,13 @@ public class ComponentPropertiesProviderImpl implements ComponentPropertiesProvi
      *
      * @return a list of Mqtt topic subscriptions.
      */
-    public List<MqttTopicSubscription> getAllSubscriptions() {
-        List<MqttTopicSubscription> subscriptions = new ArrayList<>();
+    public List<ComponentEntity> getAllSubscriptions() {
+        List<ComponentEntity> subscriptions = new ArrayList<>();
 
         List<ComponentEntity> componentEntities = componentRepository.findAll();
         componentEntities.forEach(componentEntity -> {
             if (StringUtils.isNotBlank(componentEntity.getSubscriptionTopic())) {
-                subscriptions.add(new MqttTopicSubscription(componentEntity.getSubscriptionTopic(), MqttUtils.convertToMqttQos(componentEntity.getSubscriptionQos())));
+                subscriptions.add(componentEntity);
                 logger.info("Add subscription={} with qos={} to subscription list.", componentEntity.getSubscriptionTopic(), componentEntity.getSubscriptionQos());
             }
         });

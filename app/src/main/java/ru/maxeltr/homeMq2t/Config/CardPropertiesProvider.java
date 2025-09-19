@@ -43,6 +43,7 @@ public interface CardPropertiesProvider {
 //    public Optional<ViewModel> getStartDashboard();
 
 //    public Optional<DashboardEntity> getDashboardEntity(String number);
+    public List<CardEntity> getAllSubscriptions();
 
     public CardEntity saveCardEntity(CardEntity cardEntity);
 

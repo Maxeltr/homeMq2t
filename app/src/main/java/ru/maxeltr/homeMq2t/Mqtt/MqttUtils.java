@@ -38,8 +38,9 @@ public class MqttUtils {
     }
 
     /**
-     * Convert the given qos value from string to MqttQos enum instance. If the
-     * qos value is invalid, it defaults to qos level 0.
+     * Convert the given qos value from string (AT_MOST_ONCE, AT_LEAST_ONCE or
+     * EXACTLY_ONCE) to MqttQos enum instance. If the qos value is invalid, it
+     * defaults to qos level 0.
      *
      * @param qosString The qos value as a string. Must not be null.
      * @return The qos level as a MqttQos enum value.

@@ -384,13 +384,13 @@ public class CardPropertiesProviderImpl implements CardPropertiesProvider {
      *
      * @return a list of Mqtt topic subscriptions.
      */
-    public List<MqttTopicSubscription> getAllSubscriptions() {
-        List<MqttTopicSubscription> subscriptions = new ArrayList<>();
+    public List<CardEntity> getAllSubscriptions() {
+        List<CardEntity> subscriptions = new ArrayList<>();
 
         List<CardEntity> cardEntities = cardRepository.findAll();
         cardEntities.forEach(cardEntity -> {
             if (StringUtils.isNotBlank(cardEntity.getSubscriptionTopic())) {
-                subscriptions.add(new MqttTopicSubscription(cardEntity.getSubscriptionTopic(), MqttUtils.convertToMqttQos(cardEntity.getSubscriptionQos())));
+                subscriptions.add(cardEntity);
                 logger.info("Add subscription={} with qos={} to subscription list.", cardEntity.getSubscriptionTopic(), cardEntity.getSubscriptionQos());
             }
         });

@@ -236,13 +236,13 @@ public class CommandPropertiesProviderImpl implements CommandPropertiesProvider 
      *
      * @return a list of Mqtt topic subscriptions.
      */
-    public List<MqttTopicSubscription> getAllSubscriptions() {
-        List<MqttTopicSubscription> subscriptions = new ArrayList<>();
+    public List<CommandEntity> getAllSubscriptions() {
+        List<CommandEntity> subscriptions = new ArrayList<>();
 
         List<CommandEntity> commandEntities = commandRepository.findAll();
         commandEntities.forEach(commandEntity -> {
             if (StringUtils.isNotBlank(commandEntity.getSubscriptionTopic())) {
-                subscriptions.add(new MqttTopicSubscription(commandEntity.getSubscriptionTopic(), MqttUtils.convertToMqttQos(commandEntity.getSubscriptionQos())));
+                subscriptions.add(commandEntity);
                 logger.info("Add subscription={} with qos={} to subscription list.", commandEntity.getSubscriptionTopic(), commandEntity.getSubscriptionQos());
             }
         });

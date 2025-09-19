@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import ru.maxeltr.homeMq2t.Entity.HasSubscription;
 import ru.maxeltr.homeMq2t.Entity.BaseEntity;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;

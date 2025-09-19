@@ -27,10 +27,11 @@ import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 import io.netty.util.concurrent.Promise;
 import java.util.List;
+import ru.maxeltr.homeMq2t.Entity.HasSubscription;
 
 public interface SubscriptionService {
 
-    public void subscribe(List<MqttTopicSubscription> subscriptions);
+    public void subscribe(List<? extends HasSubscription> subscriptions);
 
     public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics);
 

@@ -24,6 +24,7 @@
 package ru.maxeltr.homeMq2t.Config;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
@@ -183,7 +184,7 @@ public class DashboardPropertiesProviderImpl implements DashboardPropertiesProvi
         }
 
         List<CardEntity> cardEntities = dashboardEntity.getItems();
-        cardEntities.forEach(cardEntity -> {
+        Optional.ofNullable(cardEntities).orElseGet(Collections::emptyList).forEach(cardEntity -> {
             ViewModel<CardEntity> card = new CardImpl(cardEntity, cardPathname);
             cards.add(card);
             logger.debug("Card={} has been created and added to card list. Number={}", card.getName(), card.getNumber());

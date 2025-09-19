@@ -43,6 +43,8 @@ import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
 import ru.maxeltr.homeMq2t.Config.ComponentPropertiesProvider;
+import ru.maxeltr.homeMq2t.Entity.CardEntity;
+import ru.maxeltr.homeMq2t.Entity.HasSubscription;
 
 public class SubscriptionServiceImpl implements SubscriptionService {
 
@@ -55,6 +57,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 //    private final ConcurrentMap<String, AtomicInteger> counts = new ConcurrentHashMap<>();
 //    private final ConcurrentMap<String, Integer> maxQos = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, SubscriptionState> states = new ConcurrentHashMap<>();
+
+    private final ConcurrentMap<String, List<HasSubscription>> subscribers = new ConcurrentHashMap<>();
 
     @Autowired
     private AppProperties appProperties;
@@ -70,7 +74,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public void clearSubscriptionsAndSubscribeFromConfig() {
-        List<MqttTopicSubscription> subs = appProperties.getAllSubscriptions();
+        List<? extends HasSubscription> subs = cardPropertiesProvider.getAllSubscriptions();
         logger.debug("List of subscriptions {}", subs);
         //var clearSusbs = MqttUtils.removeCopiesAndSelectMaxQos(subs);
         //logger.debug("List of subscription after removing copies {}", clearSusbs);
@@ -79,42 +83,72 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public void subscribe(List<MqttTopicSubscription> subscriptions) {
+    public void subscribe(List<? extends HasSubscription> subscriptions) {
         if (subscriptions == null || subscriptions.isEmpty()) {
             logger.debug("Empty subscription list given");
             return;
         }
-
         logger.debug("Prepare list to subscribe to topics {}", subscriptions);
 
         List<String> toSubscribe = new ArrayList<>();
 
-        for (var sub : subscriptions) {
-            String topic = sub.topicName();
-            int qos = sub.qualityOfService().value();
-            boolean shouldSubscribe = states.compute(topic, (k, s) -> {
-                SubscriptionState oldState = s;
-                if (oldState == null) {
-                    oldState = new SubscriptionState();
+        for (var entity : subscriptions) {
+            String topic = entity.getSubscriptionTopic();
+            String qos = entity.getSubscriptionQos();
+
+            subscribers.compute(topic, (k, v) -> {
+                var subs = v;
+                if (subs == null) {
+                    subs = new ArrayList<>();
+                    subs.add(entity);
+                } else {
+                    if (!subs.contains(entity)) {
+                        subs.add(entity);
+                    }
                 }
-                oldState.updateMaxQos(qos);
-                oldState.increment();
-                return oldState;
-            }).getRefCount() == 1;
-
-            if (shouldSubscribe) {
-                toSubscribe.add(topic);
-            }
+                return subs;
+            });
         }
 
-        if (!toSubscribe.isEmpty()) {
-            List<MqttTopicSubscription> prepared = toSubscribe.stream().map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(states.get(t).getMaxQos()))).collect(Collectors.toList());
-            logger.debug("Prepared list of subscriptions {}", prepared);
-            mediator.subscribe(prepared);
-        } else {
-            logger.info("List to subscribe is empty.");
-        }
     }
+
+//    @Override
+//    public void subscribe(List<MqttTopicSubscription> subscriptions) {
+//        if (subscriptions == null || subscriptions.isEmpty()) {
+//            logger.debug("Empty subscription list given");
+//            return;
+//        }
+//
+//        logger.debug("Prepare list to subscribe to topics {}", subscriptions);
+//
+//        List<String> toSubscribe = new ArrayList<>();
+//
+//        for (var sub : subscriptions) {
+//            String topic = sub.topicName();
+//            int qos = sub.qualityOfService().value();
+//            boolean shouldSubscribe = states.compute(topic, (k, s) -> {
+//                SubscriptionState oldState = s;
+//                if (oldState == null) {
+//                    oldState = new SubscriptionState();
+//                }
+//                oldState.updateMaxQos(qos);
+//                oldState.increment();
+//                return oldState;
+//            }).getRefCount() == 1;
+//
+//            if (shouldSubscribe) {
+//                toSubscribe.add(topic);
+//            }
+//        }
+//
+//        if (!toSubscribe.isEmpty()) {
+//            List<MqttTopicSubscription> prepared = toSubscribe.stream().map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(states.get(t).getMaxQos()))).collect(Collectors.toList());
+//            logger.debug("Prepared list of subscriptions {}", prepared);
+//            mediator.subscribe(prepared);
+//        } else {
+//            logger.info("List to subscribe is empty.");
+//        }
+//    }
 
     @Override
     public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
