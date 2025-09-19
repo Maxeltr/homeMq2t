@@ -23,6 +23,7 @@
  */
 package ru.maxeltr.homeMq2t.Service.UI;
 
+import ru.maxeltr.homeMq2t.Entity.HasSubscription;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
@@ -117,7 +118,7 @@ public class MqttManagerImpl implements MqttManager {
         }
 
         if (StringUtils.isNotBlank(newTopic) && mediator.isConnected()) {
-            this.subscriptionService.subscribe(List.of(new MqttTopicSubscription(newTopic, MqttUtils.convertToMqttQos(newQos))));
+            this.subscriptionService.subscribe(List.of(after));
         }
     }
 

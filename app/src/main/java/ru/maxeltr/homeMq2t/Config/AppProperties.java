@@ -102,7 +102,7 @@ public class AppProperties implements StartupTaskPropertiesProvider {
      * @return the startup task number if found, or an empty string.
      */
     public String getStartupTaskNumber(String name) {
-        return startupTaskRepository.findByName(name).map(StartupTaskEntity::getNumber).map(String::valueOf).orElse("");
+        return startupTaskRepository.findByName(name).map(StartupTaskEntity::getNumber).map(String::valueOf).orElse("");    //TODO may be null
     }
 
     /**
@@ -214,62 +214,62 @@ public class AppProperties implements StartupTaskPropertiesProvider {
     }
 
     public String getHost() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getHost).filter(Objects::nonNull).orElse("");
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getHost).orElse("");
     }
 
     public String getPort() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getPort).filter(Objects::nonNull).orElse("1883");
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getPort).orElse("1883");
     }
 
     public Boolean getCleanSession() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getCleanSession).filter(Objects::nonNull).orElse(false);
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getCleanSession).orElse(false);
     }
 
     public Boolean getReconnect() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getReconnect).filter(Objects::nonNull).orElse(false);
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getReconnect).orElse(false);
     }
 
     public Boolean getAutoConnect() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getAutoConnect).filter(Objects::nonNull).orElse(false);
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getAutoConnect).orElse(false);
     }
 
     public Boolean getHasUsername() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getHasUsername).filter(Objects::nonNull).orElse(false);
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getHasUsername).orElse(false);
     }
 
     public Boolean getHasPassword() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getHasPassword).filter(Objects::nonNull).orElse(false);
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getHasPassword).orElse(false);
     }
 
     public Boolean getWillRetain() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillRetain).filter(Objects::nonNull).orElse(false);
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillRetain).orElse(false);
     }
 
     public Integer getWillQos() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillQos).filter(Objects::nonNull).flatMap(AppUtils::safeParseInt).orElse(0);
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillQos).flatMap(AppUtils::safeParseInt).orElse(0);
     }
 
     public Boolean getWillFlag() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillFlag).filter(Objects::nonNull).orElse(false);
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillFlag).orElse(false);
     }
 
     public String getClientId() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getClientId).filter(Objects::nonNull).orElse(UUID.randomUUID().toString());
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getClientId).orElse(UUID.randomUUID().toString());
     }
 
     public String getWillTopic() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillTopic).filter(Objects::nonNull).orElse("");
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillTopic).orElse("");
     }
 
     public String getWillMessage() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillMessage).filter(Objects::nonNull).orElse("");
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getWillMessage).orElse("");
     }
 
     public String getUsername() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getMq2tUsername).filter(Objects::nonNull).orElse("");
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getMq2tUsername).orElse("");
     }
 
     public String getPassword() {
-        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getMq2tPassword).filter(Objects::nonNull).orElse("");
+        return mqttSettingsRepository.findByName(MqttSettingsEntity.TABLE_NAME).map(MqttSettingsEntity::getMq2tPassword).orElse("");
     }
 }

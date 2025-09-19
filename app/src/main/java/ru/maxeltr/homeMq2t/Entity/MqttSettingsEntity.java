@@ -74,7 +74,7 @@ public class MqttSettingsEntity extends BaseEntity {
     @Nullable
     @Override
     public String getName() {
-        return name != null ? name : "";
+        return name;
     }
 
     public void setName(String name) {
@@ -83,7 +83,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public String getHost() {
-        return host != null ? host : "";
+        return host;
     }
 
     public void setHost(String host) {
@@ -92,7 +92,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public String getPort() {
-        return port != null ? port : "";
+        return port;
     }
 
     public void setPort(String port) {
@@ -101,7 +101,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public String getMq2tPassword() {
-        return mq2tPassword != null ? mq2tPassword : "";
+        return mq2tPassword;
     }
 
     public void setMq2tPassword(String mq2tPassword) {
@@ -110,7 +110,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public String getMq2tUsername() {
-        return mq2tUsername != null ? mq2tUsername : "";
+        return mq2tUsername;
     }
 
     public void setMq2tUsername(String mq2tUsername) {
@@ -119,7 +119,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public String getClientId() {
-        return clientId != null ? clientId : "";
+        return clientId;
     }
 
     public void setClientId(String clientId) {
@@ -127,8 +127,8 @@ public class MqttSettingsEntity extends BaseEntity {
     }
 
     @Nullable
-    public boolean getHasUsername() {
-        return hasUsername != null && hasUsername;
+    public Boolean getHasUsername() {
+        return hasUsername;
     }
 
     public void setHasUsername(Boolean hasUsername) {
@@ -137,7 +137,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public Boolean getHasPassword() {
-        return hasPassword != null && hasPassword;
+        return hasPassword;
     }
 
     public void setHasPassword(Boolean hasPassword) {
@@ -146,7 +146,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public String getWillQos() {
-        return willQos != null ? willQos : "";
+        return willQos;
     }
 
     public void setWillQos(String willQos) {
@@ -155,7 +155,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public Boolean getWillRetain() {
-        return willRetain != null && willRetain;
+        return willRetain;
     }
 
     public void setWillRetain(Boolean willRetain) {
@@ -164,7 +164,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public Boolean getWillFlag() {
-        return willFlag != null && willFlag;
+        return willFlag;
     }
 
     public void setWillFlag(Boolean willFlag) {
@@ -173,7 +173,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public Boolean getCleanSession() {
-        return cleanSession != null && cleanSession;
+        return cleanSession;
     }
 
     public void setCleanSession(Boolean cleanSession) {
@@ -182,7 +182,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public Boolean getAutoConnect() {
-        return autoConnect != null && autoConnect;
+        return autoConnect;
     }
 
     public void setAutoConnect(Boolean autoConnect) {
@@ -191,7 +191,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public String getWillTopic() {
-        return willTopic != null ? willTopic : "";
+        return willTopic;
     }
 
     public void setWillTopic(String willTopic) {
@@ -200,7 +200,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public String getWillMessage() {
-        return willMessage != null ? willMessage : "";
+        return willMessage;
     }
 
     public void setWillMessage(String willMessage) {
@@ -209,7 +209,7 @@ public class MqttSettingsEntity extends BaseEntity {
 
     @Nullable
     public Boolean getReconnect() {
-        return reconnect != null && reconnect;
+        return reconnect;
     }
 
     public void setReconnect(Boolean reconnect) {
