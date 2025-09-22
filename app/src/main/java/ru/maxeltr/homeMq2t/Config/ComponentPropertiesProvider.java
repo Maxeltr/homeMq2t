@@ -33,7 +33,6 @@ import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
 import ru.maxeltr.homeMq2t.Model.ViewModel;
 import ru.maxeltr.homeMq2t.Repository.ComponentRepository;
 
-
 /**
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
@@ -146,5 +145,7 @@ public interface ComponentPropertiesProvider {
      * @return the provider arguments if found, or an empty string.
      */
     public String getComponentProviderArgs(String name);
+
+    public List<ComponentEntity> getAllSubscriptions();
 
 }

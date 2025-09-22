@@ -33,6 +33,8 @@ import java.util.Map;
 
 public class MqttUtils {
 
+    public static final int MQTT_SUBACK_FAILURE = 0x80;
+
     private MqttUtils() {
 
     }

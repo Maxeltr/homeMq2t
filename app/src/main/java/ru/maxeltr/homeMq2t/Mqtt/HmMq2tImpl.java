@@ -361,7 +361,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
             //this.disconnect((byte) 1);  //TODO resub?
         } else {
             for (int i = 0; i < subAckQos.size(); i++) {
-                if (subAckQos.get(i) == 128) {
+                if (subAckQos.get(i) == MqttUtils.MQTT_SUBACK_FAILURE) {
                     logger.warn("Subscription on topic={} with Qos={} failed. Return code={}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
                 } else if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
                     logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicName(), topics.get(i).qualityOfService());

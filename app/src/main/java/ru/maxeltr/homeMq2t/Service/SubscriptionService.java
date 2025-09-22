@@ -31,7 +31,7 @@ import ru.maxeltr.homeMq2t.Entity.HasSubscription;
 
 public interface SubscriptionService {
 
-    public void subscribe(List<? extends HasSubscription> subscriptions);
+    public void subscribe(List<HasSubscription> subscriptions);
 
     public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics);
 

@@ -118,4 +118,6 @@ public interface CommandPropertiesProvider {
      * @return the arguments if found, or an empty string.
      */
     public String getCommandArguments(String name);
+
+    public List<CommandEntity> getAllSubscriptions();
 }
