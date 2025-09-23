@@ -64,7 +64,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Lazy               //TODO
     private ServiceMediator mediator;
 
-    private final ConcurrentMap<String, Subscription> subscribers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Subscription> subscriptions = new ConcurrentHashMap<>();
 
     @Autowired
     private AppProperties appProperties;
@@ -79,7 +79,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private ComponentPropertiesProvider componentPropertiesProvider;
 
     @Override
-    public void clearSubscriptionsAndSubscribeFromConfig() {
+    public void subscribeFromConfig() {
         subscribe(Stream.of(
                 cardPropertiesProvider.getAllSubscriptions(),
                 commandPropertiesProvider.getAllSubscriptions(),
@@ -90,62 +90,102 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     @Override
-    public void subscribe(List<HasSubscription> subscriptions) {
-        synchronized (this) {
-            if (subscriptions == null || subscriptions.isEmpty()) {
-                logger.debug("Empty subscription list given");
-                return;
-            }
-            logger.debug("Prepare list to subscribe to topics {}", subscriptions);
+    public void subscribe(List<HasSubscription> entities) {
 
-            //Use ArrayList to preserve insertion order
-            List<String> toSubscribe = new ArrayList<>();
+        if (entities == null || entities.isEmpty()) {
+            logger.debug("Empty entity list for subscription was given.");
+            return;
+        }
 
-            for (var entity : subscriptions) {
-                String topic = entity.getSubscriptionTopic();
-                subscribers.compute(topic, (k, v) -> {
-                    var sub = v;
-                    if (sub == null) {
-                        toSubscribe.add(topic);
-                        sub = new Subscription();
-                        sub.setTopic(topic);
-                        sub.addSubscriberAndUpdateQos(entity);
-                    } else {
-                        if (!sub.hasSubscriber(entity)) {
-                            sub.addSubscriberAndUpdateQos(entity);
-                        }
-                    }
-                    return sub;
-                });
-            }
+        //Use ArrayList to preserve insertion order
+        List<String> toSubscribe = new ArrayList<>();
+        List<String> toResubscribe = new ArrayList<>();
 
-            if (toSubscribe.isEmpty()) {
-                logger.info("List to subscribe is empty.");
-            } else {
-                List<MqttTopicSubscription> prepared = toSubscribe.stream().map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(subscribers.get(t).getMaxQos()))).collect(Collectors.toList());
-                logger.debug("Prepared list of subscriptions {}", prepared);
-                Promise<MqttSubAckMessage> promise = mediator.subscribe(prepared);
-                promise.awaitUninterruptibly(this.connectTimeout);
-                if (promise.isSuccess()) {
-                    MqttSubAckMessage ack = promise.getNow();
-                    logger.info("SUBACK received id={}.", ack.variableHeader().messageId());
-                    List<Integer> granted = ack.payload().grantedQoSLevels();
-                    for (int i = 0; i < granted.size(); i++) {
-                        int grantedQos = granted.get(i);
-                        String grantedTopic = prepared.get(i).topicName();
-                        if (grantedQos == MqttUtils.MQTT_SUBACK_FAILURE) {
-                            logger.warn("SUBACK rejected. Topic={}.", grantedTopic);
-                            subscribers.get(grantedTopic).setStatus(Status.FAIL);
-                        } else {
-                            logger.info("SUBACK accepted. Topic={}. QoS={}", grantedTopic, grantedQos);
-                            subscribers.get(grantedTopic).setStatus(Status.OK);
-                        }
-                    }
+        for (var entity : entities) {
+            String topic = entity.getSubscriptionTopic();
+            subscriptions.compute(topic, (k, v) -> {
+                Subscription sub = v;
+                if (sub == null) {
+                    toSubscribe.add(topic);
+                    sub = new Subscription(topic);
+                    sub.addSubscriberAndUpdateQos(entity);
                 } else {
-                    logger.warn("SUBSCRIBE failed. {}", promise.cause());
-                    subscribers.values().stream().forEach(s -> s.setStatus(Status.FAIL));
+                    boolean qosChanged = sub.addSubscriberAndUpdateQos(entity);
+                    if (qosChanged) {
+                        toResubscribe.add(topic);
+                    }
+                }
+                return sub;
+            });
+        }
+
+        if (toSubscribe.isEmpty()) {
+            logger.info("List to subscribe is empty.");
+        } else {
+            subscribeAndUpdateStatusOfSubscriptions(toSubscribe);
+        }
+
+        if (toResubscribe.isEmpty()) {
+            logger.info("List to resubscribe is empty.");
+        } else {
+            unsubscribeAndUpdateStatusOfSubscriptions(toResubscribe);
+            subscribeAndUpdateStatusOfSubscriptions(toResubscribe);
+        }
+
+//        if (toSubscribe.isEmpty()) {
+//            logger.info("List to subscribe is empty.");
+//        } else {
+//            List<MqttTopicSubscription> prepared = toSubscribe.stream().map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(subscriptions.get(t).getMaxQos()))).collect(Collectors.toList());
+//            logger.debug("Prepared list of subscriptions {}", prepared);
+//            Promise<MqttSubAckMessage> promise = mediator.subscribe(prepared);
+//            promise.awaitUninterruptibly(this.connectTimeout);
+//            if (promise.isSuccess()) {
+//                MqttSubAckMessage ack = promise.getNow();
+//                logger.info("SUBACK received id={}.", ack.variableHeader().messageId());
+//                List<Integer> granted = ack.payload().grantedQoSLevels();
+//                for (int i = 0; i < granted.size(); i++) {
+//                    int grantedQos = granted.get(i);
+//                    String grantedTopic = prepared.get(i).topicName();
+//                    if (grantedQos == MqttUtils.MQTT_SUBACK_FAILURE) {
+//                        logger.warn("SUBACK rejected. Topic={}.", grantedTopic);
+//                        subscriptions.get(grantedTopic).setStatus(Status.FAIL);
+//                    } else {
+//                        logger.info("SUBACK accepted. Topic={}. QoS={}", grantedTopic, grantedQos);
+//                        subscriptions.get(grantedTopic).setStatus(Status.OK);
+//                    }
+//                }
+//            } else {
+//                logger.warn("SUBSCRIBE failed. {}", promise.cause());
+//                subscriptions.values().stream().forEach(s -> s.setStatus(Status.FAIL));
+//            }
+//        }
+    }
+
+    private void subscribeAndUpdateStatusOfSubscriptions(List<String> toSubscribe) {
+        List<MqttTopicSubscription> prepared = toSubscribe.stream().map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(subscriptions.get(t).getMaxQos()))).collect(Collectors.toList());
+        logger.debug("Prepared list of subscriptions {}", prepared);
+
+        Promise<MqttSubAckMessage> promise = mediator.subscribe(prepared);
+        promise.awaitUninterruptibly(this.connectTimeout);
+
+        if (promise.isSuccess()) {
+            MqttSubAckMessage ack = promise.getNow();
+            logger.info("SUBACK received id={}.", ack.variableHeader().messageId());
+            List<Integer> granted = ack.payload().grantedQoSLevels();
+            for (int i = 0; i < granted.size(); i++) {
+                int grantedQos = granted.get(i);
+                String grantedTopic = prepared.get(i).topicName();
+                if (grantedQos == MqttUtils.MQTT_SUBACK_FAILURE) {
+                    logger.warn("SUBACK rejected. Topic={}.", grantedTopic);
+                    subscriptions.get(grantedTopic).setStatus(Status.FAIL);
+                } else {
+                    logger.info("SUBACK accepted. Topic={}. QoS={}", grantedTopic, grantedQos);
+                    subscriptions.get(grantedTopic).setStatus(Status.OK);
                 }
             }
+        } else {
+            logger.warn("SUBSCRIBE failed. {}", promise.cause());
+            subscriptions.values().stream().forEach(s -> s.setStatus(Status.FAIL));
         }
     }
 
@@ -154,7 +194,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-
+    private void unsubscribeAndUpdateStatusOfSubscriptions(List<String> prepared) {
+        logger.debug("Prepared list of unsubscriptions {}", prepared);
+        prepared.stream().forEach(t -> subscriptions.get(t).setStatus(Status.UNKNOWN));
+        Promise<MqttUnsubAckMessage> promise = mediator.unsubscribe(prepared);
+        promise.awaitUninterruptibly(this.connectTimeout);
+        if (promise.isSuccess()) {
+            MqttUnsubAckMessage ack = promise.getNow();
+            logger.info("UNSUBACK id={} received for {} topics.", ack.variableHeader().messageId(), prepared.size());
+        } else {
+            logger.warn("UNSUBSCRIBE failed. {}", promise.cause());
+        }
+    }
 
     private static class Subscription {
 
@@ -163,33 +214,62 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         private final AtomicInteger maxQos = new AtomicInteger(0);
         private Status status = Status.UNKNOWN;
 
+        Subscription(String topic) {
+            this.topic = topic;
+        }
+
         String getTopic() {
             return topic;
         }
 
-        void setTopic(String topic) {
-            this.topic = topic;
-        }
-
         List<HasSubscription> getSubscribers() {
-            return subscribers;
+            return new ArrayList<>(subscribers);
         }
 
-        Integer addSubscriberAndUpdateQos(HasSubscription entity) {
-            subscribers.add(entity);
-            return maxQos.updateAndGet(prev -> Math.max(prev, MqttUtils.convertToMqttQos(entity.getSubscriptionQos()).value()));
+        boolean addSubscriberAndUpdateQos(HasSubscription entity) {
+            if (!this.topic.equals(entity.getSubscriptionTopic())) {
+                throw new IllegalArgumentException("Subscription topic is not equal entity topic");
+            }
+
+            boolean qosChanged = false;
+            int prevQos = getMaxQos();
+            int newQos = MqttUtils.convertToMqttQos(entity.getSubscriptionQos()).value();
+
+            if (prevQos < newQos) {
+                maxQos.set(newQos);
+                logger.debug("Topic {}. Qoschanged from {} to {}", topic, prevQos, newQos);
+                qosChanged = true;
+            }
+
+            if (!hasSubscriber(entity)) {
+                subscribers.add(entity);
+            }
+
+            logger.debug("Add subscriber {} to topic {}. Total susbcribers={}", entity, topic, subscribers.size());
+
+            return qosChanged;
         }
 
-        Integer removeSubscriberAndUpdateQos(HasSubscription entity) {
-            subscribers.remove(entity);
-            Integer newQos = subscribers
+        boolean removeSubscriberAndUpdateQos(HasSubscription entity) {
+            var removed = subscribers.remove(entity);
+            if (!removed) {
+                return false;
+            }
+            logger.debug("Remove subscriber {} from topic {}. Total susbcribers={}", entity, topic, subscribers.size());
+
+            var prevQos = getMaxQos();
+            int newQos = subscribers
                     .stream()
-                    .max(Comparator.comparing(e -> MqttUtils.convertToMqttQos(e.getSubscriptionQos()).value()))
-                    .map(e -> MqttUtils.convertToMqttQos(e.getSubscriptionQos()).value())
+                    .mapToInt(e -> MqttUtils.convertToMqttQos(e.getSubscriptionQos()).value())
+                    .max()
                     .orElse(0);
-            maxQos.set(newQos);
 
-            return newQos;
+            if (prevQos != newQos) {
+                maxQos.set(newQos);
+                logger.debug("Topic {}. Qoschanged from {} to {}", topic, prevQos, newQos);
+                return true;
+            }
+            return false;
         }
 
         boolean hasSubscriber(HasSubscription entity) {

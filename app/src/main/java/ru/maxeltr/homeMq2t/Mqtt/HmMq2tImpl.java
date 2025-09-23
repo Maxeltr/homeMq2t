@@ -274,16 +274,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
         if (this.appProperties.getCleanSession()) {
             this.mqttAckMediator.clear();
+            this.subscribedTopics.clear();
         }
 
-        //unsubscribe because we subscribe again when we connect
-//        if (!this.cleanSession) {
-//            List<String> topics = this.subscribedTopics.keySet().stream().collect(Collectors.toList());
-//            logger.info("Unsubscribing from topics=[{}]", topics);
-//            Promise<MqttUnsubAckMessage> unSubscribeFuture = this.unsubscribe(topics);
-//            unSubscribeFuture.awaitUninterruptibly(this.connectTimeout);
-//        }
-//        this.subscribedTopics.clear();
         MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
         MqttReasonCodeAndPropertiesVariableHeader mqttDisconnectVariableHeader = new MqttReasonCodeAndPropertiesVariableHeader(reasonCode, MqttProperties.NO_PROPERTIES);
         MqttMessage message = new MqttMessage(mqttFixedHeader, mqttDisconnectVariableHeader);

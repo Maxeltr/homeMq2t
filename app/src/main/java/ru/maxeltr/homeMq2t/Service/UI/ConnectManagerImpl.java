@@ -89,7 +89,7 @@ public class ConnectManagerImpl implements ConnectManager {
         } else {
             logger.info("Connection established successfully.");
             msg.data(this.jsonFormatter.createAndEncodeHtml(dashboardHtml, Status.OK));
-            this.subscriptionService.clearSubscriptionsAndSubscribeFromConfig();
+            this.subscriptionService.subscribeFromConfig();
         }
 
         return msg.build();
