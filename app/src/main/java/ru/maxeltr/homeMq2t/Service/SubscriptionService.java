@@ -33,7 +33,7 @@ public interface SubscriptionService {
 
     public void subscribe(List<HasSubscription> subscriptions);
 
-    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics);
+    public void unsubscribe(List<HasSubscription> entities);
 
     public void subscribeFromConfig();
 

@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -91,7 +92,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     @Override
     public void subscribe(List<HasSubscription> entities) {
-
         if (entities == null || entities.isEmpty()) {
             logger.debug("Empty entity list for subscription was given.");
             return;
@@ -102,7 +102,17 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         List<String> toResubscribe = new ArrayList<>();
 
         for (var entity : entities) {
+            if (entity == null) {
+                logger.debug("Entity is null.");
+                continue;
+            }
+
             String topic = entity.getSubscriptionTopic();
+            if (StringUtils.isBlank(topic)) {
+                logger.debug("Subscription topic of entity is empty. {}", entity);
+                continue;
+            }
+
             subscriptions.compute(topic, (k, v) -> {
                 Subscription sub = v;
                 if (sub == null) {
@@ -120,15 +130,15 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
 
         if (toSubscribe.isEmpty()) {
-            logger.info("List to subscribe is empty.");
+            logger.debug("List to subscribe is empty.");
         } else {
             subscribeAndUpdateStatusOfSubscriptions(toSubscribe);
         }
 
         if (toResubscribe.isEmpty()) {
-            logger.info("List to resubscribe is empty.");
+            logger.debug("List to resubscribe is empty.");
         } else {
-            unsubscribeAndUpdateStatusOfSubscriptions(toResubscribe);
+            unsubscribeAndRemoveSubscriptions(toResubscribe);
             subscribeAndUpdateStatusOfSubscriptions(toResubscribe);
         }
 
@@ -162,7 +172,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     }
 
     private void subscribeAndUpdateStatusOfSubscriptions(List<String> toSubscribe) {
-        List<MqttTopicSubscription> prepared = toSubscribe.stream().map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(subscriptions.get(t).getMaxQos()))).collect(Collectors.toList());
+        List<MqttTopicSubscription> prepared = toSubscribe.stream()
+                .map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(subscriptions.get(t).getMaxQos())))
+                .collect(Collectors.toCollection(ArrayList::new));
         logger.debug("Prepared list of subscriptions {}", prepared);
 
         Promise<MqttSubAckMessage> promise = mediator.subscribe(prepared);
@@ -175,33 +187,96 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             for (int i = 0; i < granted.size(); i++) {
                 int grantedQos = granted.get(i);
                 String grantedTopic = prepared.get(i).topicName();
+                Subscription sub = subscriptions.get(grantedTopic);
+                if (sub == null) {
+                    logger.warn("Received SUBACK for topic {} which is not present in subscriptions. Message id={}", grantedTopic, ack.variableHeader().messageId());
+                    continue;
+                }
                 if (grantedQos == MqttUtils.MQTT_SUBACK_FAILURE) {
                     logger.warn("SUBACK rejected. Topic={}.", grantedTopic);
-                    subscriptions.get(grantedTopic).setStatus(Status.FAIL);
+                    sub.setStatus(Status.FAIL);
                 } else {
                     logger.info("SUBACK accepted. Topic={}. QoS={}", grantedTopic, grantedQos);
-                    subscriptions.get(grantedTopic).setStatus(Status.OK);
+                    sub.setStatus(Status.OK);
                 }
             }
         } else {
             logger.warn("SUBSCRIBE failed. {}", promise.cause());
-            subscriptions.values().stream().forEach(s -> s.setStatus(Status.FAIL));
+            toSubscribe.forEach(t -> {
+                Subscription s = subscriptions.get(t);
+                if (s != null) {
+                    s.setStatus(Status.FAIL);
+                }
+            });
         }
     }
 
     @Override
-    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void unsubscribe(List<HasSubscription> entities) {
+        if (entities == null || entities.isEmpty()) {
+            logger.debug("Empty entity list for unsubscribe was given.");
+            return;
+        }
+
+        List<String> toUnsubscribe = new ArrayList<>();
+        List<String> toResubscribe = new ArrayList<>();
+
+        for (var entity : entities) {
+            if (entity == null) {
+                logger.debug("Entity is null.");
+                continue;
+            }
+
+            String topic = entity.getSubscriptionTopic();
+            if (StringUtils.isBlank(topic)) {
+                logger.debug("Subscription topic of entity is empty. Skipping. {}", entity);
+                continue;
+            }
+
+            subscriptions.computeIfPresent(topic, (k, v) -> {
+                Subscription sub = v;
+                boolean qosChanged = sub.removeSubscriberAndUpdateQos(entity);
+
+                if (!sub.hasSubscribers()) {
+                    toUnsubscribe.add(topic);
+                    return null;
+                } else {
+                    if (qosChanged) {
+                        toResubscribe.add(topic);
+                    }
+                    return sub;
+                }
+            });
+        }
+
+        if (toUnsubscribe.isEmpty()) {
+            logger.debug("List to unsubscribe is empty.");
+        } else {
+            unsubscribeAndRemoveSubscriptions(toUnsubscribe);
+        }
+
+        if (toResubscribe.isEmpty()) {
+            logger.debug("List to resubscribe is empty.");
+        } else {
+            unsubscribeAndRemoveSubscriptions(toResubscribe);
+            subscribeAndUpdateStatusOfSubscriptions(toResubscribe);
+        }
     }
 
-    private void unsubscribeAndUpdateStatusOfSubscriptions(List<String> prepared) {
+    private void unsubscribeAndRemoveSubscriptions(List<String> prepared) {
         logger.debug("Prepared list of unsubscriptions {}", prepared);
-        prepared.stream().forEach(t -> subscriptions.get(t).setStatus(Status.UNKNOWN));
+        prepared.stream().forEach(t -> {
+            Subscription s = subscriptions.get(t);
+            if (s != null) {
+                s.setStatus(Status.UNKNOWN);
+            }
+        });
         Promise<MqttUnsubAckMessage> promise = mediator.unsubscribe(prepared);
         promise.awaitUninterruptibly(this.connectTimeout);
         if (promise.isSuccess()) {
             MqttUnsubAckMessage ack = promise.getNow();
             logger.info("UNSUBACK id={} received for {} topics.", ack.variableHeader().messageId(), prepared.size());
+            prepared.forEach(subscriptions::remove);
         } else {
             logger.warn("UNSUBSCRIBE failed. {}", promise.cause());
         }
@@ -209,13 +284,13 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
     private static class Subscription {
 
-        private String topic = "";
+        private final String topic;
         private final List<HasSubscription> subscribers = new ArrayList<>();
         private final AtomicInteger maxQos = new AtomicInteger(0);
         private Status status = Status.UNKNOWN;
 
         Subscription(String topic) {
-            this.topic = topic;
+            this.topic = Objects.requireNonNull(topic);
         }
 
         String getTopic() {
@@ -226,12 +301,21 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             return new ArrayList<>(subscribers);
         }
 
+        boolean hasSubscribers() {
+            return !subscribers.isEmpty();
+        }
+
         boolean addSubscriberAndUpdateQos(HasSubscription entity) {
+            boolean qosChanged = false;
+            if (entity == null) {
+                logger.debug("Entity is null.");
+                return qosChanged;
+            }
+
             if (!this.topic.equals(entity.getSubscriptionTopic())) {
                 throw new IllegalArgumentException("Subscription topic is not equal entity topic");
             }
 
-            boolean qosChanged = false;
             int prevQos = getMaxQos();
             int newQos = MqttUtils.convertToMqttQos(entity.getSubscriptionQos()).value();
 
