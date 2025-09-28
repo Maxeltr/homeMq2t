@@ -205,6 +205,28 @@ public class CardEntity extends BaseEntity implements HasSubscription {
     }
 
     @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 67 * hash + (int) (this.id ^ (this.id >>> 32));
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CardEntity other = (CardEntity) obj;
+        return this.id == other.id;
+    }
+
+    @Override
     public String toString() {
         return "CardEntity{" + "id=" + id + ", name=" + name + ", subscriptionTopic=" + subscriptionTopic + ", subscriptionQos=" + subscriptionQos + ", subscriptionDataName=" + subscriptionDataName + ", subscriptionDataType=" + subscriptionDataType + ", displayDataJsonpath=" + displayDataJsonpath + ", publicationTopic=" + publicationTopic + ", publicationQos=" + publicationQos + ", publicationRetain=" + publicationRetain + ", publicationData=" + publicationData + ", publicationDataType=" + publicationDataType + ", localTaskPath=" + localTaskPath + ", localTaskArguments=" + localTaskArguments + ", localTaskDataType=" + localTaskDataType + ", number=" + number + ", dashboard=" + dashboard.getName() + '}';
     }

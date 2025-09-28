@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -99,7 +100,6 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         //Use ArrayList to preserve insertion order
         List<String> toSubscribe = new ArrayList<>();
-        List<String> toResubscribe = new ArrayList<>();
 
         for (var entity : entities) {
             if (entity == null) {
@@ -116,13 +116,18 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             subscriptions.compute(topic, (k, v) -> {
                 Subscription sub = v;
                 if (sub == null) {
+                    logger.debug("Subscribers for topic={} are absent. Create new Subscription.", topic);
                     toSubscribe.add(topic);
                     sub = new Subscription(topic);
                     sub.addSubscriberAndUpdateQos(entity);
                 } else {
+                    logger.debug("Subscribers for topic={} are present. Add one else to existing Subscription.", topic);
                     boolean qosChanged = sub.addSubscriberAndUpdateQos(entity);
                     if (qosChanged) {
-                        toResubscribe.add(topic);
+                        logger.debug("Qos is changed for topic={}.", topic);
+                        if (!toSubscribe.contains(topic)) {
+                            toSubscribe.add(topic);
+                        }
                     }
                 }
                 return sub;
@@ -134,46 +139,19 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         } else {
             subscribeAndUpdateStatusOfSubscriptions(toSubscribe);
         }
-
-        if (toResubscribe.isEmpty()) {
-            logger.debug("List to resubscribe is empty.");
-        } else {
-            unsubscribeAndRemoveSubscriptions(toResubscribe);
-            subscribeAndUpdateStatusOfSubscriptions(toResubscribe);
-        }
-
-//        if (toSubscribe.isEmpty()) {
-//            logger.info("List to subscribe is empty.");
-//        } else {
-//            List<MqttTopicSubscription> prepared = toSubscribe.stream().map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(subscriptions.get(t).getMaxQos()))).collect(Collectors.toList());
-//            logger.debug("Prepared list of subscriptions {}", prepared);
-//            Promise<MqttSubAckMessage> promise = mediator.subscribe(prepared);
-//            promise.awaitUninterruptibly(this.connectTimeout);
-//            if (promise.isSuccess()) {
-//                MqttSubAckMessage ack = promise.getNow();
-//                logger.info("SUBACK received id={}.", ack.variableHeader().messageId());
-//                List<Integer> granted = ack.payload().grantedQoSLevels();
-//                for (int i = 0; i < granted.size(); i++) {
-//                    int grantedQos = granted.get(i);
-//                    String grantedTopic = prepared.get(i).topicName();
-//                    if (grantedQos == MqttUtils.MQTT_SUBACK_FAILURE) {
-//                        logger.warn("SUBACK rejected. Topic={}.", grantedTopic);
-//                        subscriptions.get(grantedTopic).setStatus(Status.FAIL);
-//                    } else {
-//                        logger.info("SUBACK accepted. Topic={}. QoS={}", grantedTopic, grantedQos);
-//                        subscriptions.get(grantedTopic).setStatus(Status.OK);
-//                    }
-//                }
-//            } else {
-//                logger.warn("SUBSCRIBE failed. {}", promise.cause());
-//                subscriptions.values().stream().forEach(s -> s.setStatus(Status.FAIL));
-//            }
-//        }
     }
 
     private void subscribeAndUpdateStatusOfSubscriptions(List<String> toSubscribe) {
         List<MqttTopicSubscription> prepared = toSubscribe.stream()
-                .map(t -> new MqttTopicSubscription(t, MqttQoS.valueOf(subscriptions.get(t).getMaxQos())))
+                .map(t -> new MqttTopicSubscription(
+                t,
+                MqttQoS.valueOf(
+                        Optional.ofNullable(subscriptions.get(t))
+                                .map(s -> s.getMaxQos())
+                                .orElseGet(() -> {
+                                    logger.warn("Subscription is null for topic={}. Change QoS to 0.", t);
+                                    return 0;
+                                }))))
                 .collect(Collectors.toCollection(ArrayList::new));
         logger.debug("Prepared list of subscriptions {}", prepared);
 
@@ -219,7 +197,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
 
         List<String> toUnsubscribe = new ArrayList<>();
-        List<String> toResubscribe = new ArrayList<>();
+        List<String> toSubscribe = new ArrayList<>();
 
         for (var entity : entities) {
             if (entity == null) {
@@ -242,7 +220,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                     return null;
                 } else {
                     if (qosChanged) {
-                        toResubscribe.add(topic);
+                        toSubscribe.add(topic);
                     }
                     return sub;
                 }
@@ -255,11 +233,10 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             unsubscribeAndRemoveSubscriptions(toUnsubscribe);
         }
 
-        if (toResubscribe.isEmpty()) {
-            logger.debug("List to resubscribe is empty.");
+        if (toSubscribe.isEmpty()) {
+            logger.debug("List to resubscribe (update QoS) is empty.");
         } else {
-            unsubscribeAndRemoveSubscriptions(toResubscribe);
-            subscribeAndUpdateStatusOfSubscriptions(toResubscribe);
+            subscribeAndUpdateStatusOfSubscriptions(toSubscribe);
         }
     }
 
@@ -346,11 +323,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                     .stream()
                     .mapToInt(e -> MqttUtils.convertToMqttQos(e.getSubscriptionQos()).value())
                     .max()
-                    .orElse(0);
+                    .orElseGet(() -> {
+                        logger.warn("Could not get max QoS after removing subscriber. Set QoS to 0.");
+                        return 0;
+                    });
 
             if (prevQos != newQos) {
                 maxQos.set(newQos);
-                logger.debug("Topic {}. Qoschanged from {} to {}", topic, prevQos, newQos);
+                logger.debug("Topic {}. Qos changed from {} to {}", topic, prevQos, newQos);
                 return true;
             }
             return false;

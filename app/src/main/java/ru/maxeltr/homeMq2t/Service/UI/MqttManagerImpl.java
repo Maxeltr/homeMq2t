@@ -30,6 +30,7 @@ import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 import io.netty.util.concurrent.Promise;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -103,32 +104,19 @@ public class MqttManagerImpl implements MqttManager {
         String oldQos = before != null ? before.getSubscriptionQos() : "";
         String newQos = after != null ? after.getSubscriptionQos() : "";
 
-        boolean topicChanged = !equalsNullSafe(oldTopic, newTopic);
-        boolean qosChanged = !equalsNullSafe(oldQos, newQos);
+        boolean topicChanged = !Objects.equals(oldTopic, newTopic);
+        boolean qosChanged = !Objects.equals(oldQos, newQos);
 
         if (!topicChanged && !qosChanged) {
             return;
         }
 
-        if (StringUtils.isNotEmpty(oldTopic) && this.mediator.isConnected() && (topicChanged || qosChanged)) {
-            Promise<MqttUnsubAckMessage> promise = this.subscriptionService.unsubscribe(List.of(oldTopic));
-            if (promise != null) {
-                promise.awaitUninterruptibly(ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-            }
+        if (StringUtils.isNotBlank(oldTopic) && topicChanged) {
+            subscriptionService.unsubscribe(List.of(before));
         }
 
-        if (StringUtils.isNotBlank(newTopic) && mediator.isConnected()) {
-            this.subscriptionService.subscribe(List.of(after));
+        if (StringUtils.isNotBlank(newTopic) && (topicChanged || qosChanged)) {
+            subscriptionService.subscribe(List.of(after));
         }
-    }
-
-    private boolean equalsNullSafe(String a, String b) {
-        if (a == null && b == null) {
-            return true;
-        }
-        if (a == null || b == null) {
-            return false;
-        }
-        return a.equals(b);
     }
 }

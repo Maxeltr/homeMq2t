@@ -30,8 +30,12 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class MqttUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(MqttUtils.class);
 
     public static final int MQTT_SUBACK_FAILURE = 0x80;
 
@@ -53,34 +57,9 @@ public class MqttUtils {
             qos = MqttQoS.valueOf(qosString);
         } catch (IllegalArgumentException ex) {
             qos = MqttQoS.AT_MOST_ONCE;
+            logger.warn("Error while converting QoS. Change QoS to AT_MOST_ONCE. {}", ex);
         }
 
         return qos;
-    }
-
-    public static List<MqttTopicSubscription> removeCopiesAndSelectMaxQos(List<MqttTopicSubscription> subscriptions) {
-        if (subscriptions == null || subscriptions.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        Map<String, MqttTopicSubscription> merged = new LinkedHashMap<>(subscriptions.size());
-        for (MqttTopicSubscription s : subscriptions) {
-            if (s == null) {
-                continue;
-            }
-            String topic = s.topicName();
-            int qos = s.qualityOfService().value();
-
-            MqttTopicSubscription existing = merged.get(topic);
-            if (existing == null) {
-                merged.put(topic, s);
-            } else {
-                if (qos > existing.qualityOfService().value()) {
-                    merged.put(topic, s);
-                }
-            }
-        }
-
-        return new ArrayList<>(merged.values());
     }
 }
