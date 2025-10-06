@@ -10,7 +10,7 @@ plugins {
     // Apply the application plugin to add support for building a CLI application in Java.
     //id 'java-library'
     id 'application'
-    id 'org.springframework.boot' version '3.1.0'
+    id 'org.springframework.boot' version '3.3.1'
     id "io.spring.dependency-management" version "1.1.0"
     id 'java'
 }
@@ -65,7 +65,7 @@ bootJar {
     manifest {
         attributes(
             'Implementation-Title': 'mq2t',
-            'Implementation-Version': '1.0.1' 
+            'Implementation-Version': '1.0.1'
         )
     }
 }

@@ -63,6 +63,28 @@ public class MqttSettingsEntity extends BaseEntity {
     @Column(name = "number", insertable = false)
     private Integer number;
 
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 19 * hash + (int) (this.id ^ (this.id >>> 32));
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final MqttSettingsEntity other = (MqttSettingsEntity) obj;
+        return this.id == other.id;
+    }
+
     public long getId() {
         return id;
     }
