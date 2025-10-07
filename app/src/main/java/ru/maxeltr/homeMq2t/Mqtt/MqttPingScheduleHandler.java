@@ -41,6 +41,7 @@ import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import ru.maxeltr.homeMq2t.Service.SubscriptionService;
 
@@ -55,6 +56,7 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter {
     public static String NAME = "mqttPingHandler";
 
     @Autowired
+    @Qualifier("mq2tTaskScheduler")
     private ThreadPoolTaskScheduler threadPoolTaskScheduler;
 
     @Autowired
