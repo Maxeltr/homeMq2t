@@ -37,7 +37,7 @@ dependencies {
     implementation group: 'org.webjars', name: 'bootstrap', version: '5.3.8'
     implementation 'org.webjars:jquery:3.7.1'
     implementation 'org.webjars.npm:bootstrap-icons:1.13.1'
-    implementation 'org.webjars.npm:dompurify:3.2.7'
+    implementation 'org.webjars.npm:dompurify:3.3.1'
     implementation group: 'org.jsoup', name: 'jsoup', version: '1.21.2'
     implementation 'org.apache.commons:commons-lang3:3.19.0'
     implementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.9.0'
