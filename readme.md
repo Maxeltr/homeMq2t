@@ -140,7 +140,7 @@ Feel free to contribute to the project in any way you like!
    cat ~/.ssh/id_ed25519.pub | clip
    ```
 3. Добавьте его в свой профиль на [://github.com](https://://github.com).
-4. Проверьте связь в терминале: `ssh -T git@github.com`. Должно появиться приветствие `Hi Maxeltr!`.
+4. Проверьте связь в терминале: `ssh -T git@github.com`. Должно появиться приветствие.
 
 ---
 
@@ -177,7 +177,7 @@ C:\Projects\
 
 ## 🚀 Шаг 5. Первичная настройка Git и Сборка
 
-1. Укажите Git свои данные (чтобы коммиты корректно привязывались к вашему профилю `Maxeltr`):
+1. Укажите Git свои данные (чтобы коммиты корректно привязывались к вашему профилю):
    ```bash
    git config --global user.name "Maksim"
    git config --global user.email "ваша_почта@example.com"
