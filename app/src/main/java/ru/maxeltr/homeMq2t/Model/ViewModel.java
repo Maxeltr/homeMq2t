@@ -33,6 +33,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ClassPathResource;
+
 import ru.maxeltr.homeMq2t.Entity.BaseEntity;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 
@@ -91,17 +93,20 @@ public abstract class ViewModel<T extends BaseEntity> {
     }
 
     private Optional<Document> getTemplateFromFile() {
-        String path = System.getProperty("user.dir") + this.getPathname();
-        logger.info("Load template from={}", path);
+        //String path = System.getProperty("user.dir") + this.getPathname();
+        //logger.info("Load template from={}", path);
         Document doc = null;
-        File initialFile = new File(path);
+        //File initialFile = new File(path);
 
-        if (!initialFile.exists()) {
-            logger.error("Card template file not found: {}", path);
-            return Optional.empty();
-        }
+        
 
-        try (InputStream is = new FileInputStream(initialFile)) {
+        // if (!initialFile.exists()) {
+        //     logger.error("Card template file not found: {}", initialFile.getAbsolutePath());
+        //     return Optional.empty();
+        // }
+
+        try (InputStream is = new ClassPathResource(this.getPathname()).getInputStream()) {
+        //try (InputStream is = new FileInputStream(initialFile)) {
             doc = Jsoup.parse(is, "utf-8", "");
         } catch (IOException ex) {
             logger.error("Error reading or parsing card template.", ex);
