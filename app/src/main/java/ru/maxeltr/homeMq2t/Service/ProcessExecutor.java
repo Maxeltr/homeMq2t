@@ -21,24 +21,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Repository;
+package ru.maxeltr.homeMq2t.Service;
 
-import java.util.List;
-import java.util.Optional;
-import org.springframework.data.jpa.repository.JpaRepository;
-import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
+/**
+ *
+ * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
+ */
+public interface ProcessExecutor {
 
-public interface ComponentRepository extends JpaRepository<ComponentEntity, Long> {
+    String execute(String commandPath, String arguments);
 
-    Optional<ComponentEntity> findByNumber(int number);
-
-    Optional<ComponentEntity> findByName(String name);
-
-    List<ComponentEntity> findBySubscriptionTopic(String subscriptionTopic);
-
-    @Override
-    List<ComponentEntity> findAll();
-
-    @Override
-    Optional<ComponentEntity> findById(Long id);
 }

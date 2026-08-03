@@ -29,18 +29,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.annotation.Lazy;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Msg;
-import ru.maxeltr.homeMq2t.Service.ServiceMediator;
+import ru.maxeltr.homeMq2t.Service.ProcessExecutor;
 
 public class LocalTaskManagerImpl implements LocalTaskManager {
 
     private static final Logger logger = LoggerFactory.getLogger(LocalTaskManagerImpl.class);
 
     @Autowired
-    @Lazy               //TODO
-    private ServiceMediator mediator;
+    private ProcessExecutor processExecutor;
 
     @Autowired
     @Qualifier("getCardPropertiesProvider")
@@ -63,7 +61,7 @@ public class LocalTaskManagerImpl implements LocalTaskManager {
 
         String arguments = this.appProperties.getCardLocalTaskArguments(msg.getId());
         logger.info("Launch local task for msg={}. commandPath={}, arguments={}.", msg.getId(), path, arguments);
-        data = this.mediator.execute(path, arguments);
+        data = this.processExecutor.execute(path, arguments);
         if (data != null) {
             builder.data(data);
         }

@@ -34,12 +34,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
-import ru.maxeltr.homeMq2t.Entity.CommandEntity;
-import ru.maxeltr.homeMq2t.Entity.ComponentEntity;
 import ru.maxeltr.homeMq2t.Entity.StartupTaskEntity;
 import ru.maxeltr.homeMq2t.Repository.CardRepository;
-import ru.maxeltr.homeMq2t.Repository.CommandRepository;
-import ru.maxeltr.homeMq2t.Repository.ComponentRepository;
 import ru.maxeltr.homeMq2t.Repository.StartupTaskRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,12 +67,6 @@ public class AppProperties implements StartupTaskPropertiesProvider {
 
     @Autowired
     private CardRepository cardRepository;
-
-    @Autowired
-    private ComponentRepository componentRepository;
-
-    @Autowired
-    private CommandRepository commandRepository;
 
     @Autowired
     private StartupTaskRepository startupTaskRepository;
@@ -140,22 +130,6 @@ public class AppProperties implements StartupTaskPropertiesProvider {
             if (StringUtils.isNotBlank(cardEntity.getSubscriptionTopic())) {
                 subscriptions.add(new MqttTopicSubscription(cardEntity.getSubscriptionTopic(), MqttUtils.convertToMqttQos(cardEntity.getSubscriptionQos())));
                 logger.info("Add subscription={} with qos={} to subscription list.", cardEntity.getSubscriptionTopic(), cardEntity.getSubscriptionQos());
-            }
-        });
-
-        List<CommandEntity> commandEntities = commandRepository.findAll();
-        commandEntities.forEach(commandEntity -> {
-            if (StringUtils.isNotBlank(commandEntity.getSubscriptionTopic())) {
-                subscriptions.add(new MqttTopicSubscription(commandEntity.getSubscriptionTopic(), MqttUtils.convertToMqttQos(commandEntity.getSubscriptionQos())));
-                logger.info("Add subscription={} with qos={} to subscription list.", commandEntity.getSubscriptionTopic(), commandEntity.getSubscriptionQos());
-            }
-        });
-
-        List<ComponentEntity> componentEntities = componentRepository.findAll();
-        componentEntities.forEach(componentEntity -> {
-            if (StringUtils.isNotBlank(componentEntity.getSubscriptionTopic())) {
-                subscriptions.add(new MqttTopicSubscription(componentEntity.getSubscriptionTopic(), MqttUtils.convertToMqttQos(componentEntity.getSubscriptionQos())));
-                logger.info("Add subscription={} with qos={} to subscription list.", componentEntity.getSubscriptionTopic(), componentEntity.getSubscriptionQos());
             }
         });
 

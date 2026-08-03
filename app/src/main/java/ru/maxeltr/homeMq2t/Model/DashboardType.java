@@ -27,9 +27,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum DashboardType {
-    CARD("card"),
-    COMMAND("command"),
-    COMPONENT("component");
+    CARD("card");
 
     private final String value;
 

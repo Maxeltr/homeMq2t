@@ -23,18 +23,14 @@
  */
 package ru.maxeltr.homeMq2t.Config;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.Locale;
-import java.util.ServiceLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,35 +50,20 @@ import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
 import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
-import ru.maxeltr.homeMq2t.Repository.CardRepository;
-import ru.maxeltr.homeMq2t.Service.Command.CommandService;
-import ru.maxeltr.homeMq2t.Service.Command.CommandServiceImpl;
-import ru.maxeltr.homeMq2t.Service.ComponentServiceImpl;
-import ru.maxeltr.homeMq2t.Service.ComponentService;
+import ru.maxeltr.homeMq2t.Service.ProcessExecutor;
+import ru.maxeltr.homeMq2t.Service.ProcessExecutorImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 import ru.maxeltr.homeMq2t.Service.ServiceMediatorImpl;
 import ru.maxeltr.homeMq2t.Service.UI.UIService;
 import ru.maxeltr.homeMq2t.Service.UI.UIServiceImpl;
-//import ru.maxeltr.homeMq2t.Service.Mq2tCallbackComponent;
-import ru.maxeltr.mq2tLib.Mq2tComponent;
-import ru.maxeltr.homeMq2t.Repository.DashboardRepository;
-import ru.maxeltr.homeMq2t.Service.Command.CommandParser;
-import ru.maxeltr.homeMq2t.Service.Command.CommandParserImpl;
-import ru.maxeltr.homeMq2t.Service.Command.ProcessExecutor;
-import ru.maxeltr.homeMq2t.Service.Command.ProcessExecutorImpl;
-import ru.maxeltr.homeMq2t.Service.Command.ReplySender;
-import ru.maxeltr.homeMq2t.Service.Command.ReplySenderImpl;
 import ru.maxeltr.homeMq2t.Service.SubscriptionService;
 import ru.maxeltr.homeMq2t.Service.SubscriptionServiceImpl;
 import ru.maxeltr.homeMq2t.Service.UI.ConnectManager;
 import ru.maxeltr.homeMq2t.Service.UI.ConnectManagerImpl;
-import ru.maxeltr.homeMq2t.Service.UI.DashboardItemManager;
 import ru.maxeltr.homeMq2t.Service.UI.DashboardItemCardManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizer;
 import ru.maxeltr.homeMq2t.Service.UI.HtmlSanitizerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.Base64HtmlJsonFormatterImpl;
-import ru.maxeltr.homeMq2t.Service.UI.DashboardItemCommandManagerImpl;
-import ru.maxeltr.homeMq2t.Service.UI.DashboardItemComponentManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.DashboardItemMqttSettingManagerImpl;
 import ru.maxeltr.homeMq2t.Service.UI.DisplayManager;
 import ru.maxeltr.homeMq2t.Service.UI.DisplayManagerImpl;
@@ -178,26 +159,8 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public CommandService getCommandService() {
-        return new CommandServiceImpl();
-    }
-
-    @Bean
     public UIService getUIService() {
         return new UIServiceImpl();
-    }
-
-    @Bean
-    public ComponentService getComponentService() {
-        List<Mq2tComponent> providers = new ArrayList<>();
-        logger.info("Starting to collect components implement Mq2tComponent.");
-        ServiceLoader<Mq2tComponent> loader = ServiceLoader.load(Mq2tComponent.class);
-        for (Mq2tComponent provider : loader) {
-            logger.info("Add {} as {} provider.", provider.getClass().getName(), Mq2tComponent.class.getName());
-            providers.add(provider);
-        }
-
-        return new ComponentServiceImpl(providers);
     }
 
     @Bean
@@ -234,26 +197,9 @@ public class AppAnnotationConfig {
         return periodicTrigger;
     }
 
-    @Bean(name = "pollingPeriodicTrigger")
-    public PeriodicTrigger pollingPeriodicTrigger() {
-        Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("polling-sensors-delay", "10000")));
-        PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
-        return periodicTrigger;
-    }
-
-    @Bean
-    public ReplySender getReplySender() {
-        return new ReplySenderImpl();
-    }
-
     @Bean
     public ProcessExecutor getProcessExecutor() {
         return new ProcessExecutorImpl();
-    }
-
-    @Bean
-    public CommandParser getCommandParser() {
-        return new CommandParserImpl();
     }
 
     @Bean
@@ -264,16 +210,6 @@ public class AppAnnotationConfig {
     @Bean
     public DashboardItemCardManagerImpl getDashboardItemCardManager() {
         return new DashboardItemCardManagerImpl();
-    }
-
-    @Bean
-    public DashboardItemCommandManagerImpl getDashboardItemCommandManager() {
-        return new DashboardItemCommandManagerImpl();
-    }
-
-    @Bean
-    public DashboardItemComponentManagerImpl getDashboardItemComponentManager() {
-        return new DashboardItemComponentManagerImpl();
     }
 
     @Bean
@@ -304,16 +240,6 @@ public class AppAnnotationConfig {
     @Bean
     public CardPropertiesProvider getCardPropertiesProvider() {
         return new CardPropertiesProviderImpl();
-    }
-
-    @Bean
-    public CommandPropertiesProvider getCommandPropertiesProvider() {
-        return new CommandPropertiesProviderImpl();
-    }
-
-    @Bean
-    public ComponentPropertiesProvider getComponentPropertiesProvider() {
-        return new ComponentPropertiesProviderImpl();
     }
 
     @Bean

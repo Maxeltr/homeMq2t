@@ -31,8 +31,6 @@ import ru.maxeltr.homeMq2t.Model.ViewModel;
 
 public interface DashboardPropertiesProvider {
 
-    public Optional<ViewModel<DashboardEntity>> getCommandDashboard();
-
     public Optional<DashboardEntity> getDashboardEntity(String number);
 
     public Optional<ViewModel<DashboardEntity>> getDashboard(String number);
@@ -40,6 +38,4 @@ public interface DashboardPropertiesProvider {
     public Optional<ViewModel<DashboardEntity>> getStartDashboard();
 
     public List<ViewModel<DashboardEntity>> getCardDashboards();
-
-    public Optional<ViewModel<DashboardEntity>> getComponentDashboard();
 }

@@ -42,12 +42,6 @@ public interface ServiceMediator {
 
     void publish(Msg msg, String topic, MqttQoS qos, boolean retain);
 
-    void execute(Msg command, String commandNumber);
-
-    String execute(String commandPath, String arguments);
-
-    void process(Msg data, String componentNumber);
-
     void display(Msg data, String cardNumber);
 
     void handleMessage(MqttPublishMessage message);

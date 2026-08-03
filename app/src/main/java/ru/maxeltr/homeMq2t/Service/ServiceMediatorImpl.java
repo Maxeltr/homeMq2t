@@ -23,7 +23,6 @@
  */
 package ru.maxeltr.homeMq2t.Service;
 
-import ru.maxeltr.homeMq2t.Service.Command.CommandService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.netty.buffer.Unpooled;
@@ -46,8 +45,6 @@ import org.springframework.beans.factory.annotation.Value;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
-import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
-import ru.maxeltr.homeMq2t.Config.ComponentPropertiesProvider;
 import ru.maxeltr.homeMq2t.Model.Msg;
 import ru.maxeltr.homeMq2t.Model.MsgImpl;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
@@ -62,12 +59,6 @@ import ru.maxeltr.homeMq2t.Service.UI.UIService;
 public class ServiceMediatorImpl implements ServiceMediator {
 
     private static final Logger logger = LoggerFactory.getLogger(ServiceMediatorImpl.class);
-
-    @Autowired
-    private ComponentService componentService;
-
-    @Autowired
-    private CommandService commandService;
 
     @Autowired
     private UIService uiService;
@@ -91,13 +82,10 @@ public class ServiceMediatorImpl implements ServiceMediator {
     private CardPropertiesProvider cardPropertiesProvider;
 
     @Autowired
-    private CommandPropertiesProvider commandPropertiesProvider;
-
-    @Autowired
-    private ComponentPropertiesProvider componentPropertiesProvider;
-
-    @Autowired
     private MqttManager mqttManager;
+
+    @Autowired
+    private ProcessExecutor processExecutor;
 
     @Value("${wait-disconnect-while-shutdown:1000}")
     private int waitDisconnect;
@@ -109,7 +97,7 @@ public class ServiceMediatorImpl implements ServiceMediator {
         appProperties.getAllStartupTasks().forEach(
                 startupTask -> {
                     try {
-                        this.commandService.execute(startupTask.getPath(), startupTask.getArguments());
+                        this.processExecutor.execute(startupTask.getPath(), startupTask.getArguments());
                     } catch (Exception ex) {
                         logger.warn("Could not execute start task.", ex);
                     }
@@ -118,8 +106,6 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     public void setMediator() {
-        componentService.setMediator(this);
-        commandService.setMediator(this);
         uiService.setMediator(this);
         hmMq2t.setMediator(this);
         mqttChannelInitializer.setMediator(this);
@@ -138,27 +124,9 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     @Override
-    public void execute(Msg command, String commandNumber) {
-        this.commandService.execute(command, commandNumber);
-        logger.info("Data has been passed to the command service. Data={}.", command);
-    }
-
-    @Override
-    public String execute(String commandPath, String arguments) {
-        logger.debug("Pass command to the command service. commandPath={}, arguments={}.", commandPath, arguments);
-        return this.commandService.execute(commandPath, arguments);
-    }
-
-    @Override
     public void display(Msg data, String cardNumber) {
         this.uiService.display(data, cardNumber);
         logger.info("Data has been passed to the ui service. Card number={}, data={}.", cardNumber, data);
-    }
-
-    @Override
-    public void process(Msg data, String componentNumber) {
-        this.componentService.process(data, componentNumber);
-        logger.info("Data has been passed to the component service. Data={}.", data);
     }
 
     /**
@@ -178,45 +146,12 @@ public class ServiceMediatorImpl implements ServiceMediator {
     }
 
     /**
-     * Retrive command numbers assosiatied with the given MQTT topic. This
-     * method delegates to the commandPropertiesProvider to resolve which
-     * command identifiers (numbers) are bound to the specified topic.
-     *
-     * @param topic the MQTT topic name
-     * @return a list of command numbers associated with the topic
-     *
-     * @implNote This method is package-private and intended for use by
-     * ServiceType numbers-getter method references (e.g.
-     * ServiceMediator::getCommandNumbersByTopic).
-     */
-    List<String> getCommandNumbersByTopic(String topic) {
-        return commandPropertiesProvider.getCommandNumbersByTopic(topic);
-    }
-
-    /**
-     * Retrive component numbers assosiatied with the given MQTT topic. This
-     * method delegates to the componentPropertiesProvider to resolve which
-     * component identifiers (numbers) are bound to the specified topic.
-     *
-     * @param topic the MQTT topic name
-     * @return a list of component numbers associated with the topic
-     *
-     * @implNote This method is package-private and intended for use by
-     * ServiceType numbers-getter method references (e.g.
-     * ServiceMediator::getComponentNumbersByTopic).
-     */
-    List<String> getComponentNumbersByTopic(String topic) {
-        return componentPropertiesProvider.getComponentNumbersByTopic(topic);
-    }
-
-    /**
      * Handles an incoming Mqtt publish message.
      *
      * This method processes the message payload, attempts to convert it into
      * Msg.Builder object, and then dispatch the message to various services.
-     * The method retrieves card numbers, command numbers, and component numbers
-     * assotiated with the topic and sends the message to the appropriate
-     * service for each valid numbers.
+     * The method retrieves card numbers assotiated with the topic and sends the
+     * message to the appropriate service for each valid numbers.
      *
      * @param mqttMessage the Mqtt publish message to be handled
      */
@@ -265,8 +200,6 @@ public class ServiceMediatorImpl implements ServiceMediator {
     @Override
     public void shutdown() {
         logger.info("Do shutdown.");
-        this.componentService.stopSensorStreaming();
-        this.componentService.shutdown();
         this.disconnect(MqttReasonCodeAndPropertiesVariableHeader.REASON_CODE_OK);
 
         try {

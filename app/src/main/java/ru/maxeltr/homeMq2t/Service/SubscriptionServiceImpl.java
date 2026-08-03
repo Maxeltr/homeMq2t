@@ -48,8 +48,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import ru.maxeltr.homeMq2t.Config.AppProperties;
 import ru.maxeltr.homeMq2t.Config.CardPropertiesProvider;
-import ru.maxeltr.homeMq2t.Config.CommandPropertiesProvider;
-import ru.maxeltr.homeMq2t.Config.ComponentPropertiesProvider;
 import ru.maxeltr.homeMq2t.Entity.CardEntity;
 import ru.maxeltr.homeMq2t.Entity.HasSubscription;
 import ru.maxeltr.homeMq2t.Model.Status;
@@ -74,21 +72,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     @Autowired
     private CardPropertiesProvider cardPropertiesProvider;
 
-    @Autowired
-    private CommandPropertiesProvider commandPropertiesProvider;
-
-    @Autowired
-    private ComponentPropertiesProvider componentPropertiesProvider;
-
     @Override
     public void subscribeFromConfig() {
-        subscribe(Stream.of(
-                cardPropertiesProvider.getAllSubscriptions(),
-                commandPropertiesProvider.getAllSubscriptions(),
-                componentPropertiesProvider.getAllSubscriptions())
-                .flatMap(Collection::stream)
-                .collect(Collectors.toCollection(ArrayList::new))
-        );
+        subscribe(new ArrayList<>(cardPropertiesProvider.getAllSubscriptions()));
     }
 
     @Override

@@ -2,17 +2,10 @@ let stompClient = null;
 let subDataTopic = '/topic/data';
 let connectTopic = '/app/connect';
 let dataSubscription = null;
-let sendCommandTopic = "/app/publish";
 let getCardSettingsTopic = "/app/getCardSettings";
-let getCommandSettingsTopic = "/app/getCommandSettings";
-let getComponentSettingsTopic = "/app/getComponentSettings";
 let getMqttSettingsTopic = "/app/getMqttSettings";
 let saveCardTopic = "/app/saveCard";
-let saveCommandTopic = "/app/saveCommand";
-let saveComponentTopic = "/app/saveComponent";
 let deleteCardTopic = "/app/deleteCard";
-let deleteCommandTopic = "/app/deleteCommand";
-let deleteComponentTopic = "/app/deleteComponent";
 let saveMqttSettingsTopic = "/app/saveMqttSettings";
 let deleteMqttSettingsTopic = "/app/deleteMqttSettings";
 
@@ -48,14 +41,6 @@ function connect() {
 
 function goToStartDashboard() {
     stompClient.send("/app/displayCardDashboard", {}, JSON.stringify({'id': ""}));
-}
-
-function goToCommandDashboard() {
-    stompClient.send("/app/displayCommandDashboard", {}, JSON.stringify({'id': ""}));
-}
-
-function goToComponentDashboard() {
-    stompClient.send("/app/displayComponentDashboard", {}, JSON.stringify({'id': ""}));
 }
 
 function disconnect() {
@@ -226,39 +211,14 @@ $(function () {
         }
     });
 
-    $(document).on("click", "#sendCommand", function () {
-        const arg = $(this).val();
-        stompClient.send(sendCommandTopic, {}, JSON.stringify({'id': arg}));
-    });
-
     $(document).on("click", "#editCardSettings", function () {
         const arg = $(this).val();
         stompClient.send(getCardSettingsTopic, {}, JSON.stringify({'id': arg}));
-    });
-
-    $(document).on("click", "#editCommandSettings", function () {
-        const arg = $(this).val();
-        stompClient.send(getCommandSettingsTopic, {}, JSON.stringify({'id': arg}));
-    });
-    
-    $(document).on("click", "#editComponentSettings", function () {
-        const arg = $(this).val();
-        stompClient.send(getComponentSettingsTopic, {}, JSON.stringify({'id': arg}));
     });
     
     $(document).on("click", "#addCard", function () {
         const arg = $(this).val();
         stompClient.send(getCardSettingsTopic, {}, JSON.stringify({'id': arg}));
-    });
-
-    $(document).on("click", "#addCommand", function () {
-        const arg = $(this).val();
-        stompClient.send(getCommandSettingsTopic, {}, JSON.stringify({'id': arg}));
-    });
-
-    $(document).on("click", "#addComponent", function () {
-        const arg = $(this).val();
-        stompClient.send(getComponentSettingsTopic, {}, JSON.stringify({'id': arg}));
     });
     
     function getFormData(name) {
@@ -278,20 +238,6 @@ $(function () {
             goToStartDashboard();
         }, 100);
     });
-
-    $(document).on("click", "#saveCommand", function () {
-        stompClient.send(saveCommandTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('commandSettingsForm'))}));
-        setTimeout(() => {
-            goToCommandDashboard();
-        }, 100);
-    });
-
-    $(document).on("click", "#saveComponent", function () {
-        stompClient.send(saveComponentTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('componentSettingsForm'))}));
-        setTimeout(() => {
-            goToComponentDashboard();
-        }, 100);
-    });
     
     $(document).on("click", "#saveMqttSettings", function () {
         stompClient.send(saveMqttSettingsTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('mqttSettingsForm'))}));
@@ -304,10 +250,6 @@ $(function () {
         const arg = $(this).val();
         if (arg === 'card') {
             goToStartDashboard();
-        } else if (arg === 'command') {
-            goToCommandDashboard();
-        } else if (arg === 'component') {
-            goToComponentDashboard();
         } else if (arg === 'mqttSettings') {
             goToStartDashboard();
         } else {
@@ -324,44 +266,16 @@ $(function () {
             goToStartDashboard();
         }, 100);
     });
-
-    $(document).on("click", "#deleteCommand", function () {
-        if (!confirm('Delete command?')) {
-            return;
-        }
-        stompClient.send(deleteCommandTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('commandSettingsForm'))}));
-        setTimeout(() => {
-            goToCommandDashboard();
-        }, 100);
-    });
-
-    $(document).on("click", "#deleteComponent", function () {
-        if (!confirm('Delete component?')) {
-            return;
-        }
-        stompClient.send(deleteComponentTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('componentSettingsForm'))}));
-        setTimeout(() => {
-            goToComponentDashboard();
-        }, 100);
-    });
     
     $(document).on("click", "#deleteMqttSettings", function () {
         stompClient.send(deleteMqttSettingsTopic, {}, JSON.stringify({'data': JSON.stringify(getFormData('mqttSettingsForm'))}));
         setTimeout(() => {
-            //goToComponentDashboard();
+            goToStartDashboard();
         }, 100);
     });
 
     $(document).on("click", "#viewCards", function () {
         goToStartDashboard();
-    });
-
-    $(document).on("click", "#viewCommands", function () {
-        goToCommandDashboard();
-    });
-
-    $(document).on("click", "#viewComponents", function () {
-        goToComponentDashboard();
     });
     
     $(document).on("click", "#viewMqttSettings", function () {

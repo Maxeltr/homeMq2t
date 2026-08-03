@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package ru.maxeltr.homeMq2t.Service.Command;
+package ru.maxeltr.homeMq2t.Service;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,7 +29,6 @@ import java.io.InputStreamReader;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.maxeltr.homeMq2t.Model.Msg;
 
 /**
  *

@@ -45,10 +45,6 @@ dependencies {
     implementation 'com.h2database:h2:2.4.240'
 
     implementation 'org.webjars:webjars-locator-core:0.59'
-    implementation 'io.github.classgraph:classgraph:4.8.181'
-
-    implementation project(':mq2tLib')
-
 }
 
 application {
@@ -77,11 +73,6 @@ bootJar {
 bootRun {
     if (project.hasProperty('env') && project.env == 'dev') {
         args = ['--spring.profiles.active=dev']
-
-        //add dependencies in dev profile
-        dependencies {
-            implementation files('./plugins/mq2tHttpPollableComponent/mq2tHttpPollableComponent.jar')
-        }
     }
 }
 

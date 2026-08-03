@@ -31,7 +31,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import static ru.maxeltr.homeMq2t.Entity.ComponentEntity.JSON_FIELD_ID;
+import static ru.maxeltr.homeMq2t.Entity.BaseEntity.JSON_FIELD_ID;
 
 @Entity
 @Table(name = "mqtt_settings")

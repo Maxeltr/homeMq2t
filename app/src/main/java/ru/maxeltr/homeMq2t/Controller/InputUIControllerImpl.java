@@ -85,34 +85,10 @@ public class InputUIControllerImpl implements InputUIController {
         uiService.displayCardSettings(msg.build());
     }
 
-    @MessageMapping("/getCommandSettings")
-    public void getCommandSettings(Msg.Builder msg) {
-        logger.debug("Do edit command settings. Msg.Builder was received - {}.", msg);
-        uiService.displayCommandSettings(msg.build());
-    }
-
-    @MessageMapping("/getComponentSettings")
-    public void getComponentSettings(Msg.Builder msg) {
-        logger.debug("Do edit component settings. Msg.Builder was received - {}.", msg);
-        uiService.displayComponentSettings(msg.build());
-    }
-
     @MessageMapping("/saveCard")
     public void saveCard(Msg.Builder msg) {
         logger.debug("Do save card settings. Msg.Builder was received - {}.", msg.getData());
         uiService.saveCardSettings(msg.build());
-    }
-
-    @MessageMapping("/saveCommand")
-    public void saveCommand(Msg.Builder msg) {
-        logger.debug("Do save command settings. Msg.Builder was received - {}.", msg.getData());
-        uiService.saveCommandSettings(msg.build());
-    }
-
-    @MessageMapping("/saveComponent")
-    public void saveComponent(Msg.Builder msg) {
-        logger.debug("Do save component settings. Msg.Builder was received - {}.", msg.getData());
-        uiService.saveComponentSettings(msg.build());
     }
 
     @MessageMapping("/saveMqttSettings")
@@ -127,18 +103,6 @@ public class InputUIControllerImpl implements InputUIController {
         uiService.deleteCard(msg.build());
     }
 
-    @MessageMapping("/deleteCommand")
-    public void deleteCommand(Msg.Builder msg) {
-        logger.debug("Do delete command. Msg.Builder was received - {}.", msg.getData());
-        uiService.deleteCommand(msg.build());
-    }
-
-    @MessageMapping("/deleteComponent")
-    public void deleteComponent(Msg.Builder msg) {
-        logger.debug("Do delete component. Msg.Builder was received - {}.", msg.getData());
-        uiService.deleteComponent(msg.build());
-    }
-
     @MessageMapping("/deleteMqttSettings")
     public void deleteMqttSettings(Msg.Builder msg) {
         logger.debug("Do delete mqtt. Msg.Builder was received - {}.", msg.getData());
@@ -149,17 +113,5 @@ public class InputUIControllerImpl implements InputUIController {
     public void displayCards(Msg.Builder msg) {
         logger.debug("Do display cards. {}", msg.getData());
         uiService.displayCardDashboard(msg.build());
-    }
-
-    @MessageMapping("/displayCommandDashboard")
-    public void displayCommands(Msg.Builder msg) {
-        logger.debug("Do display commands. {}", msg.getData());
-        uiService.displayCommandDashboard(msg.build());
-    }
-
-    @MessageMapping("/displayComponentDashboard")
-    public void displayComponents(Msg.Builder msg) {
-        logger.debug("Do display components. {}", msg.getData());
-        uiService.displayComponentDashboard(msg.build());
     }
 }

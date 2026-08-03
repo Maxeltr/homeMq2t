@@ -31,9 +31,7 @@ import ru.maxeltr.homeMq2t.Model.Msg;
 
 public enum ServiceType {
 
-    UI("ui", ServiceMediatorImpl::display, ServiceMediatorImpl::getCardNumbersByTopic),
-    COMMAND("command", ServiceMediatorImpl::execute, ServiceMediatorImpl::getCommandNumbersByTopic),
-    COMPONENT("component", ServiceMediatorImpl::process, ServiceMediatorImpl::getComponentNumbersByTopic);
+    UI("ui", ServiceMediatorImpl::display, ServiceMediatorImpl::getCardNumbersByTopic);
 
     private final TriConsumer<ServiceMediatorImpl, Msg, String> action;
 

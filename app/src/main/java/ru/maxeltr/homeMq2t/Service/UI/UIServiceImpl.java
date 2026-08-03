@@ -50,14 +50,6 @@ public class UIServiceImpl implements UIService {
     private DashboardItemManager cardManager;
 
     @Autowired
-    @Qualifier("getDashboardItemCommandManager")
-    private DashboardItemManager commandManager;
-
-    @Autowired
-    @Qualifier("getDashboardItemComponentManager")
-    private DashboardItemManager componentManager;
-
-    @Autowired
     @Qualifier("getDashboardItemMqttSettingManager")
     private DashboardItemManager mqttSettingManager;
 
@@ -99,33 +91,9 @@ public class UIServiceImpl implements UIService {
     }
 
     @Override
-    public void displayCommandDashboard(Msg msg) {
-        logger.debug("Do display command dashboard {}.", msg);
-        this.display(this.commandManager.getItemsByDashboard(msg), "dashboard");
-    }
-
-    @Override
-    public void displayComponentDashboard(Msg msg) {
-        logger.debug("Do display component dashboard {}.", msg);
-        this.display(this.componentManager.getItemsByDashboard(msg), "dashboard");
-    }
-
-    @Override
     public void displayCardSettings(Msg msg) {
         logger.debug("Do edit card settings {}.", msg);
         this.display(this.cardManager.getItem(msg), "dashboard");
-    }
-
-    @Override
-    public void displayCommandSettings(Msg msg) {
-        logger.debug("Do edit command settings {}.", msg);
-        this.display(this.commandManager.getItem(msg), "dashboard");
-    }
-
-    @Override
-    public void displayComponentSettings(Msg msg) {
-        logger.debug("Do edit component settings {}.", msg);
-        this.display(this.componentManager.getItem(msg), "dashboard");
     }
 
     @Override
@@ -141,18 +109,6 @@ public class UIServiceImpl implements UIService {
     }
 
     @Override
-    public void saveCommandSettings(Msg msg) {
-        logger.debug("Do save command settings {}.", msg.getData());
-        this.commandManager.saveItem(msg);
-    }
-
-    @Override
-    public void saveComponentSettings(Msg msg) {
-        logger.debug("Do save component settings {}.", msg.getData());
-        this.componentManager.saveItem(msg);
-    }
-
-    @Override
     public void saveMqttSettings(Msg msg) {
         logger.debug("Do save component settings {}.", msg.getData());
         this.mqttSettingManager.saveItem(msg);
@@ -162,18 +118,6 @@ public class UIServiceImpl implements UIService {
     public void deleteCard(Msg msg) {
         logger.debug("Do delete card {}.", msg.getData());
         this.cardManager.deleteItem(msg);
-    }
-
-    @Override
-    public void deleteCommand(Msg msg) {
-        logger.debug("Do delete command {}.", msg.getData());
-        this.commandManager.deleteItem(msg);
-    }
-
-    @Override
-    public void deleteComponent(Msg msg) {
-        logger.debug("Do delete component {}.", msg.getData());
-        this.componentManager.deleteItem(msg);
     }
 
     @Override

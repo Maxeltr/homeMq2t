@@ -34,21 +34,9 @@ public interface UIService {
 
     public void displayCardSettings(Msg msg);
 
-    public void displayCommandSettings(Msg msg);
-
-    public void displayComponentDashboard(Msg msg);
-
     public void saveCardSettings(Msg msg);
 
-    public void saveCommandSettings(Msg msg);
-
-    public void saveComponentSettings(Msg msg);
-
     public void deleteCard(Msg msg);
-
-    public void deleteCommand(Msg msg);
-
-    public void deleteComponent(Msg msg);
 
     public void disconnect(byte reasonCode);
 
@@ -61,10 +49,6 @@ public interface UIService {
     public void display(Msg msg, String cardNumber);
 
     public void displayCardDashboard(Msg msg);
-
-    public void displayCommandDashboard(Msg msg);
-
-    public void displayComponentSettings(Msg msg);
 
     public void displayMqttSettings(Msg msg);
 

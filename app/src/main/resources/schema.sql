@@ -1,4 +1,3 @@
-
 CREATE SEQUENCE IF NOT EXISTS dashboard_number_seq
   START WITH 1
   INCREMENT BY 1;
@@ -31,39 +30,6 @@ CREATE TABLE IF NOT EXISTS card_settings (
     local_task_data_type VARCHAR(50),
     dashboard_id BIGINT NOT NULL,
     FOREIGN KEY (dashboard_id) REFERENCES dashboard_settings(id) ON DELETE CASCADE
-);
-
-CREATE SEQUENCE IF NOT EXISTS command_number_seq START WITH 1 INCREMENT BY 1;	
-
-CREATE TABLE IF NOT EXISTS command_settings (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    subscription_topic VARCHAR(255),
-    subscription_qos VARCHAR(50),
-    publication_topic VARCHAR(255),
-    publication_qos VARCHAR(50),
-    publication_retain BOOLEAN,
-    publication_data_type VARCHAR(50),
-    path VARCHAR(255),
-    arguments VARCHAR(255),
-    number BIGINT DEFAULT NEXT VALUE FOR command_number_seq NOT NULL	
-);
-
-CREATE SEQUENCE IF NOT EXISTS component_number_seq START WITH 1 INCREMENT BY 1;	
-
-CREATE TABLE IF NOT EXISTS component_settings (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    subscription_topic VARCHAR(255),
-    subscription_qos VARCHAR(50),
-    publication_topic VARCHAR(255),
-    publication_qos VARCHAR(50),
-    publication_retain BOOLEAN,
-    publication_data_type VARCHAR(50),
-    publication_local_card_id VARCHAR(255),
-    provider VARCHAR(255),
-    provider_args VARCHAR(255),
-    number BIGINT DEFAULT NEXT VALUE FOR component_number_seq NOT NULL	
 );
 
 CREATE SEQUENCE IF NOT EXISTS startup_task_number_seq START WITH 1 INCREMENT BY 1;	
@@ -106,14 +72,6 @@ SELECT 'Start dashboard', 'CARD'
 WHERE NOT EXISTS (
   SELECT 1 FROM dashboard_settings WHERE name = 'Start dashboard'
 );
-
-INSERT INTO dashboard_settings (name, type)
-SELECT 'Command List', 'COMMAND'
-WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Command List');
- 
-INSERT INTO dashboard_settings (name, type)
-SELECT 'Component List', 'COMPONENT'
-WHERE NOT EXISTS (SELECT 1 FROM dashboard_settings WHERE name = 'Component List');
 
 INSERT INTO mqtt_settings (name)
 SELECT 'Mqtt Settings'
@@ -160,4 +118,3 @@ VALUES
 --     NULL,  -- local_task_data_type (пустое значение)
 --     1   -- dashboard_id 
 -- );
-

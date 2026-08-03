@@ -4,6 +4,7 @@ gradle.properties
 
 
 # Ignore Gradle build output directory
+bin
 build
 logs
 plugins
