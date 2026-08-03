@@ -73,7 +73,7 @@ public class DashboardItemMqttSettingManagerImpl implements DashboardItemManager
     public Msg getItem(Msg msg) {
         lock.lock();
         try {
-            Optional<ViewModel> mqttSettingsOpt;
+            Optional<ViewModel<MqttSettingsEntity>> mqttSettingsOpt;
             if (StringUtils.isNotBlank(msg.getId())) {
                 mqttSettingsOpt = this.propertiesProvider.getMqttSettings(msg.getId());
             } else {

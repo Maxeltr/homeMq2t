@@ -92,7 +92,9 @@ public class AppProperties implements StartupTaskPropertiesProvider {
      * @return the startup task number if found, or an empty string.
      */
     public String getStartupTaskNumber(String name) {
-        return startupTaskRepository.findByName(name).map(StartupTaskEntity::getNumber).map(String::valueOf).orElse("");    //TODO may be null
+        return startupTaskRepository.findByName(name)
+                .map(entity -> entity.getNumber() != null ? String.valueOf(entity.getNumber()) : "")
+                .orElse("");
     }
 
     /**
@@ -144,7 +146,7 @@ public class AppProperties implements StartupTaskPropertiesProvider {
         return this.mqttSettingsRepository.save(entity);
     }
 
-    public Optional<ViewModel> getMqttSettings(String name) {
+    public Optional<ViewModel<MqttSettingsEntity>> getMqttSettings(String name) {
         String templatePathname = env.getProperty(MQTT_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(templatePathname)) {
             logger.info("No value defined for mqtt settings template pathname.");
@@ -159,7 +161,7 @@ public class AppProperties implements StartupTaskPropertiesProvider {
         return Optional.of(new MqttSettingsImpl(mqttEntity.get(), templatePathname));
     }
 
-    public Optional<ViewModel> getEmptyMqttSettings() {
+    public Optional<ViewModel<MqttSettingsEntity>> getEmptyMqttSettings() {
         String templatePathname = env.getProperty(MQTT_SETTINGS_TEMPLATE_PATH, "");
         if (StringUtils.isEmpty(templatePathname)) {
             logger.error("No value defined for mqtt settings template pathname.");

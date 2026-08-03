@@ -179,7 +179,7 @@ public class CardSettingsImpl extends ViewModel<CardEntity> {
 
         el = document.getElementById("settingsCard-dashboardNumber");
         if (el != null) {
-            for (ViewModel dashboard : this.dashboards) {
+            for (ViewModel<DashboardEntity> dashboard : this.dashboards) {
                 Element option = new Element(Tag.valueOf("option"), "").attr("value", String.valueOf(dashboard.getNumber())).text(dashboard.getName());
                 if (String.valueOf(this.getEntity().getDashboard().getNumber()).equals(option.val())) {
                     option.attr("selected", "selected");
