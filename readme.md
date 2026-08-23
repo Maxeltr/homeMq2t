@@ -75,35 +75,6 @@ local task arguments - The arguments to be passed to the local task or script wh
 local task data type - The MIME type of the data that the local task will output to stdout and will be displayed in the local card.
 ```
 
-## Command Settings Description
-
-```properties
-name - The name of the command, representing the specific action to be executed.
-subscription topic - The MQTT topic to which the command subscribes for receiving execution requests.
-subscription qos - The Quality of Service level for the subscription, determining the message delivery guarantee (e.g., "AT_MOST_ONCE").
-publication topic - The MQTT topic to which the command publishes replies or results after execution.
-publication qos - The Quality of Service level for the publication, determining how messages are sent to the topic (e.g., "AT_MOST_ONCE").
-retain - A boolean value indicating whether the published message should be retained by the broker for future subscribers.
-publication data type - The MIME type of the data being published, indicating the format of the content (e.g., "text/plain").
-path - The name of the command, file, or script to be executed (e.g., "java").
-arguments - The arguments to be passed to the command via the command line when it is executed (e.g., "-version").
-```
-
-## Component Settings Description
-
-```properties
-name - The name of the component, representing the specific functionality
-subscription topic - The MQTT topic to which the component subscribes for receiving data updates (e.g., leave blank if not applicable).
-subscription qos - The Quality of Service level for the subscription, determining the message delivery guarantee (e.g., "AT_MOST_ONCE").
-publication topic - The MQTT topic to which the component publishes data or updates (e.g., leave blank if not applicable).
-publication qos - The Quality of Service level for the publication, determining how messages are sent to the topic (e.g., "AT_MOST_ONCE").
-retain - A boolean value indicating whether the published message should be retained by the broker for future subscribers.
-publication data type - The MIME type of the data being published, indicating the format of the content (e.g., "text/plain").
-publication local card - The name of the local card associated with the component, which displays the data locally on the dashboard card. This functionality works without an internet connection.
-provider - The Java plugin that is dynamically loaded by the Java ClassLoader and is responsible for polling the sensors or executing specific tasks. This is a plugin that implements the interfaces `Mq2tHttpPollableComponent` or `Mq2tHttpCallbackComponent`.
-provider args - The arguments or parameters required by the provider.
-```
-
 Persistence:
 Persistence is not implemented nowadays. The app starts with in-memory persistence, which means all sessions and messages are lost after a server restart.
 
@@ -142,66 +113,8 @@ Feel free to contribute to the project in any way you like!
 3. Добавьте его в свой профиль на [://github.com](https://://github.com).
 4. Проверьте связь в терминале: `ssh -T git@github.com`. Должно появиться приветствие.
 
----
 
-## ☕ Шаг 3. Требования к окружению (Java 25 & Gradle 9.6.1)
-Проект использует передовые фичи и требует строго определенных версий инструментов:
-
-*   **Java SDK:** Требуется **Java 25 (LTS)**. Рекомендуется дистрибутив **Azul Zulu OpenJDK 25**, так как он юридически чист для коммерции и не содержит скрытой телеметрии.
-    *   *Важно:* При установке `.msi` обязательно включите галочку `Set JAVA_HOME environment variable`.
-*   **Gradle:** Используется **Gradle 9.6.1**. Фоновое скачивание и совместимость с Java 25 настроены через файл `gradle/wrapper/gradle-wrapper.properties`.
-
----
-
-## 📂 Шаг 4. Структура папок и Клонирование
-Проект является многомодульным. Корневой проект приложения (`homeMq2t`) и проект общей библиотеки (`mq2tLib`) должны лежать **в одной общей директории** на одном уровне:
-
-```text
-C:\Projects\
-    ├── homeMq2t\       <-- Основной репозиторий (этот проект)
-    └── mq2tLib\        <-- Репозиторий библиотеки
-```
-
-1. Склонируйте оба репозитория по SSH в папку `C:\Projects\`:
-   ```bash
-   git clone git@github.com:Maxeltr/homeMq2t.git
-   git clone git@github.com:Maxeltr/mq2tLib.git
-   ```
-2. В файле `homeMq2t/settings.gradle` путь к библиотеке должен указывать строго на соседнюю папку:
-   ```groovy
-   project(':mq2tLib').projectDir = file('../mq2tLib')
-   ```
-3. Откройте в VS Code папку `C:\Projects\homeMq2t`.
-
----
-
-## 🚀 Шаг 5. Первичная настройка Git и Сборка
-
-1. Укажите Git свои данные (чтобы коммиты корректно привязывались к вашему профилю):
-   ```bash
-   git config --global user.name "Maksim"
-   git config --global user.email "ваша_почта@example.com"
-   ```
-2. Выполните сборку проекта через графический интерфейс VS Code (вкладка со **слоником Gradle** -> задача **`app:assemble`**) или через встроенный терминал:
-   ```bash
-   ./gradlew assemble
-   ```
-3. Запустите MQTT-сервер:
-   ```bash
-   ./gradlew bootRun
-   ```
-
----
-
-## ⚠️ Шаг 6. Правила работы с ресурсами (Шаблоны HTML)
-Чтобы проект не падал при сборке и запуске из готового `.jar` архива, **запрещено** использовать файловые пути через `System.getProperty("user.dir")` и метод `.getFile()`. 
-
-*   Все внешние HTML-шаблоны карточек и дашбордов должны загружаться как **потоки данных (Stream)** через класс Spring `ClassPathResource`.
-*   В конфигурационных файлах пути к ресурсам должны указываться относительно корня папки `resources`, например: `card-settings-template-path = /Static/cardSettings.html` (без префикса `/src/main/resources`).
-
----
-
-## 🤖 Шаг 7. Использование ИИ-агента Yandex SourceCraft
+## Использование ИИ-агента Yandex SourceCraft
 В проект встроен ИИ-агент для автоматического написания кода в режиме максимальной экономии токенов.
 
 *   В корне проекта в папке `plans/architecture.md` зафиксированы схемы **UML Mermaid**. Это «карта памяти» для ИИ. Не удаляйте её, чтобы агент не сканировал весь проект заново.

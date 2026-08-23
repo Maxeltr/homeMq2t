@@ -52,6 +52,7 @@ import io.netty.handler.codec.mqtt.MqttPublishVariableHeader;
 import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
 import io.netty.handler.codec.mqtt.MqttUnsubscribeMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubscribePayload;
+import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
@@ -61,6 +62,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -82,7 +84,9 @@ import ru.maxeltr.homeMq2t.Utils.AppUtils;
  *
  * @author Maxim Eltratov <<Maxim.Eltratov@ya.ru>>
  */
-public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate to ConnectionManager, ReconnectionStrategy, PingScheduler, SubscriptionManager, PublishManager
+public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate to ConnectionManager,
+                                                               // ReconnectionStrategy, PingScheduler,
+                                                               // SubscriptionManager, PublishManager
 
     private static final Logger logger = LoggerFactory.getLogger(HmMq2tImpl.class);
 
@@ -119,7 +123,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
-    private final Map<String, MqttTopicSubscription> subscribedTopics = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, MqttTopicSubscription> subscribedTopics = Collections
+            .synchronizedMap(new LinkedHashMap<>());
 
     private final static AtomicBoolean connecting = new AtomicBoolean();
 
@@ -135,6 +140,15 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
     private ScheduledFuture<?> retransmitScheduledFuture;
 
+    public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>>> PENDING_SUBSCRIBES = AttributeKey
+            .valueOf("pending_subscribes");
+    public static final AttributeKey<ConcurrentHashMap<Integer, Integer>> RETRY_ATTEMPTS = AttributeKey
+            .valueOf("retry_attempts");
+
+    private static final int MAX_RETRY_SUB_ATTEMPTS = 3;
+    private static final int MAX_RETRY_UNSUB_ATTEMPTS = 3;
+    private static final int RETRY_INTERVAL_SECONDS = 5;
+
     @Override
     public void run(String... args) {
         logger.info("Start app with args={}.", Arrays.toString(args));
@@ -148,7 +162,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     public Promise<MqttConnAckMessage> connect() {
         logger.debug("Start connect method.");
         if (connecting.get() || connected.get()) {
-            logger.warn("Connecting or connected already. connecting={}. connected={}. auhtFuture={}", connecting.get(), connected.get(), mqttAckMediator.getConnectFuture());
+            logger.warn("Connecting or connected already. connecting={}. connected={}. auhtFuture={}", connecting.get(),
+                    connected.get(), mqttAckMediator.getConnectFuture());
             return mqttAckMediator.getConnectFuture();
         }
         connecting.set(true);
@@ -163,23 +178,27 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         authFuture.addListener(f -> {
             if (f.isSuccess()) {
                 connected.set(true);
-                logger.debug("Connection accepted. CONNACK message has been received {}.", ((MqttConnAckMessage) f.get()).variableHeader());
-                //perform post-connection operations here
-                //HmMq2tImpl.this.subscribe(appProperties.getAllSubscriptions());
+                logger.debug("Connection accepted. CONNACK message has been received {}.",
+                        ((MqttConnAckMessage) f.get()).variableHeader());
+                // perform post-connection operations here
+                // HmMq2tImpl.this.subscribe(appProperties.getAllSubscriptions());
                 reconnectAttempts = 0;
                 this.startRetransmitTask();
             }
-            logger.debug("Connection attempt completed. authFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
+            logger.debug("Connection attempt completed. authFuture isDone={}, isSuccess={}, isCancelled={}, future={}",
+                    f.isDone(), f.isSuccess(), f.isCancelled(), f);
             connecting.set(false);
         });
         mqttAckMediator.setConnectFuture(authFuture);
 
-        bootstrap.remoteAddress(this.appProperties.getHost(), AppUtils.safeParseInt(this.appProperties.getPort()).orElse(1883));
+        bootstrap.remoteAddress(this.appProperties.getHost(),
+                AppUtils.safeParseInt(this.appProperties.getPort()).orElse(1883));
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.connectTimeout);
         ChannelFuture channelFuture = bootstrap.connect();
         channelFuture.addListener((ChannelFutureListener) f -> {
             HmMq2tImpl.this.channel = f.channel();
-            logger.debug("Waiting for ConnAckMessage. ChannelFuture isDone={}, isSuccess={}, isCancelled={}, future={}", f.isDone(), f.isSuccess(), f.isCancelled(), f);
+            logger.debug("Waiting for ConnAckMessage. ChannelFuture isDone={}, isSuccess={}, isCancelled={}, future={}",
+                    f.isDone(), f.isSuccess(), f.isCancelled(), f);
         });
 
         logger.info("Connecting to {} via port {}.", this.appProperties.getHost(), this.appProperties.getPort());
@@ -277,8 +296,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
             this.subscribedTopics.clear();
         }
 
-        MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0);
-        MqttReasonCodeAndPropertiesVariableHeader mqttDisconnectVariableHeader = new MqttReasonCodeAndPropertiesVariableHeader(reasonCode, MqttProperties.NO_PROPERTIES);
+        MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE,
+                false, 0);
+        MqttReasonCodeAndPropertiesVariableHeader mqttDisconnectVariableHeader = new MqttReasonCodeAndPropertiesVariableHeader(
+                reasonCode, MqttProperties.NO_PROPERTIES);
         MqttMessage message = new MqttMessage(mqttFixedHeader, mqttDisconnectVariableHeader);
 
         this.writeAndFlush(message);
@@ -287,8 +308,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
                 mqttDisconnectVariableHeader.reasonCode(),
                 message.fixedHeader().isDup(),
                 message.fixedHeader().qosLevel(),
-                message.fixedHeader().isRetain()
-        );
+                message.fixedHeader().isRetain());
 
         try {
             TimeUnit.MILLISECONDS.sleep(waitDisconnect);
@@ -314,53 +334,167 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         logger.info("Shutdown gracefully");
     }
 
+    // @Override
+    // public Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions) {
+    //     int id = getNewMessageId();
+    //     MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE,
+    //             false, 0);
+    //     MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
+    //     MqttSubscribePayload payload = new MqttSubscribePayload(subscriptions);
+    //     MqttSubscribeMessage message = new MqttSubscribeMessage(fixedHeader, variableHeader, payload);
+
+    //     Promise<MqttSubAckMessage> subscribeFuture = new DefaultPromise<>(this.workerGroup.next());
+    //     this.mqttAckMediator.add(id, subscribeFuture, message);
+    //     subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
+    //         HmMq2tImpl.this.handleSubAckMessage(f.get());
+    //     });
+
+    //     ReferenceCountUtil.retain(message); // TODO is it nessesary?
+
+    //     this.writeAndFlush(message);
+    //     logger.info("Sent SUBSCRIBE message id={}, d={}, q={}, r={}.", message.variableHeader().messageId(),
+    //             message.fixedHeader().isDup(), message.fixedHeader().qosLevel(), message.fixedHeader().isRetain());
+
+    //     return subscribeFuture;
+    // }
+
     @Override
     public Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions) {
         int id = getNewMessageId();
+        Promise<MqttSubAckMessage> subscribeFuture = this.channel.eventLoop().newPromise();
+
+        ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> pendingSubs = this.channel.attr(PENDING_SUBSCRIBES)
+                .setIfAbsent(new ConcurrentHashMap<>());
+        pendingSubs.put(id, subscribeFuture);
+
+        ScheduledFuture<?> scheduledTask = sendSubscribeWithRetries(subscriptions, 0);
+
+        subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
+            if (scheduledTask != null) {
+                scheduledTask.cancel(false);
+            }
+        });
+
+        return subscribeFuture;
+    }
+
+    private ScheduledFuture<?> sendSubscribeWithRetries(List<MqttTopicSubscription> subscriptions, Integer attempt) {
+		int id = getNewMessageId();
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
         MqttSubscribePayload payload = new MqttSubscribePayload(subscriptions);
         MqttSubscribeMessage message = new MqttSubscribeMessage(fixedHeader, variableHeader, payload);
+		
+		this.writeAndFlush(message);
+        logger.info("Sent SUBSCRIBE message id={}.", message.variableHeader().messageId());
 
-        Promise<MqttSubAckMessage> subscribeFuture = new DefaultPromise<>(this.workerGroup.next());
-        this.mqttAckMediator.add(id, subscribeFuture, message);
-        subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
-            HmMq2tImpl.this.handleSubAckMessage(f.get());
+		ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
+			if (subscribeFuture != null && !subscribeFuture.isDone()) {
+				logger.warn("Timeout SUBACK for id={} is over. Attempt number={}", id, attempt);
+				subscribeFuture.setFailure(new Throwable("Disconnect. Broker did not answer for subscribe message."));
+				var pendingSubs = this.channel.attr(PENDING_SUBSCRIBES).get();
+				if (pendingSubs != null) pendingSubs.remove(id);
+					
+				if (attempt < MAX_RETRY_SUB_ATTEMPTS) {
+					sendSubscribeWithRetries(subscriptions, attempt + 1);
+				} else {
+					logger.error("Disconnect. Broker did not answer for subscribe message id={} after 3 attempts.", id);
+					pendingSubs.foreach(f -> if (f != null && !f.isDone()) f.cancel(false));
+					pendingSubs.clear();
+					this.disconnect((byte) 1);
+				}
+			}
+		}, RETRY_INTERVAL_SECONDS, TimeUnit.SECONDS);
+		
+		return scheduledTask;
+	}
+
+    private ScheduledFuture<?> sendUnsubscribeWithRetries(List<String> topics, Integer attempt) {
+		int id = getNewMessageId();
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.UNSUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
+        MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
+        MqttUnsubscribePayload payload = new MqttUnsubscribePayload(topics);
+        MqttUnsubscribeMessage unsubscribeMessage = new MqttUnsubscribeMessage(fixedHeader, variableHeader, payload);
+		
+		this.writeAndFlush(unsubscribeMessage);
+        logger.info("Sent UNSUBSCRIBE message id={}.", unsubscribeMessage.variableHeader().messageId()));
+		
+		ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
+			if (subscribeFuture != null && !subscribeFuture.isDone()) {
+				logger.warn("Timeout UNSUBACK for id={} is over. Attempt number={}", id, attempt);
+				unsubscribeFuture.setFailure(new TimeoutException("Disconnect. Broker did not answer for unsubscribe message."));
+				var pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBE).get();
+				if (pendingUnsubs != null) pendingUnsubs.remove(id);
+					
+				if (attempt < MAX_RETRY_UNSUB_ATTEMPTS) {
+					sendUnsubscribeWithRetries(topics, attempt + 1);
+				} else {
+					logger.error("Disconnect. Broker did not answer for unsubscribe message id={} after 3 attempts.", id);
+					pendingUnsubs.foreach(f -> if (f != null && !f.isDone()) f.cancel(false));
+					pendingUnsubs.clear();
+					this.disconnect((byte) 1);
+				}
+			}
+		}, RETRY_INTERVAL_SECONDS, TimeUnit.SECONDS);
+		
+		return scheduledTask;
+	}
+
+    public static final AttributeKey<ConcurrentHashMap<Integer,Promise<MqttUnsubAckMessage>>> PENDING_UNSUBSCRIBES = AttributeKey.valueOf("pending_unsubscribes");
+	@Override
+    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
+        
+
+		Promise<MqttUnsubAckMessage> unsubscribeFuture = this.channel.eventLoop().newPromise();
+		
+		ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>> pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES).setIfAbsent(new ConcurrentHashMap<>()).get();
+		pendingUnsubs.put(id, unsubscribeFuture);
+		
+		ScheduledFuture<?> scheduledTask = sendUnsubscribeWithRetries(topics, 0);
+		
+		unsubscribeFuture.addListener((Promise<MqttUnsubAckMessage> f) -> {
+            if (scheduledTask != null) {
+				scheduledTask.cancel(false);
+			}
         });
-
-        ReferenceCountUtil.retain(message); //TODO is it nessesary?
-
-        this.writeAndFlush(message);
-        logger.info("Sent SUBSCRIBE message id={}, d={}, q={}, r={}.", message.variableHeader().messageId(), message.fixedHeader().isDup(), message.fixedHeader().qosLevel(), message.fixedHeader().isRetain());
-
-        return subscribeFuture;
+		
+        return unsubscribeFuture;
     }
 
     private void handleSubAckMessage(MqttSubAckMessage subAckMessage) {
         int id = subAckMessage.variableHeader().messageId();
         MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(id);
-        /* if (subscribeMessage == null) {
-            logger.warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already.");
-            //TODO resub?
-            return;
-        } */
+        /*
+         * if (subscribeMessage == null) {
+         * logger.
+         * warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already."
+         * );
+         * //TODO resub?
+         * return;
+         * }
+         */
         this.mqttAckMediator.remove(id);
         logger.info("Subscribe message id={} has been acknowledged.", id);
 
         List<MqttTopicSubscription> topics = subscribeMessage.payload().topicSubscriptions();
         List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
         if (subAckQos.size() != topics.size()) {
-            logger.warn("Number of topics to subscribe is not match number of returned granted QOS. QoS size={}. Topics size={}", subAckQos.size(), topics.size());
-            //this.disconnect((byte) 1);  //TODO resub?
+            logger.warn(
+                    "Number of topics to subscribe is not match number of returned granted QOS. QoS size={}. Topics size={}",
+                    subAckQos.size(), topics.size());
+            // this.disconnect((byte) 1); //TODO resub?
         } else {
             for (int i = 0; i < subAckQos.size(); i++) {
                 if (subAckQos.get(i) == MqttUtils.MQTT_SUBACK_FAILURE) {
-                    logger.warn("Subscription on topic={} with Qos={} failed. Return code={}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
+                    logger.warn("Subscription on topic={} with Qos={} failed. Return code={}",
+                            topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
                 } else if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
-                    logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicName(), topics.get(i).qualityOfService());
+                    logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicName(),
+                            topics.get(i).qualityOfService());
                 } else {
-                    logger.warn("Subscribed on topic={} with Qos={}. But granted Qos={}", topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
-                    //TODO resub with lower QoS?
+                    logger.warn("Subscribed on topic={} with Qos={}. But granted Qos={}", topics.get(i).topicName(),
+                            topics.get(i).qualityOfService(), subAckQos.get(i));
+                    // TODO resub with lower QoS?
                 }
                 this.subscribedTopics.put(topics.get(i).topicName(), topics.get(i));
             }
@@ -384,7 +518,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     }
 
     public void publishAtMostOnce(String topic, ByteBuf payload, boolean retain) {
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_MOST_ONCE, retain, 0);
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_MOST_ONCE, retain,
+                0);
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, -1);
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
 
@@ -399,7 +534,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
     public void publishAtLeastOnce(String topic, ByteBuf payload, boolean retain) {
         int id = this.getNewMessageId();
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, retain, 0);
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, retain,
+                0);
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
 
@@ -409,7 +545,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
             HmMq2tImpl.this.handlePubAckMessage(f.get());
         });
 
-        ReferenceCountUtil.retain(message); //TODO is it nessesary?
+        ReferenceCountUtil.retain(message); // TODO is it nessesary?
 
         this.writeAndFlush(message);
         logger.info("Sent publish message id={}, t={}, d={}, q={}, r={}.",
@@ -417,17 +553,20 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
                 message.variableHeader().topicName(),
                 message.fixedHeader().isDup(),
                 message.fixedHeader().qosLevel(),
-                message.fixedHeader().isRetain()
-        );
+                message.fixedHeader().isRetain());
     }
 
     private void handlePubAckMessage(MqttPubAckMessage pubAckMessage) {
         int id = pubAckMessage.variableHeader().messageId();
         MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
-        /* if (publishMessage == null) {
-            logger.warn("There is no stored PUBLISH message for PUBACK message. May be it was acknowledged already.");
-             return;
-        }*/
+        /*
+         * if (publishMessage == null) {
+         * logger.
+         * warn("There is no stored PUBLISH message for PUBACK message. May be it was acknowledged already."
+         * );
+         * return;
+         * }
+         */
         this.mqttAckMediator.remove(id);
         logger.info("PublishMessage id={} has been acknowledged.", id);
         ReferenceCountUtil.release(publishMessage);
@@ -435,7 +574,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
 
     public void publishExactlyOnce(String topic, ByteBuf payload, boolean retain) {
         int id = this.getNewMessageId();
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.EXACTLY_ONCE, retain, 0);
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.EXACTLY_ONCE, retain,
+                0);
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
 
@@ -445,7 +585,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
             HmMq2tImpl.this.handlePubRecMessage(f.get());
         });
 
-        ReferenceCountUtil.retain(message); //TODO is it nessesary?
+        ReferenceCountUtil.retain(message); // TODO is it nessesary?
 
         this.writeAndFlush(message);
         logger.info("Sent publish message id={}, t={}, d={}, q={}, r={}.",
@@ -453,17 +593,20 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
                 message.variableHeader().topicName(),
                 message.fixedHeader().isDup(),
                 message.fixedHeader().qosLevel(),
-                message.fixedHeader().isRetain()
-        );
+                message.fixedHeader().isRetain());
     }
 
     private void handlePubRecMessage(MqttMessage pubRecMessage) {
         int id = ((MqttMessageIdVariableHeader) pubRecMessage.variableHeader()).messageId();
         MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
-        /* if (publishMessage == null ) {
-            logger.warn("There is no stored PUBLISH message for PUBREC message. May be it was acknowledged already.");
-            return;
-        } */
+        /*
+         * if (publishMessage == null ) {
+         * logger.
+         * warn("There is no stored PUBLISH message for PUBREC message. May be it was acknowledged already."
+         * );
+         * return;
+         * }
+         */
         this.mqttAckMediator.remove(id);
         logger.info("Publish message id={} has been acknowledged.", id);
         ReferenceCountUtil.release(publishMessage);
@@ -471,7 +614,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     }
 
     private void sendPubRelMessage(int id) {
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBREL, false, MqttQoS.AT_LEAST_ONCE, false, 0);
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBREL, false, MqttQoS.AT_LEAST_ONCE, false,
+                0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
         MqttMessage pubrelMessage = new MqttMessage(fixedHeader, variableHeader);
 
@@ -481,24 +625,27 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
             HmMq2tImpl.this.handlePubCompMessage(f.get());
         });
 
-        ReferenceCountUtil.retain(pubrelMessage); //TODO is it nessesary?
+        ReferenceCountUtil.retain(pubrelMessage); // TODO is it nessesary?
 
         this.writeAndFlush(pubrelMessage);
         logger.info("Sent PUBREL message id={}, d={}, q={}, r={}.",
                 variableHeader.messageId(),
                 pubrelMessage.fixedHeader().isDup(),
                 pubrelMessage.fixedHeader().qosLevel(),
-                pubrelMessage.fixedHeader().isRetain()
-        );
+                pubrelMessage.fixedHeader().isRetain());
     }
 
     private void handlePubCompMessage(MqttMessage pubCompMessage) {
         int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();
         MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
-        /* if (pubrelMessage == null ) {
-            logger.warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already.");
-            return;
-        } */
+        /*
+         * if (pubrelMessage == null ) {
+         * logger.
+         * warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already."
+         * );
+         * return;
+         * }
+         */
         this.mqttAckMediator.remove(id);
         logger.info("PubRelMessage id={} has been acknowledged.", id);
         ReferenceCountUtil.release(pubrelMessage);
@@ -509,8 +656,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         if (this.channel == null) {
             logger.error("Cannot write and flush message. Channel is null. Total failures={}, consecutive failures={}.",
                     writeFailureCount.incrementAndGet(),
-                    consecutiveWriteFailerCount.incrementAndGet()
-            );
+                    consecutiveWriteFailerCount.incrementAndGet());
             return null;
         }
         if (this.channel.isActive()) {
@@ -520,8 +666,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
                     logger.error("Write failed. Total failures={}, consecutive failures={}. {}",
                             writeFailureCount.incrementAndGet(),
                             consecutiveWriteFailerCount.incrementAndGet(),
-                            f.cause()
-                    );
+                            f.cause());
                 } else {
                     consecutiveWriteFailerCount.set(0);
                 }
@@ -530,8 +675,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         }
         logger.error("Cannot write and flush message. Channel is closed. Total failures={}, consecutive failures={}.",
                 writeFailureCount.incrementAndGet(),
-                consecutiveWriteFailerCount.incrementAndGet()
-        );
+                consecutiveWriteFailerCount.incrementAndGet());
         return this.channel.newFailedFuture(new RuntimeException("Cannot write and flush message. Channel is closed."));
     }
 
@@ -554,32 +698,32 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
         return id;
     }
 
-    @Override
-    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
-        int id = getNewMessageId();
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.UNSUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
-        MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
-        MqttUnsubscribePayload payload = new MqttUnsubscribePayload(topics);
-        MqttUnsubscribeMessage unSubscribeMessage = new MqttUnsubscribeMessage(fixedHeader, variableHeader, payload);
+    // @Override
+    // public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
+    //     int id = getNewMessageId();
+    //     MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.UNSUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE,
+    //             false, 0);
+    //     MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
+    //     MqttUnsubscribePayload payload = new MqttUnsubscribePayload(topics);
+    //     MqttUnsubscribeMessage unSubscribeMessage = new MqttUnsubscribeMessage(fixedHeader, variableHeader, payload);
 
-        Promise<MqttUnsubAckMessage> unSubscribeFuture = new DefaultPromise<>(this.workerGroup.next());
-        this.mqttAckMediator.add(id, unSubscribeFuture, unSubscribeMessage);
-        unSubscribeFuture.addListener((Promise<MqttUnsubAckMessage> f) -> {
-            HmMq2tImpl.this.handleUnSubAckMessage(f.get());
-        });
+    //     Promise<MqttUnsubAckMessage> unSubscribeFuture = new DefaultPromise<>(this.workerGroup.next());
+    //     this.mqttAckMediator.add(id, unSubscribeFuture, unSubscribeMessage);
+    //     unSubscribeFuture.addListener((Promise<MqttUnsubAckMessage> f) -> {
+    //         HmMq2tImpl.this.handleUnSubAckMessage(f.get());
+    //     });
 
-        ReferenceCountUtil.retain(unSubscribeMessage); //TODO is it nessesary?
+    //     ReferenceCountUtil.retain(unSubscribeMessage); // TODO is it nessesary?
 
-        this.writeAndFlush(unSubscribeMessage);
-        logger.info("Sent unsubscribe message id={}, d={}, q={}, r={}.",
-                unSubscribeMessage.variableHeader().messageId(),
-                unSubscribeMessage.fixedHeader().isDup(),
-                unSubscribeMessage.fixedHeader().qosLevel(),
-                unSubscribeMessage.fixedHeader().isRetain()
-        );
+    //     this.writeAndFlush(unSubscribeMessage);
+    //     logger.info("Sent unsubscribe message id={}, d={}, q={}, r={}.",
+    //             unSubscribeMessage.variableHeader().messageId(),
+    //             unSubscribeMessage.fixedHeader().isDup(),
+    //             unSubscribeMessage.fixedHeader().qosLevel(),
+    //             unSubscribeMessage.fixedHeader().isRetain());
 
-        return unSubscribeFuture;
-    }
+    //     return unSubscribeFuture;
+    // }
 
     private void handleUnSubAckMessage(MqttUnsubAckMessage unSubAckMessage) {
         int id = unSubAckMessage.variableHeader().messageId();
@@ -596,13 +740,15 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     }
 
     public String getSubscribedTopicAndQosAsString() {
-        return this.subscribedTopics.keySet().stream().map(key -> this.subscribedTopics.get(key).toString()).collect(Collectors.joining("\\n ", "", ""));
+        return this.subscribedTopics.keySet().stream().map(key -> this.subscribedTopics.get(key).toString())
+                .collect(Collectors.joining("\\n ", "", ""));
     }
 
     private void startRetransmitTask() {
         if (this.retransmitScheduledFuture == null || this.retransmitScheduledFuture.isDone()) {
             logger.info("Start retransmit task.");
-            this.retransmitScheduledFuture = this.threadPoolTaskScheduler.schedule(new RetransmitTask(), this.retransmitPeriodicTrigger);
+            this.retransmitScheduledFuture = this.threadPoolTaskScheduler.schedule(new RetransmitTask(),
+                    this.retransmitPeriodicTrigger);
         } else {
             logger.warn("Could not start retransmit task. Previous retransmit task was not stopped.");
         }
@@ -619,7 +765,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
     class RetransmitTask implements Runnable {
 
         @Override
-        public void run() {     //TODO syncronized?
+        public void run() { // TODO syncronized?
             logger.info("Start retransmission");
             for (MqttMessage message : mqttAckMediator) {
                 logger.info("message={}", message.variableHeader());
@@ -631,12 +777,12 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
                         if (qos == MqttQoS.AT_LEAST_ONCE || qos == MqttQoS.EXACTLY_ONCE) {
                             MqttFixedHeader fixedHeader = new MqttFixedHeader(
                                     initialMessage.fixedHeader().messageType(),
-                                    true, //change Dup on true
+                                    true, // change Dup on true
                                     initialMessage.fixedHeader().qosLevel(),
                                     initialMessage.fixedHeader().isRetain(),
-                                    initialMessage.fixedHeader().remainingLength()
-                            );
-                            MqttPublishMessage dupMessage = new MqttPublishMessage(fixedHeader, initialMessage.variableHeader(), initialMessage.payload());
+                                    initialMessage.fixedHeader().remainingLength());
+                            MqttPublishMessage dupMessage = new MqttPublishMessage(fixedHeader,
+                                    initialMessage.variableHeader(), initialMessage.payload());
 
                             writeAndFlush(dupMessage);
                             logger.info("Publish message has been retransmited. id={}, t={}, d={}, q={}, r={}",
@@ -644,8 +790,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
                                     dupMessage.variableHeader().topicName(),
                                     dupMessage.fixedHeader().isDup(),
                                     dupMessage.fixedHeader().qosLevel(),
-                                    dupMessage.fixedHeader().isRetain()
-                            );
+                                    dupMessage.fixedHeader().isRetain());
                         }
                     }
                     case MqttMessageType.SUBSCRIBE -> {
@@ -654,8 +799,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
                         logger.info("Subscribe message has been retransmited. id={}, q={}, r={}",
                                 initialMessage.variableHeader().messageId(),
                                 initialMessage.fixedHeader().qosLevel(),
-                                initialMessage.fixedHeader().isRetain()
-                        );
+                                initialMessage.fixedHeader().isRetain());
                     }
                     case MqttMessageType.UNSUBSCRIBE -> {
                         writeAndFlush(message);
@@ -663,18 +807,17 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner {  //TODO separate 
                         logger.info("Unsubscribe message has been retransmited. id={}, q={}, r={}",
                                 initialMessage.variableHeader().messageId(),
                                 initialMessage.fixedHeader().qosLevel(),
-                                initialMessage.fixedHeader().isRetain()
-                        );
+                                initialMessage.fixedHeader().isRetain());
                     }
                     case MqttMessageType.PUBREL -> {
                         writeAndFlush(message);
-                        MqttMessageIdVariableHeader idVariableHeader = (MqttMessageIdVariableHeader) message.variableHeader();
+                        MqttMessageIdVariableHeader idVariableHeader = (MqttMessageIdVariableHeader) message
+                                .variableHeader();
                         logger.info("PubRel message has been retransmited. id={}, d={}, q={}, r={}",
                                 idVariableHeader.messageId(),
                                 message.fixedHeader().isDup(),
                                 message.fixedHeader().qosLevel(),
-                                message.fixedHeader().isRetain()
-                        );
+                                message.fixedHeader().isRetain());
                     }
 
                 }
