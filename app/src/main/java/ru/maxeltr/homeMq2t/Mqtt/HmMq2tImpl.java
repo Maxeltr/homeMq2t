@@ -64,6 +64,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -142,6 +143,13 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     private static int reconnectAttempts = 0;
 
     private ScheduledFuture<?> retransmitScheduledFuture;
+
+    private static final class TimeoutWithMessage extends TimeoutException {
+
+        TimeoutWithMessage(String message) {
+            super(message);
+        }
+    }
 
     public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>>> PENDING_SUBSCRIBES = AttributeKey
             .valueOf("pending_subscribes");
@@ -411,28 +419,28 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         return scheduledTask;
     }
 
-    private ScheduledFuture<?> sendUnsubscribeMessageWithTimeout(List<String> topics, Integer attempt) {
-		
+    private ScheduledFuture<?> sendUnsubscribeMessageWithTimeout(List<String> topics, int id,
+            Promise<MqttUnsubAckMessage> unsubscribeFuture, Integer attempt) {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.UNSUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
         MqttUnsubscribePayload payload = new MqttUnsubscribePayload(topics);
         MqttUnsubscribeMessage unsubscribeMessage = new MqttUnsubscribeMessage(fixedHeader, variableHeader, payload);
-		
-		this.writeAndFlush(unsubscribeMessage);
-        logger.info("Sent UNSUBSCRIBE message id={}.", unsubscribeMessage.variableHeader().messageId()));
-		
-		ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
-			if (subscribeFuture != null && !subscribeFuture.isDone()) {
-				logger.warn("Timeout UNSUBACK for id={} is over.", id);
-				unsubscribeFuture.setFailure(new TimeoutException("Disconnect. Broker did not answer for unsubscribe message."));
-				var pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES).get();
-				if (pendingUnsubs != null) pendingUnsubs.remove(id);
-					
-			}
-		}, this.subscribeTimeout, TimeUnit.SECONDS);
-		
-		return scheduledTask;
-	}
+
+        this.writeAndFlush(unsubscribeMessage);
+        logger.info("Sent UNSUBSCRIBE message id={}.", unsubscribeMessage.variableHeader().messageId());
+
+        ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
+            if (unsubscribeFuture != null && !unsubscribeFuture.isDone()) {
+                logger.warn("Timeout UNSUBACK for id={} is over.", id);
+                unsubscribeFuture.setFailure(
+                        new TimeoutWithMessage("Disconnect. Broker did not answer for unsubscribe message."));
+                var pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES).get();
+                if (pendingUnsubs != null) pendingUnsubs.remove(id);
+            }
+        }, this.subscribeTimeout, TimeUnit.SECONDS);
+
+        return scheduledTask;
+    }
 
     @Override
     public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
@@ -441,10 +449,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         Promise<MqttUnsubAckMessage> unsubscribeFuture = this.channel.eventLoop().newPromise();
 
         ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>> pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES)
-                .setIfAbsent(new ConcurrentHashMap<>()).get();
+                .setIfAbsent(new ConcurrentHashMap<>());
         pendingUnsubs.put(id, unsubscribeFuture);
 
-        ScheduledFuture<?> scheduledTask = sendUnsubscribeWithRetries(topics, id, unsubscribeFuture, 0);
+        ScheduledFuture<?> scheduledTask = sendUnsubscribeMessageWithTimeout(topics, id, unsubscribeFuture, 0);
 
         unsubscribeFuture.addListener((Promise<MqttUnsubAckMessage> f) -> {
             if (scheduledTask != null) {
