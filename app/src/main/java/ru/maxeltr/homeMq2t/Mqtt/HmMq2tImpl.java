@@ -118,6 +118,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     @Value("${reconnect-delay-max:1800000}")
     private int reconnectDelayMax;
 
+	@Value("${subscribe-timeout:1000}")
+    private int subscribeTimeout;
+
     @Autowired
     private AppProperties appProperties;
 
@@ -145,9 +148,6 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     public static final AttributeKey<ConcurrentHashMap<Integer, Integer>> RETRY_ATTEMPTS = AttributeKey
             .valueOf("retry_attempts");
 
-    private static final int MAX_RETRY_SUB_ATTEMPTS = 3;
-    private static final int MAX_RETRY_UNSUB_ATTEMPTS = 3;
-    private static final int RETRY_INTERVAL_SECONDS = 5;
 
     @Override
     public void run(String... args) {
@@ -367,19 +367,19 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 .setIfAbsent(new ConcurrentHashMap<>());
         pendingSubs.put(id, subscribeFuture);
 
-        ScheduledFuture<?> scheduledTask = sendSubscribeWithRetries(subscriptions, 0);
+        ScheduledFuture<?> scheduledTask = sendSubscribeMessageWithTimeout(subscriptions, 0);
 
         subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
             if (scheduledTask != null) {
                 scheduledTask.cancel(false);
             }
+			logger.info("Subscribe message id={} has been acknowledged", f.get().variableHeader().messageId());
         });
 
         return subscribeFuture;
     }
 
-    private ScheduledFuture<?> sendSubscribeWithRetries(List<MqttTopicSubscription> subscriptions, Integer attempt) {
-		int id = getNewMessageId();
+    private ScheduledFuture<?> sendSubscribeMessageWithTimeout(List<MqttTopicSubscription> subscriptions, int id, Promise<MqttSubAckMessage> subscribeFuture, Integer attempt) {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
         MqttSubscribePayload payload = new MqttSubscribePayload(subscriptions);
@@ -390,21 +390,13 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
 		ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
 			if (subscribeFuture != null && !subscribeFuture.isDone()) {
-				logger.warn("Timeout SUBACK for id={} is over. Attempt number={}", id, attempt);
+				logger.warn("Timeout SUBACK for id={} is over.", id);
 				subscribeFuture.setFailure(new Throwable("Disconnect. Broker did not answer for subscribe message."));
 				var pendingSubs = this.channel.attr(PENDING_SUBSCRIBES).get();
 				if (pendingSubs != null) pendingSubs.remove(id);
-					
-				if (attempt < MAX_RETRY_SUB_ATTEMPTS) {
-					sendSubscribeWithRetries(subscriptions, attempt + 1);
-				} else {
-					logger.error("Disconnect. Broker did not answer for subscribe message id={} after 3 attempts.", id);
-					pendingSubs.foreach(f -> if (f != null && !f.isDone()) f.cancel(false));
-					pendingSubs.clear();
-					this.disconnect((byte) 1);
-				}
+
 			}
-		}, RETRY_INTERVAL_SECONDS, TimeUnit.SECONDS);
+		}, this.subscribeTimeout, TimeUnit.SECONDS);
 		
 		return scheduledTask;
 	}
