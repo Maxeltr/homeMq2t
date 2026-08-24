@@ -145,8 +145,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>>> PENDING_SUBSCRIBES = AttributeKey
             .valueOf("pending_subscribes");
-    public static final AttributeKey<ConcurrentHashMap<Integer, Integer>> RETRY_ATTEMPTS = AttributeKey
-            .valueOf("retry_attempts");
+
+	public static final AttributeKey<ConcurrentHashMap<Integer,Promise<MqttUnsubAckMessage>>> PENDING_UNSUBSCRIBES = AttributeKey.valueOf("pending_unsubscribes");
 
 
     @Override
@@ -367,7 +367,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 .setIfAbsent(new ConcurrentHashMap<>());
         pendingSubs.put(id, subscribeFuture);
 
-        ScheduledFuture<?> scheduledTask = sendSubscribeMessageWithTimeout(subscriptions, 0);
+        ScheduledFuture<?> scheduledTask = sendSubscribeMessageWithTimeout(subscriptions, id, subscribeFuture, 0);
 
         subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
             if (scheduledTask != null) {
@@ -401,8 +401,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 		return scheduledTask;
 	}
 
-    private ScheduledFuture<?> sendUnsubscribeWithRetries(List<String> topics, Integer attempt) {
-		int id = getNewMessageId();
+    private ScheduledFuture<?> sendUnsubscribeMessageWithTimeout(List<String> topics, Integer attempt) {
+		
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.UNSUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
         MqttUnsubscribePayload payload = new MqttUnsubscribePayload(topics);
@@ -413,41 +413,33 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 		
 		ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
 			if (subscribeFuture != null && !subscribeFuture.isDone()) {
-				logger.warn("Timeout UNSUBACK for id={} is over. Attempt number={}", id, attempt);
+				logger.warn("Timeout UNSUBACK for id={} is over.", id);
 				unsubscribeFuture.setFailure(new TimeoutException("Disconnect. Broker did not answer for unsubscribe message."));
-				var pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBE).get();
+				var pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES).get();
 				if (pendingUnsubs != null) pendingUnsubs.remove(id);
 					
-				if (attempt < MAX_RETRY_UNSUB_ATTEMPTS) {
-					sendUnsubscribeWithRetries(topics, attempt + 1);
-				} else {
-					logger.error("Disconnect. Broker did not answer for unsubscribe message id={} after 3 attempts.", id);
-					pendingUnsubs.foreach(f -> if (f != null && !f.isDone()) f.cancel(false));
-					pendingUnsubs.clear();
-					this.disconnect((byte) 1);
-				}
 			}
-		}, RETRY_INTERVAL_SECONDS, TimeUnit.SECONDS);
+		}, this.subscribeTimeout, TimeUnit.SECONDS);
 		
 		return scheduledTask;
 	}
 
-    public static final AttributeKey<ConcurrentHashMap<Integer,Promise<MqttUnsubAckMessage>>> PENDING_UNSUBSCRIBES = AttributeKey.valueOf("pending_unsubscribes");
 	@Override
     public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
-        
+        int id = getNewMessageId();
 
 		Promise<MqttUnsubAckMessage> unsubscribeFuture = this.channel.eventLoop().newPromise();
 		
 		ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>> pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES).setIfAbsent(new ConcurrentHashMap<>()).get();
 		pendingUnsubs.put(id, unsubscribeFuture);
 		
-		ScheduledFuture<?> scheduledTask = sendUnsubscribeWithRetries(topics, 0);
+		ScheduledFuture<?> scheduledTask = sendUnsubscribeWithRetries(topics, id, unsubscribeFuture, 0);
 		
 		unsubscribeFuture.addListener((Promise<MqttUnsubAckMessage> f) -> {
             if (scheduledTask != null) {
 				scheduledTask.cancel(false);
 			}
+			logger.info("Unsubscribe message id={} has been acknowledged", f.get().variableHeader().messageId());
         });
 		
         return unsubscribeFuture;
