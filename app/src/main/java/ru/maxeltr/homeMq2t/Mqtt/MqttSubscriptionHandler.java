@@ -48,11 +48,10 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttSubscriptionHandler.class);
 
-    @Autowired
     private AppProperties appProperties;
 
-
-    MqttSubscriptionHandler() {
+    MqttSubscriptionHandler(AppProperties appProperties) {
+		this.appProperties = appProperties;
         logger.debug("Create {}.", this.getClass());
     }
 
@@ -82,7 +81,7 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
 		int id = message.variableHeader().messageId();
         logger.info("Received SUBACK for subscription with id={}.", id);
 		
-        var pendingSubs = channel.attr(PENDING_SUBSCRIBES).get();
+        var pendingSubs = channel.attr(HmMq2tImpl.PENDING_SUBSCRIBES).get();
         if (pendingSubs == null) {
             logger.warn("No pending subscriptions map found in channel attributes for SUBACK id={}", id);
             return;
@@ -99,11 +98,11 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
         }
     }
 
-    private void handleUnsuback(MqttUnsubAckMessage message) {
+    private void handleUnsuback(Channel channel, MqttUnsubAckMessage message) {
 		int id = message.variableHeader().messageId();
         logger.info("Received UNSUBACK for subscription with id={}.", id);
 
-		var pendingUnsubs = channel.attr(PENDING_UNSUBSCRIBES).get();
+		var pendingUnsubs = channel.attr(HmMq2tImpl.PENDING_UNSUBSCRIBES).get();
         if (pendingUnsubs == null) {
             logger.warn("No pending unsubscriptions map found in channel attributes for UNSUBACK id={}", id);
             return;
