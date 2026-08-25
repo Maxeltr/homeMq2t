@@ -48,56 +48,76 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttSubscriptionHandler.class);
 
-//    @Autowired
-    private MqttAckMediator mqttAckMediator;
+    @Autowired
+    private AppProperties appProperties;
 
-    MqttSubscriptionHandler(MqttAckMediator mqttAckMediator) {
-        this.mqttAckMediator = mqttAckMediator;
+
+    MqttSubscriptionHandler() {
         logger.debug("Create {}.", this.getClass());
     }
 
-//    public void setMediator(MqttAckMediator mqttAckMediator) {
-//        this.mqttAckMediator = mqttAckMediator;
-//    }
-
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (!(msg instanceof MqttMessage)) {
+        if (!(msg instanceof MqttMessage message)) {
             ctx.fireChannelRead(msg);
             return;
         }
 
-        MqttMessage message = (MqttMessage) msg;
-        if (message.fixedHeader().messageType() == MqttMessageType.SUBACK) {
-            this.handleSubAck(ctx.channel(), (MqttSubAckMessage) message);
-            ReferenceCountUtil.release(msg);
-        } else if (message.fixedHeader().messageType() == MqttMessageType.UNSUBACK) {
-            this.handleUnsuback((MqttUnsubAckMessage) message);
-            ReferenceCountUtil.release(msg);
-        } else {
-            ctx.fireChannelRead(msg);   //ctx.fireChannelRead(ReferenceCountUtil.retain(msg));
-        }
+		switch (message.fixedHeader().messageType()) {
+            case SUBACK -> {
+                this.handleSubAck(ctx.channel(), (MqttSubAckMessage) message);
+                ReferenceCountUtil.release(msg);
+            }
+            case UNSUBACK -> {
+                this.handleUnsuback(ctx.channel(), (MqttUnsubAckMessage) message);
+                ReferenceCountUtil.release(msg);
+            }
+            default -> {
+                ctx.fireChannelRead(msg); 
+            }
+		}
     }
 
     private void handleSubAck(Channel channel, MqttSubAckMessage message) {
 		int id = message.variableHeader().messageId();
         logger.info("Received SUBACK for subscription with id={}.", id);
-        Promise<MqttSubAckMessage> future = this.mqttAckMediator.getFuture(id);
-        if (future == null) {
-            logger.warn("There is no stored future of SUBSCRIBE message for SUBACK message id={}. May be it was acknowledged already.", id);
+		
+        var pendingSubs = channel.attr(PENDING_SUBSCRIBES).get();
+        if (pendingSubs == null) {
+            logger.warn("No pending subscriptions map found in channel attributes for SUBACK id={}", id);
             return;
         }
-        future.setSuccess(message);
+
+        Promise<MqttSubAckMessage> future = pendingSubs.get(id);
+        if (future == null) {
+            logger.warn("There is no stored future of SUBSCRIBE message for SUBACK message id={}. Maybe it timed out already.", id);
+            return;
+        }
+
+        if (!future.trySuccess(message)) {
+            logger.debug("SUBACK id={} arrived but promise was already done (e.g., timed out).", id);
+        }
     }
 
     private void handleUnsuback(MqttUnsubAckMessage message) {
 		int id = message.variableHeader().messageId();
         logger.info("Received UNSUBACK for subscription with id={}.", id);
-        Promise<MqttUnsubAckMessage> future = this.mqttAckMediator.getFuture(id);
-        if (future == null) {
-            logger.warn("There is no stored future of UNSUBSCRIBE message for UNSUBACK message id={}. May be it was acknowledged already.", id);
+
+		var pendingUnsubs = channel.attr(PENDING_UNSUBSCRIBES).get();
+        if (pendingUnsubs == null) {
+            logger.warn("No pending unsubscriptions map found in channel attributes for UNSUBACK id={}", id);
             return;
         }
-        future.setSuccess(message);
+
+        Promise<MqttUnsubAckMessage> future = pendingUnsubs.get(id);
+        if (future == null) {
+            logger.warn("There is no stored future of UNSUBSCRIBE message for UNSUBACK message id={}. Maybe it timed out already.", id);
+            return;
+        }
+
+        if (!future.trySuccess(message)) {
+            logger.debug("UNSUBACK id={} arrived but promise was already done.", id);
+		}
+        
     }
 }
