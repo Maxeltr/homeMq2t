@@ -58,9 +58,9 @@ public class AppProperties implements StartupTaskPropertiesProvider {
 
     private final static String MQTT_SETTINGS_TEMPLATE_PATH = "mqtt-settings-template-path";
 
-    public final static String PENDING_SUBSCRIBES = "pending_subscribes";
+    public final static String NAME_PENDING_SUBSCRIBES = "pending_subscribes";
 
-    public final static String PENDING_UNSUBSCRIBES = "pending_unsubscribes";
+    public final static String NAME_PENDING_UNSUBSCRIBES = "pending_unsubscribes";
 
     @Autowired
     private Environment env;
