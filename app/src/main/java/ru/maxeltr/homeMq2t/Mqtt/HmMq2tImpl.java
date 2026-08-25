@@ -152,10 +152,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     }
 
     public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>>> PENDING_SUBSCRIBES = AttributeKey
-            .valueOf("pending_subscribes");
+            .valueOf(appProperties.PENDING_SUBSCRIBES);
 
     public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>>> PENDING_UNSUBSCRIBES = AttributeKey
-            .valueOf("pending_unsubscribes");
+            .valueOf(appProperties.PENDING_UNSUBSCRIBES);
 
     @Override
     public void run(String... args) {
@@ -378,7 +378,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         int id = getNewMessageId();
         Promise<MqttSubAckMessage> subscribeFuture = this.channel.eventLoop().newPromise();
 
-        var attr = this.channel.attr(PENDING_SUBSCRIBES);
+        var attr = this.channel.attr(pendingSubscribes);
         ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> newMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> oldMap = attr.setIfAbsent(newMap);
         final var pendingSubs = (oldMap != null) ? oldMap : newMap;
@@ -452,7 +452,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
         Promise<MqttUnsubAckMessage> unsubscribeFuture = this.channel.eventLoop().newPromise();
 
-        ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>> pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES)
+        ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>> pendingUnsubs = this.channel.attr(pendingUnsubscribes)
                 .setIfAbsent(new ConcurrentHashMap<>());
         pendingUnsubs.put(id, unsubscribeFuture);
 
