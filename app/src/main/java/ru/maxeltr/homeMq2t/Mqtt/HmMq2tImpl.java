@@ -379,8 +379,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         Promise<MqttSubAckMessage> subscribeFuture = this.channel.eventLoop().newPromise();
 
         var attr = this.channel.attr(PENDING_SUBSCRIBES);
-        ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> pendingSubs = attr.setIfAbsent(new ConcurrentHashMap<>());
-        if (pendingSubs == null) pendingSubs = attr.get();
+        ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> newMap = new ConcurrentHashMap<>();
+        ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> oldMap = attr.setIfAbsent(newMap);
+        final var pendingSubs = (oldMap != null) ? oldMap : newMap;
         pendingSubs.put(id, subscribeFuture);
 
         ScheduledFuture<?> scheduledTask = sendSubscribeMessageWithTimeout(subscriptions, id, subscribeFuture);
