@@ -378,24 +378,31 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         int id = getNewMessageId();
         Promise<MqttSubAckMessage> subscribeFuture = this.channel.eventLoop().newPromise();
 
-        ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> pendingSubs = this.channel.attr(PENDING_SUBSCRIBES)
-                .setIfAbsent(new ConcurrentHashMap<>());
+        var attr = this.channel.attr(PENDING_SUBSCRIBES);
+        ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> pendingSubs = attr.setIfAbsent(new ConcurrentHashMap<>());
+        if (pendingSubs == null) pendingSubs = attr.get();
         pendingSubs.put(id, subscribeFuture);
 
-        ScheduledFuture<?> scheduledTask = sendSubscribeMessageWithTimeout(subscriptions, id, subscribeFuture, 0);
+        ScheduledFuture<?> scheduledTask = sendSubscribeMessageWithTimeout(subscriptions, id, subscribeFuture);
 
         subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
+            pendingSubs.remove(id);
             if (scheduledTask != null) {
                 scheduledTask.cancel(false);
             }
-            logger.info("Subscribe message id={} has been acknowledged", f.get().variableHeader().messageId());
+            if (f.isSuccess()) {
+                var ack = f.getNow();
+                logger.info("Subscribe message id={} has been acknowledged", ack.variableHeader().messageId());
+            } else {
+                logger.warn("Subscribe message id={} failed: {}", id, f.cause().getMessage());
+            }
         });
 
         return subscribeFuture;
     }
 
     private ScheduledFuture<?> sendSubscribeMessageWithTimeout(List<MqttTopicSubscription> subscriptions, int id,
-            Promise<MqttSubAckMessage> subscribeFuture, Integer attempt) {
+            Promise<MqttSubAckMessage> subscribeFuture) {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE,
                 false, 0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
@@ -408,11 +415,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
             if (subscribeFuture != null && !subscribeFuture.isDone()) {
                 logger.warn("Timeout SUBACK for id={} is over.", id);
-                subscribeFuture.setFailure(new Throwable("Disconnect. Broker did not answer for subscribe message."));
-                var pendingSubs = this.channel.attr(PENDING_SUBSCRIBES).get();
-                if (pendingSubs != null)
-                    pendingSubs.remove(id);
-
+                subscribeFuture.setFailure(new TimeoutWithMessage("Broker did not answer for subscribe message."));
             }
         }, this.subscribeTimeout, TimeUnit.SECONDS);
 
@@ -420,7 +423,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     }
 
     private ScheduledFuture<?> sendUnsubscribeMessageWithTimeout(List<String> topics, int id,
-            Promise<MqttUnsubAckMessage> unsubscribeFuture, Integer attempt) {
+            Promise<MqttUnsubAckMessage> unsubscribeFuture) {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.UNSUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
         MqttUnsubscribePayload payload = new MqttUnsubscribePayload(topics);
@@ -433,7 +436,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
             if (unsubscribeFuture != null && !unsubscribeFuture.isDone()) {
                 logger.warn("Timeout UNSUBACK for id={} is over.", id);
                 unsubscribeFuture.setFailure(
-                        new TimeoutWithMessage("Disconnect. Broker did not answer for unsubscribe message."));
+                        new TimeoutWithMessage("Broker did not answer for unsubscribe message."));
                 var pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES).get();
                 if (pendingUnsubs != null) pendingUnsubs.remove(id);
             }
