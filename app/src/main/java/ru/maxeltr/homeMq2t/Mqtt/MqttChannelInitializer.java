@@ -119,7 +119,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
     }
 
     private MqttSubscriptionHandler createMqttSubscriptionHandler() {
-        var mqttSubscriptionHandler = new MqttSubscriptionHandler(this.mqttAckMediator);
+        var mqttSubscriptionHandler = new MqttSubscriptionHandler();
 
         AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
         autowireCapableBeanFactory.autowireBean(mqttSubscriptionHandler);

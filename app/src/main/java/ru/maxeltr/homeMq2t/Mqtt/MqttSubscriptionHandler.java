@@ -48,10 +48,7 @@ public class MqttSubscriptionHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttSubscriptionHandler.class);
 
-    private AppProperties appProperties;
-
-    MqttSubscriptionHandler(AppProperties appProperties) {
-		this.appProperties = appProperties;
+    MqttSubscriptionHandler() {
         logger.debug("Create {}.", this.getClass());
     }
 

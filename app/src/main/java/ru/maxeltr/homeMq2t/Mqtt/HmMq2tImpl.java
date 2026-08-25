@@ -152,10 +152,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     }
 
     public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>>> PENDING_SUBSCRIBES = AttributeKey
-            .valueOf(appProperties.NAME_PENDING_SUBSCRIBES);
+            .valueOf(AppProperties.NAME_PENDING_SUBSCRIBES);
 
     public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>>> PENDING_UNSUBSCRIBES = AttributeKey
-            .valueOf(appProperties.NAME_PENDING_UNSUBSCRIBES);
+            .valueOf(AppProperties.NAME_PENDING_UNSUBSCRIBES);
 
     @Override
     public void run(String... args) {
@@ -378,15 +378,23 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         int id = getNewMessageId();
         Promise<MqttSubAckMessage> subscribeFuture = this.channel.eventLoop().newPromise();
 
-        ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> pendingSubs = this.channel.attr(PENDING_SUBSCRIBES)
-                .updateAndGet(oldMap -> oldMap != null ? oldMap : new ConcurrentHashMap<>());
-        
+        var pendingSubsAttr = this.channel.attr(PENDING_SUBSCRIBES);
+        ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> pendingSubs = pendingSubsAttr.get();
+        if (pendingSubs == null) {
+            pendingSubs = new ConcurrentHashMap<>();
+            var oldMap = pendingSubsAttr.setIfAbsent(pendingSubs);
+            if (oldMap != null) {
+                pendingSubs = oldMap;
+            }
+        }
         pendingSubs.put(id, subscribeFuture);
+
+        final ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> finalPendingSubs = pendingSubs;
 
         ScheduledFuture<?> scheduledTask = sendSubscribeMessageWithTimeout(subscriptions, id, subscribeFuture);
 
         subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
-            pendingSubs.remove(id);
+            finalPendingSubs.remove(id);
             if (scheduledTask != null) {
                 scheduledTask.cancel(false);
             }
@@ -455,7 +463,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 .setIfAbsent(new ConcurrentHashMap<>());
         pendingUnsubs.put(id, unsubscribeFuture);
 
-        ScheduledFuture<?> scheduledTask = sendUnsubscribeMessageWithTimeout(topics, id, unsubscribeFuture, 0);
+        ScheduledFuture<?> scheduledTask = sendUnsubscribeMessageWithTimeout(topics, id, unsubscribeFuture);
 
         unsubscribeFuture.addListener((Promise<MqttUnsubAckMessage> f) -> {
             if (scheduledTask != null) {
