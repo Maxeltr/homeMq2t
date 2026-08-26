@@ -376,6 +376,13 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     @Override
     public Promise<MqttSubAckMessage> subscribe(List<MqttTopicSubscription> subscriptions) {
         int id = getNewMessageId();
+
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE,
+                false, 0);
+        MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
+        MqttSubscribePayload payload = new MqttSubscribePayload(subscriptions);
+        MqttSubscribeMessage message = new MqttSubscribeMessage(fixedHeader, variableHeader, payload);
+
         Promise<MqttSubAckMessage> subscribeFuture = this.channel.eventLoop().newPromise();
 
         var pendingSubsAttr = this.channel.attr(PENDING_SUBSCRIBES);
@@ -391,7 +398,12 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
         final ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> finalPendingSubs = pendingSubs;
 
-        ScheduledFuture<?> scheduledTask = sendSubscribeMessageWithTimeout(subscriptions, id, subscribeFuture);
+        ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
+            if (subscribeFuture != null && !subscribeFuture.isDone()) {
+                logger.warn("Timeout SUBACK for id={} is over.", id);
+                subscribeFuture.setFailure(new TimeoutWithMessage("Broker did not answer for subscribe message."));
+            }
+        }, this.subscribeTimeout, TimeUnit.SECONDS);
 
         subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
             finalPendingSubs.remove(id);
@@ -405,29 +417,11 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 logger.warn("Subscribe message id={} failed: {}", id, f.cause().getMessage());
             }
         });
-
-        return subscribeFuture;
-    }
-
-    private ScheduledFuture<?> sendSubscribeMessageWithTimeout(List<MqttTopicSubscription> subscriptions, int id,
-            Promise<MqttSubAckMessage> subscribeFuture) {
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.SUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE,
-                false, 0);
-        MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
-        MqttSubscribePayload payload = new MqttSubscribePayload(subscriptions);
-        MqttSubscribeMessage message = new MqttSubscribeMessage(fixedHeader, variableHeader, payload);
-
+      
         this.writeAndFlush(message);
         logger.info("Sent SUBSCRIBE message id={}.", message.variableHeader().messageId());
 
-        ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
-            if (subscribeFuture != null && !subscribeFuture.isDone()) {
-                logger.warn("Timeout SUBACK for id={} is over.", id);
-                subscribeFuture.setFailure(new TimeoutWithMessage("Broker did not answer for subscribe message."));
-            }
-        }, this.subscribeTimeout, TimeUnit.SECONDS);
-
-        return scheduledTask;
+        return subscribeFuture;
     }
 
     private ScheduledFuture<?> sendUnsubscribeMessageWithTimeout(List<String> topics, int id,
