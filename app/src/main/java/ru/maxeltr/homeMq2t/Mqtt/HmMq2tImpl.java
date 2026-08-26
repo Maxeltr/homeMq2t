@@ -401,7 +401,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
             if (subscribeFuture != null && !subscribeFuture.isDone()) {
                 logger.warn("Timeout SUBACK for id={} is over.", id);
-                subscribeFuture.setFailure(new TimeoutWithMessage("Broker did not answer for subscribe message."));
+                subscribeFuture.tryFailure(new TimeoutWithMessage("Broker did not answer for subscribe message."));
             }
         }, this.subscribeTimeout, TimeUnit.SECONDS);
 
