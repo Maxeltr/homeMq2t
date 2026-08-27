@@ -127,8 +127,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
-    private final Map<String, MqttTopicSubscription> subscribedTopics = Collections
-            .synchronizedMap(new LinkedHashMap<>());
+    //private final Map<String, MqttTopicSubscription> subscribedTopics = Collections
+    //        .synchronizedMap(new LinkedHashMap<>());
+
+    private final Map<String, MqttQos> subscribedTopics = new ConcurrentHashMap<>();
 
     private final static AtomicBoolean connecting = new AtomicBoolean();
 
@@ -397,7 +399,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         pendingSubs.put(id, subscribeFuture);
 
         final ConcurrentHashMap<Integer, Promise<MqttSubAckMessage>> finalPendingSubs = pendingSubs;
-
+        final List<MqttTopicSubscription> topics = message.payload().topicSubscriptions();
+      
         ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
             if (subscribeFuture != null && !subscribeFuture.isDone()) {
                 logger.warn("Timeout SUBACK for id={} is over.", id);
@@ -407,12 +410,22 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
         subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
             finalPendingSubs.remove(id);
-            if (scheduledTask != null) {
+            if (scheduledTask != null && !scheduledTask.isDone()) {
                 scheduledTask.cancel(false);
             }
             if (f.isSuccess()) {
                 var ack = f.getNow();
                 logger.info("Subscribe message id={} has been acknowledged", ack.variableHeader().messageId());
+
+                List<Integer> grantedQosLevels = ack.payload().grantedQosLevels();
+                for (int i = 0; i < topics.size(); i++) {
+                    int qosCode = grantedQosLevels.get(i);
+                    if (qosCode >= 0 && qosCode <= 2) {
+                        this.subscribedTopics.put(topics.get(i).topicName(), MqttQoS.valueOf(qosCode));
+                    } else {
+                        logger.warn("Subscription failed for topic: {} with code: {}", topics.get(i).topicName(), qosCode);
+                    }
+                }     
             } else {
                 logger.warn("Subscribe message id={} failed: {}", id, f.cause().getMessage());
             }
@@ -422,7 +435,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         logger.info("Sent SUBSCRIBE message id={}.", message.variableHeader().messageId());
 
         return subscribeFuture;
-
+    }
+  
     @Override
     public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
         int id = getNewMessageId();
@@ -457,7 +471,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
         unsubscribeFuture.addListener((Promise<MqttUnsubAckMessage> f) -> {
             finalPendingUnsubs.remove(id);
-            if (scheduledTask != null) {
+            if (scheduledTask != null && !scheduledTask.isDone()) {
                 scheduledTask.cancel(false);
             }
             if (f.isSuccess()) {
