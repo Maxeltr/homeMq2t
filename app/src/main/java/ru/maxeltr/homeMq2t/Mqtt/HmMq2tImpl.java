@@ -422,49 +422,55 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         logger.info("Sent SUBSCRIBE message id={}.", message.variableHeader().messageId());
 
         return subscribeFuture;
-    }
 
-    private ScheduledFuture<?> sendUnsubscribeMessageWithTimeout(List<String> topics, int id,
-            Promise<MqttUnsubAckMessage> unsubscribeFuture) {
+    @Override
+    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
+        int id = getNewMessageId();
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.UNSUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
         MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
         MqttUnsubscribePayload payload = new MqttUnsubscribePayload(topics);
         MqttUnsubscribeMessage unsubscribeMessage = new MqttUnsubscribeMessage(fixedHeader, variableHeader, payload);
 
-        this.writeAndFlush(unsubscribeMessage);
-        logger.info("Sent UNSUBSCRIBE message id={}.", unsubscribeMessage.variableHeader().messageId());
+        Promise<MqttUnsubAckMessage> unsubscribeFuture = this.channel.eventLoop().newPromise();
 
+      var pendingUnsubsAttr = this.channel.attr(PENDING_UNSUBSCRIBES);
+      ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>> pendingUnsubs = pendingUnsubsAttr.get();
+        if (pendingUnsubs == null) {
+            pendingUnsubs = new ConcurrentHashMap<>();
+            var oldMap = pendingUnsubsAttr.setIfAbsent(pendingUnsubs);
+            if (oldMap != null) {
+                pendingUnsubs = oldMap;
+            }
+        }
+      
+        pendingUnsubs.put(id, unsubscribeFuture);
+
+        final ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>> finalPendingUnsubs = pendingUnsubs;
+          
         ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
             if (unsubscribeFuture != null && !unsubscribeFuture.isDone()) {
                 logger.warn("Timeout UNSUBACK for id={} is over.", id);
-                unsubscribeFuture.setFailure(
+                unsubscribeFuture.tryFailure(
                         new TimeoutWithMessage("Broker did not answer for unsubscribe message."));
-                var pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES).get();
-                if (pendingUnsubs != null) pendingUnsubs.remove(id);
             }
         }, this.subscribeTimeout, TimeUnit.SECONDS);
 
-        return scheduledTask;
-    }
-
-    @Override
-    public Promise<MqttUnsubAckMessage> unsubscribe(List<String> topics) {
-        int id = getNewMessageId();
-
-        Promise<MqttUnsubAckMessage> unsubscribeFuture = this.channel.eventLoop().newPromise();
-
-        ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>> pendingUnsubs = this.channel.attr(PENDING_UNSUBSCRIBES)
-                .setIfAbsent(new ConcurrentHashMap<>());
-        pendingUnsubs.put(id, unsubscribeFuture);
-
-        ScheduledFuture<?> scheduledTask = sendUnsubscribeMessageWithTimeout(topics, id, unsubscribeFuture);
-
         unsubscribeFuture.addListener((Promise<MqttUnsubAckMessage> f) -> {
+            finalPendingUnsubs.remove(id);
             if (scheduledTask != null) {
                 scheduledTask.cancel(false);
             }
-            logger.info("Unsubscribe message id={} has been acknowledged", f.get().variableHeader().messageId());
+            if (f.isSuccess()) {
+                var ack = f.getNow();
+                logger.info("Unsubscribe message id={} has been acknowledged", ack.variableHeader().messageId());
+              this.subscribedTopics.keySet().removeAll(topics);
+            } else {
+                logger.warn("Unsubscribe message id={} failed: {}", id, f.cause().getMessage());
+            }
         });
+      
+        this.writeAndFlush(unsubscribeMessage);
+        logger.info("Sent UNSUBSCRIBE message id={}.", unsubscribeMessage.variableHeader().messageId());
 
         return unsubscribeFuture;
     }
