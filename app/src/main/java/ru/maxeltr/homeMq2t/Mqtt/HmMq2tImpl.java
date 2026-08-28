@@ -419,11 +419,14 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
                 List<Integer> grantedQosLevels = ack.payload().grantedQosLevels();
                 for (int i = 0; i < topics.size(); i++) {
+                    String topicName = topics.get(i).topicName();
                     int qosCode = grantedQosLevels.get(i);
                     if (qosCode >= 0 && qosCode <= 2) {
-                        this.subscribedTopics.put(topics.get(i).topicName(), MqttQoS.valueOf(qosCode));
+                        MqttQoS grantedQos = MqttQoS.valueOf(qosCode);
+                        this.subscribedTopics.put(topicName, grantedQos);
+                        logger.info("Successfully subscribed to topic: {} with QoS: {}", topicName, grantedQos);
                     } else {
-                        logger.warn("Subscription failed for topic: {} with code: {}", topics.get(i).topicName(), qosCode);
+                        logger.warn("Subscription failed for topic: {} with error code: {}", topicName, qosCode);
                     }
                 }     
             } else {
