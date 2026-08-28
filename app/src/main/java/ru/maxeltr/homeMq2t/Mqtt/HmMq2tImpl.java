@@ -130,7 +130,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     //private final Map<String, MqttTopicSubscription> subscribedTopics = Collections
     //        .synchronizedMap(new LinkedHashMap<>());
 
-    private final Map<String, MqttQos> subscribedTopics = new ConcurrentHashMap<>();
+    private final Map<String, MqttQoS> subscribedTopics = new ConcurrentHashMap<>();
 
     private final static AtomicBoolean connecting = new AtomicBoolean();
 
@@ -422,7 +422,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 var ack = f.getNow();
                 logger.info("Subscribe message id={} has been acknowledged", ack.variableHeader().messageId());
 
-                List<Integer> grantedQosLevels = ack.payload().grantedQosLevels();
+                List<Integer> grantedQosLevels = ack.payload().grantedQoSLevels();
                 for (int i = 0; i < topics.size(); i++) {
                     String topicName = topics.get(i).topicName();
                     int qosCode = grantedQosLevels.get(i);
@@ -523,16 +523,16 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
             for (int i = 0; i < subAckQos.size(); i++) {
                 if (subAckQos.get(i) == MqttUtils.MQTT_SUBACK_FAILURE) {
                     logger.warn("Subscription on topic={} with Qos={} failed. Return code={}",
-                            topics.get(i).topicName(), topics.get(i).qualityOfService(), subAckQos.get(i));
+                            topics.get(i).topicFilter(), topics.get(i).qualityOfService(), subAckQos.get(i));
                 } else if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
-                    logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicName(),
+                    logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicFilter(),
                             topics.get(i).qualityOfService());
                 } else {
                     logger.warn("Subscribed on topic={} with Qos={}. But granted Qos={}", topics.get(i).topicName(),
                             topics.get(i).qualityOfService(), subAckQos.get(i));
                     // TODO resub with lower QoS?
                 }
-                this.subscribedTopics.put(topics.get(i).topicName(), topics.get(i));
+                this.subscribedTopics.put(topics.get(i).topicFilter(), topics.get(i).qualityOfService());
             }
         }
         logger.info("Active topics list=[{}].", this.getSubscribedTopicAndQosAsString());
