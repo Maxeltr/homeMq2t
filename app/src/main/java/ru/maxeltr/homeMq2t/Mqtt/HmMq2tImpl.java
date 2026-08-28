@@ -411,7 +411,12 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         subscribeFuture.addListener((Promise<MqttSubAckMessage> f) -> {
             finalPendingSubs.remove(id);
             if (scheduledTask != null && !scheduledTask.isDone()) {
-                scheduledTask.cancel(false);
+                boolean cancelled = scheduledTask.cancel(false);
+                if (!cancelled) {
+                    logger.warn("Failed to cancel timeout task for message id={}, it might be executing right now", id);
+                } else {
+                    logger.debug("Timeout task for message id={} cancelled", id);
+                }
             }
             if (f.isSuccess()) {
                 var ack = f.getNow();
