@@ -424,7 +424,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
                 List<Integer> grantedQosLevels = ack.payload().grantedQoSLevels();
                 for (int i = 0; i < topics.size(); i++) {
-                    String topicName = topics.get(i).topicName();
+                    String topicName = topics.get(i).topicFilter();
                     int qosCode = grantedQosLevels.get(i);
                     if (qosCode >= 0 && qosCode <= 2) {
                         MqttQoS grantedQos = MqttQoS.valueOf(qosCode);
@@ -497,46 +497,46 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         return unsubscribeFuture;
     }
 
-    private void handleSubAckMessage(MqttSubAckMessage subAckMessage) {
-        int id = subAckMessage.variableHeader().messageId();
-        MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(id);
-        /*
-         * if (subscribeMessage == null) {
-         * logger.
-         * warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already."
-         * );
-         * //TODO resub?
-         * return;
-         * }
-         */
-        this.mqttAckMediator.remove(id);
-        logger.info("Subscribe message id={} has been acknowledged.", id);
+    // private void handleSubAckMessage(MqttSubAckMessage subAckMessage) {
+    //     int id = subAckMessage.variableHeader().messageId();
+    //     MqttSubscribeMessage subscribeMessage = this.mqttAckMediator.getMessage(id);
+    //     /*
+    //      * if (subscribeMessage == null) {
+    //      * logger.
+    //      * warn("There is no stored SUBSCRIBE message for SUBACK message. May be it was acknowledged already."
+    //      * );
+    //      * //TODO resub?
+    //      * return;
+    //      * }
+    //      */
+    //     this.mqttAckMediator.remove(id);
+    //     logger.info("Subscribe message id={} has been acknowledged.", id);
 
-        List<MqttTopicSubscription> topics = subscribeMessage.payload().topicSubscriptions();
-        List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
-        if (subAckQos.size() != topics.size()) {
-            logger.warn(
-                    "Number of topics to subscribe is not match number of returned granted QOS. QoS size={}. Topics size={}",
-                    subAckQos.size(), topics.size());
-            // this.disconnect((byte) 1); //TODO resub?
-        } else {
-            for (int i = 0; i < subAckQos.size(); i++) {
-                if (subAckQos.get(i) == MqttUtils.MQTT_SUBACK_FAILURE) {
-                    logger.warn("Subscription on topic={} with Qos={} failed. Return code={}",
-                            topics.get(i).topicFilter(), topics.get(i).qualityOfService(), subAckQos.get(i));
-                } else if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
-                    logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicFilter(),
-                            topics.get(i).qualityOfService());
-                } else {
-                    logger.warn("Subscribed on topic={} with Qos={}. But granted Qos={}", topics.get(i).topicName(),
-                            topics.get(i).qualityOfService(), subAckQos.get(i));
-                    // TODO resub with lower QoS?
-                }
-                this.subscribedTopics.put(topics.get(i).topicFilter(), topics.get(i).qualityOfService());
-            }
-        }
-        logger.info("Active topics list=[{}].", this.getSubscribedTopicAndQosAsString());
-    }
+    //     List<MqttTopicSubscription> topics = subscribeMessage.payload().topicSubscriptions();
+    //     List<Integer> subAckQos = subAckMessage.payload().grantedQoSLevels();
+    //     if (subAckQos.size() != topics.size()) {
+    //         logger.warn(
+    //                 "Number of topics to subscribe is not match number of returned granted QOS. QoS size={}. Topics size={}",
+    //                 subAckQos.size(), topics.size());
+    //         // this.disconnect((byte) 1); //TODO resub?
+    //     } else {
+    //         for (int i = 0; i < subAckQos.size(); i++) {
+    //             if (subAckQos.get(i) == MqttUtils.MQTT_SUBACK_FAILURE) {
+    //                 logger.warn("Subscription on topic={} with Qos={} failed. Return code={}",
+    //                         topics.get(i).topicFilter(), topics.get(i).qualityOfService(), subAckQos.get(i));
+    //             } else if (subAckQos.get(i) == topics.get(i).qualityOfService().value()) {
+    //                 logger.info("Subscribed on topic={} with Qos={}.", topics.get(i).topicFilter(),
+    //                         topics.get(i).qualityOfService());
+    //             } else {
+    //                 logger.warn("Subscribed on topic={} with Qos={}. But granted Qos={}", topics.get(i).topicName(),
+    //                         topics.get(i).qualityOfService(), subAckQos.get(i));
+    //                 // TODO resub with lower QoS?
+    //             }
+    //             this.subscribedTopics.put(topics.get(i).topicFilter(), topics.get(i).qualityOfService());
+    //         }
+    //     }
+    //     logger.info("Active topics list=[{}].", this.getSubscribedTopicAndQosAsString());
+    // }
 
     @Override
     public void publish(String topic, ByteBuf payload, MqttQoS qos, boolean retain) {
@@ -549,6 +549,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
             }
             case MqttQoS.EXACTLY_ONCE -> {
                 this.publishExactlyOnce(topic, payload, retain);
+            }
+            default  -> {
+                logger.warn("Invalid publish QoS={} for topic={}. Message will not be sent.", qos, topic);
+                throw new IllegalArgumentException("Invalid publish QoS=" + qos + " for topic=" + topic);
             }
         }
     }
