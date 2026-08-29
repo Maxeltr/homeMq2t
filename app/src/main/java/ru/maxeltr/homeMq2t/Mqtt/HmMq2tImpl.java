@@ -769,15 +769,15 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     // return unSubscribeFuture;
     // }
 
-    private void handleUnSubAckMessage(MqttUnsubAckMessage unSubAckMessage) {
-        int id = unSubAckMessage.variableHeader().messageId();
-        MqttUnsubscribeMessage unSubscribeMessage = this.mqttAckMediator.getMessage(id);
-        this.mqttAckMediator.remove(id);
-        this.subscribedTopics.keySet().removeAll(unSubscribeMessage.payload().topics());
-        logger.info("Unsubscribe message id={} has been acknowledged.", id);
-        logger.info("Clear active topics. List={}.", unSubscribeMessage.payload().topics());
-        ReferenceCountUtil.release(unSubscribeMessage);
-    }
+    // private void handleUnSubAckMessage(MqttUnsubAckMessage unSubAckMessage) {
+    //     int id = unSubAckMessage.variableHeader().messageId();
+    //     MqttUnsubscribeMessage unSubscribeMessage = this.mqttAckMediator.getMessage(id);
+    //     this.mqttAckMediator.remove(id);
+    //     this.subscribedTopics.keySet().removeAll(unSubscribeMessage.payload().topics());
+    //     logger.info("Unsubscribe message id={} has been acknowledged.", id);
+    //     logger.info("Clear active topics. List={}.", unSubscribeMessage.payload().topics());
+    //     ReferenceCountUtil.release(unSubscribeMessage);
+    // }
 
     @Override
     public void setMediator(ServiceMediator serviceMediator) {
