@@ -8,6 +8,7 @@ let saveCardTopic = "/app/saveCard";
 let deleteCardTopic = "/app/deleteCard";
 let saveMqttSettingsTopic = "/app/saveMqttSettings";
 let deleteMqttSettingsTopic = "/app/deleteMqttSettings";
+let sendCommandTopic = "/app/publish";
 
 function setConnected(connected) {
     $("#connect").prop("disabled", connected);
@@ -209,6 +210,11 @@ $(function () {
         if (!$(event.target).closest('#options').length) {
             $("#dropdown-menu").hide();
         }
+    });
+
+    $(document).on("click", "#sendCommand", function () {
+        const arg = $(this).val();
+        stompClient.send(sendCommandTopic, {}, JSON.stringify({'id': arg}));
     });
 
     $(document).on("click", "#editCardSettings", function () {
