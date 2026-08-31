@@ -144,6 +144,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     private static int reconnectAttempts = 0;
 
+    private Promise<MqttConnAckMessage> authFuture;
+
     private ScheduledFuture<?> retransmitScheduledFuture;
 
     private static final class TimeoutWithMessage extends TimeoutException {
@@ -159,6 +161,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttUnsubAckMessage>>> PENDING_UNSUBSCRIBES = AttributeKey
             .valueOf(AppProperties.NAME_PENDING_UNSUBSCRIBES);
 
+  public static final AttributeKey<Promise<MqttConnAckMessage> CONNACK_PROMISE = AttributeKey
+            .valueOf(AppProperties.NAME_CONNACK_PROMISE);
+  
     @Override
     public void run(String... args) {
         logger.info("Start app with args={}.", Arrays.toString(args));
@@ -173,8 +178,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         logger.debug("Start connect method.");
         if (connecting.get() || connected.get()) {
             logger.warn("Connecting or connected already. connecting={}. connected={}. auhtFuture={}", connecting.get(),
-                    connected.get(), mqttAckMediator.getConnectFuture());
-            return mqttAckMediator.getConnectFuture();
+                    connected.get(), authFuture);
+            return authFuture;
         }
         connecting.set(true);
         logger.info("Start connection attempt.");
@@ -184,7 +189,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         bootstrap.channel(NioSocketChannel.class);
         bootstrap.handler(mqttChannelInitializer);
 
-        Promise<MqttConnAckMessage> authFuture = new DefaultPromise<>(workerGroup.next());
+        authFuture = new DefaultPromise<>(workerGroup.next());
         authFuture.addListener(f -> {
             if (f.isSuccess()) {
                 connected.set(true);
@@ -199,8 +204,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                     f.isDone(), f.isSuccess(), f.isCancelled(), f);
             connecting.set(false);
         });
-        mqttAckMediator.setConnectFuture(authFuture);
-
+        
+        bootstrap.attr(CONNACK_PROMISE_KEY, authFuture);
+      
         bootstrap.remoteAddress(this.appProperties.getHost(),
                 AppUtils.safeParseInt(this.appProperties.getPort()).orElse(1883));
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.connectTimeout);
