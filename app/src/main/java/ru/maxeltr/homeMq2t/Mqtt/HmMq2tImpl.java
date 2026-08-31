@@ -229,11 +229,19 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     }
 
     private void cancelConnect() {
-        Promise<MqttConnAckMessage> authFuture = mqttAckMediator.getConnectFuture();
-        if (authFuture != null && !authFuture.isDone()) {
-            authFuture.cancel(true);
-            logger.debug("Cancel auth future.");
-        }
+      logger.debug("Executing cancelConnect to clean up resources.");
+
+      if (this.authFuture != null && !this.authFuture.isDone()) {
+        this.authFuture.cancel(true);
+        logger.debug("Auth future has been cancelled.");
+      }
+
+      if (this.channel != null && this.channel.isOpen()) {
+        logger.info("Closing active Netty channel to prevent leaks.");
+        this.channel.close(); 
+        this.channel = null;
+      }
+      
         connecting.set(false);
         connected.set(false);
     }
@@ -292,7 +300,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     @Override
     public void disconnect(byte reasonCode) {
-        Promise<MqttConnAckMessage> authFuture = mqttAckMediator.getConnectFuture();
+        logger.info("Initiating disconnect sequence. Reason code: {}", reasonCode);
+
         if (authFuture != null && !authFuture.isDone()) {
             authFuture.cancel(true);
         }
@@ -307,33 +316,41 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
             this.subscribedTopics.clear();
         }
 
+        connected.set(false);
+        consecutiveWriteFailerCount.set(0);
+        writeFailureCount.set(0);
+
         MqttFixedHeader mqttFixedHeader = new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE,
                 false, 0);
         MqttReasonCodeAndPropertiesVariableHeader mqttDisconnectVariableHeader = new MqttReasonCodeAndPropertiesVariableHeader(
                 reasonCode, MqttProperties.NO_PROPERTIES);
         MqttMessage message = new MqttMessage(mqttFixedHeader, mqttDisconnectVariableHeader);
 
-        this.writeAndFlush(message);
-
-        logger.info("Sent disconnection message reason={}, d={}, q={}, r={}.",
+      if (this.channel != null && this.channel.isActive()) {
+      
+        this.writeAndFlush(message).addListener((ChannelFutureListener) writeFuture -> {
+            logger.info("Sent disconnection message reason={}, d={}, q={}, r={}.",
                 mqttDisconnectVariableHeader.reasonCode(),
                 message.fixedHeader().isDup(),
                 message.fixedHeader().qosLevel(),
                 message.fixedHeader().isRetain());
-
-        try {
-            TimeUnit.MILLISECONDS.sleep(waitDisconnect);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            logger.info("Disconnect message has been send. InterruptedException while timeout.", ex);
+          
+            this.channel.close().addListener(f -> {
+                logger.debug("Netty channel closed after sending DISCONNECT. Invoking shutdown sequence.");
+                this.shutdown();
+                this.channel = null;
+            });
+        });
+        
+    } else {
+        logger.warn("Channel is not active. Skipping DISCONNECT message packet.");
+        if (this.channel != null) {
+            this.channel.close();
+            this.channel = null;
         }
-
         this.shutdown();
-
-        connected.set(false);
-        consecutiveWriteFailerCount.set(0);
-        writeFailureCount.set(0);
-    }
+   }
+}
 
     private void shutdown() {
         if (this.channel != null) {
