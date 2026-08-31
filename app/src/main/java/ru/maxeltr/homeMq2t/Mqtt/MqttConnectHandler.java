@@ -134,7 +134,7 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
     private void handleConnackMessage(Channel channel, MqttConnAckMessage message) {
         logger.debug("Handle ConnAckMessage {}.", message.variableHeader());
         MqttConnectReturnCode returnCode = message.variableHeader().connectReturnCode();
-        Promise<MqttConnAckMessage> future = this.mqttAckMediator.getConnectFuture();
+        Promise<MqttConnAckMessage> future = channel.attr(HmMq2tImpl.CONNACK_PROMISE).get()
         switch (returnCode) {
             case CONNECTION_ACCEPTED -> {
                 if (!future.isDone()) {
