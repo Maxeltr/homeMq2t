@@ -37,4 +37,6 @@ public interface SubscriptionService {
 
     public void subscribeFromConfig();
 
+    public void unsubscribeAll();
+
 }

@@ -98,7 +98,7 @@ public class ConnectManagerImpl implements ConnectManager {
     @Override
     public void disconnect(byte reasonCode) {
         logger.info("Do disconnect with reason code {}.", reasonCode);
-        //this.subscriptionService.unsubscribeFromConfig(); //TODO
+        this.subscriptionService.unsubscribeAll();
         this.mediator.disconnect(reasonCode);
     }
 

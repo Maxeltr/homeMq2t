@@ -150,7 +150,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             List<Integer> granted = ack.payload().grantedQoSLevels();
             for (int i = 0; i < granted.size(); i++) {
                 int grantedQos = granted.get(i);
-                String grantedTopic = prepared.get(i).topicName();
+                String grantedTopic = prepared.get(i).topicFilter();
                 Subscription sub = subscriptions.get(grantedTopic);
                 if (sub == null) {
                     logger.warn("Received SUBACK for topic {} which is not present in subscriptions. Message id={}", grantedTopic, ack.variableHeader().messageId());
@@ -175,6 +175,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         }
     }
 
+    
     @Override
     public void unsubscribe(List<HasSubscription> entities) {
         if (entities == null || entities.isEmpty()) {
@@ -224,6 +225,14 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         } else {
             subscribeAndUpdateStatusOfSubscriptions(toSubscribe);
         }
+    }
+
+    @Override
+    public void unsubscribeAll() {
+        List<HasSubscription> all = subscriptions.values().stream()
+                .flatMap(s -> s.getSubscribers().stream())
+                .collect(Collectors.toCollection(ArrayList::new));
+        unsubscribe(all);
     }
 
     private void unsubscribeAndRemoveSubscriptions(List<String> prepared) {

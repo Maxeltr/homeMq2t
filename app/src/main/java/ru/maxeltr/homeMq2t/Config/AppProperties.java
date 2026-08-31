@@ -62,6 +62,8 @@ public class AppProperties implements StartupTaskPropertiesProvider {
 
     public final static String NAME_PENDING_UNSUBSCRIBES = "pending_unsubscribes";
 
+    public final static String NAME_CONNACK_PROMISE = "connack_promise";
+
     @Autowired
     private Environment env;
 
