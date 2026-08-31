@@ -91,7 +91,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     private static final Logger logger = LoggerFactory.getLogger(HmMq2tImpl.class);
 
-    private EventLoopGroup workerGroup;
+    private EventLoopGroup workerGroup = new NioEventLoopGroup();
 
     private Channel channel;
 
@@ -176,14 +176,13 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     @Override
     public Promise<MqttConnAckMessage> connect() {
         logger.debug("Start connect method.");
-        if (connecting.get() || connected.get()) {
+        if (connected.get() || !connecting.compareAndSet(false, true)) {
             logger.warn("Connecting or connected already. connecting={}. connected={}. auhtFuture={}", connecting.get(),
                     connected.get(), authFuture);
             return authFuture;
         }
-        connecting.set(true);
+        
         logger.info("Start connection attempt.");
-        workerGroup = new NioEventLoopGroup();
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(workerGroup);
         bootstrap.channel(NioSocketChannel.class);
@@ -191,18 +190,20 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
         authFuture = new DefaultPromise<>(workerGroup.next());
         authFuture.addListener(f -> {
+            connecting.set(false);
             if (f.isSuccess()) {
                 connected.set(true);
                 logger.debug("Connection accepted. CONNACK message has been received {}.",
                         ((MqttConnAckMessage) f.get()).variableHeader());
-                // perform post-connection operations here
-                // HmMq2tImpl.this.subscribe(appProperties.getAllSubscriptions());
                 reconnectAttempts = 0;
                 this.startRetransmitTask();
+            } else {
+                logger.error("Connection attempt failed or timed out: {}", f.cause().getMessage());
+                this.cancelConnect();
             }
+          
             logger.debug("Connection attempt completed. authFuture isDone={}, isSuccess={}, isCancelled={}, future={}",
                     f.isDone(), f.isSuccess(), f.isCancelled(), f);
-            connecting.set(false);
         });
         
         bootstrap.attr(CONNACK_PROMISE_KEY, authFuture);
@@ -212,25 +213,19 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.connectTimeout);
         ChannelFuture channelFuture = bootstrap.connect();
         channelFuture.addListener((ChannelFutureListener) f -> {
-            HmMq2tImpl.this.channel = f.channel();
-            logger.debug("Waiting for ConnAckMessage. ChannelFuture isDone={}, isSuccess={}, isCancelled={}, future={}",
-                    f.isDone(), f.isSuccess(), f.isCancelled(), f);
+            if (f.isSuccess()) {
+                HmMq2tImpl.this.channel = f.channel();
+                logger.info("TCP connected to {} via port {}. Waiting for ConnAckMessage.", this.appProperties.getHost(), this.appProperties.getPort());
+              } else {
+                 logger.error("TCP connection failed to establish (Host: {}, Port: {}). Cause: {}", 
+                    this.appProperties.getHost(), this.appProperties.getPort(), f.cause().getMessage());
+                 authFuture.tryFailure(f.cause());
+            }
         });
 
-        logger.info("Connecting to {} via port {}.", this.appProperties.getHost(), this.appProperties.getPort());
-        channelFuture.awaitUninterruptibly();
-        if (channelFuture.isCancelled()) {
-            logger.info("Connection attempt cancelled.");
-            this.cancelConnect();
-        } else if (!channelFuture.isSuccess()) {
-            logger.info("Connection attempt failed {}.", channelFuture.cause().getMessage());
-            this.cancelConnect();
-        } else {
-            logger.info("Connected to {} via port {}.", this.appProperties.getHost(), this.appProperties.getPort());
-        }
+        logger.info("Connecting to {} via port {}.", this.appProperties.getHost(), this.appProperties.getPort())
 
         return authFuture;
-
     }
 
     private void cancelConnect() {
