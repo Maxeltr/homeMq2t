@@ -646,6 +646,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
             logger.error("Cannot write and flush message. Channel is null. Total failures={}, consecutive failures={}.",
                     writeFailureCount.incrementAndGet(),
                     consecutiveWriteFailerCount.incrementAndGet());
+            ReferenceCountUtil.release(message);
             return null;
         }
         if (this.channel.isActive()) {
@@ -665,6 +666,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         logger.error("Cannot write and flush message. Channel is closed. Total failures={}, consecutive failures={}.",
                 writeFailureCount.incrementAndGet(),
                 consecutiveWriteFailerCount.incrementAndGet());
+        ReferenceCountUtil.release(message);
+      
         return this.channel.newFailedFuture(new RuntimeException("Cannot write and flush message. Channel is closed."));
     }
 
