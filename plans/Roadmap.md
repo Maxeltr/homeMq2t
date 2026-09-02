@@ -14,6 +14,7 @@
 - **Потокобезопасный генератор ID** — переделать `getNewMessageId` с учетом многопоточности: `id = this.nextMessageId.updateAndGet(current >= 0xffff) ? 1 : current + 1)`.
 - **Сигнализация о понижении QoS** — если на топик не удалось подписаться или брокер понизил QoS, сигнализировать об этом и корректировать список подписок.
 - **Таймаут подписки** — в `SubscriptionService`: `Promise<MqttSubAckMessage> promise = mediator.subscribe(prepared);` если вышел `connectTimeout` (`promise.awaitUninterruptibly(this.connectTimeout)`), устанавливать promise в failure.
+- - **Инкапсуляция выделения ByteBuf внутри метода publish для предотвращения утечек памяти** — оборачивать в byteBuf сообщение в самом классе hmMq2t. Т.е. метод publish будет принимать String.
 
 ## Модель данных и подписки
 
