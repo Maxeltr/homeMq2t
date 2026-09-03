@@ -521,6 +521,73 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 message.fixedHeader().isRetain());
     }
 
+    private Promise<MqttPubAckMessage> publishAtLeastOnce(String topic, ByteBuf payload, boolean retain) {
+        int id = this.getNewMessageId();
+
+        byte[] bytes = new byte[payload.readableBytes()];
+        payload.getBytes(payload.readerIndex(), bytes);
+
+        CompletableFuture.runAsync(() -> {
+            this.messageRepository.savePendingMessage(id, topic, bytes, retain);
+        }, this.workerGroup);
+
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, retain,
+                0);
+        MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
+        MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
+
+        Promise<MqttPubAckMessage> publishFuture = this.channel.eventLoop().newPromise();
+
+        var pendingPubAckAttr = this.channel.attr(PENDING_PUBACK);
+        ConcurrentHashMap<Integer, Promise<MqttPubAckMessage>> pendingPubAck = pendingPubAckAttr.get();
+        if (pendingPubAck == null) {
+            pendingPubAck = new ConcurrentHashMap<>();
+            var oldMap = pendingPubAckAttr.setIfAbsent(pendingPubAck);
+            if (oldMap != null) {
+                pendingPubAck = oldMap;
+            }
+        }
+
+        pendingPubAck.put(id, publishFuture);
+        
+        final ConcurrentHashMap<Integer, Promise<MqttPubAckMessage>> finalPendingPubAck = pendingPubAck;
+
+        ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
+            if (publishFuture != null && !publishFuture.isDone()) {
+                logger.warn("Timeout PUBLISH with QoS=1 for id={} is over.", id);
+                publishFuture.tryFailure(
+                        new TimeoutWithMessage("Broker did not answer for publish message."));
+            }
+        }, this.publishQos1Timeout, TimeUnit.SECONDS);
+
+        publishFuture.addListener((Promise<MqttPubAckMessage> f) -> {
+            finalPendingPubAck.remove(id);
+            if (scheduledTask != null && !scheduledTask.isDone()) {
+                scheduledTask.cancel(false);
+            }
+            if (f.isSuccess()) {
+                var ack = f.getNow();
+                logger.info("Publish message id={} has been acknowledged", ack.variableHeader().packetId());
+                CompletableFuture.runAsync(() -> {
+                        this.messageRepository.deletePendingMessage(id);
+                    }, this.workerGroup);
+                //TODO handle medsage?
+            } else {
+                logger.warn("Publish message with QoS=1 id={} failed: {}", id, f.cause().getMessage());
+            }
+        });
+
+        this.writeAndFlush(message);
+        logger.info("Sent publish message id={}, t={}, d={}, q={}, r={}.",
+                message.variableHeader().packetId(),
+                message.variableHeader().topicName(),
+                message.fixedHeader().isDup(),
+                message.fixedHeader().qosLevel(),
+                message.fixedHeader().isRetain());
+
+        return publishFuture;
+    }
+    
     public void publishAtLeastOnce(String topic, ByteBuf payload, boolean retain) {
         int id = this.getNewMessageId();
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, retain,
