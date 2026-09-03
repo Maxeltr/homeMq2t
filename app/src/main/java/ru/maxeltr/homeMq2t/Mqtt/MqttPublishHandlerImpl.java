@@ -83,7 +83,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
 
                 break;
             case PUBACK:
-                MqttPubAckMessage pubAckMessage = (MqttPubAckMessage) msg;
+                /*MqttPubAckMessage pubAckMessage = (MqttPubAckMessage) msg;
                 int id = pubAckMessage.variableHeader().messageId();
                 logger.info("Received PUBACK. Message id: {}, d: {}, q: {}, r: {}.",
                         id,
@@ -96,7 +96,38 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                     logger.warn("There is no stored future of PUBLISH message for PUBACK message id={}. May be it was acknowledged already. ", id);
                     return;
                 }
-                future.setSuccess(pubAckMessage);
+                future.setSuccess(pubAckMessage);*/
+
+                MqttPubAckMessage pubAckMessage = (MqttPubAckMessage) msg;
+                int id = pubAckMessage.variableHeader().messageId();
+                logger.info("Received PUBACK. Message id: {}, d: {}, q: {}, r: {}.",
+                        id,
+                        pubAckMessage.fixedHeader().isDup(),
+                        pubAckMessage.fixedHeader().qosLevel(),
+                        pubAckMessage.fixedHeader().isRetain()
+                );
+                
+                var pendingPubAckAttr = ctx.channel().attr(PENDING_PUBACK);
+                ConcurrentHashMap<Integer, Promise<MqttPubAckMessage>> pendingPubAck = pendingPubAckAttr.get();
+                if (pendingPubAck == null) {
+                    logger.warn("There is no pending pub ack map for this channel. Message id={} dropped.", id);
+                    return;
+                }
+
+                Promise<MqttPubAckMessage> future = pendingPubAck.remove(id);
+                if (future == null) {
+                    logger.warn("There is no stored future for PUBACK id={}. Maybe it timed out and map was cleaned.", id);
+                    return;
+                }
+
+                if (!future.trySuccess(pubAckMessage)) {
+                    logger.warn("PUBACK for id={} arrived, but the promise was already completed (likely timeout). Cleaning DB anyway.", id);
+                    CompletableFuture.runAsync(() -> {
+                        this.messageRepository.deletePendingMessage(id);
+                    }, ctx.executor()); 
+                } else {
+                    logger.info("Successfully acknowledged message with QoS=1 id={}", id);
+                }
 
                 break;
             case PUBREC:
