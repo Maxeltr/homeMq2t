@@ -122,11 +122,6 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
 
                 if (!future.trySuccess(pubAckMessage)) {
                     logger.warn("PUBACK for id={} arrived, but the promise was already completed (likely timeout). Cleaning DB anyway.", id);
-                    CompletableFuture.runAsync(() -> {
-                        this.messageRepository.deletePendingMessage(id);
-                    }, ctx.executor()); 
-                } else {
-                    logger.info("Successfully acknowledged message with QoS=1 id={}", id);
                 }
 
                 break;
