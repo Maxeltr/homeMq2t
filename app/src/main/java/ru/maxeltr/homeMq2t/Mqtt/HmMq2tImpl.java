@@ -716,26 +716,20 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
             ReferenceCountUtil.release(message);
             return null;
         }
-        if (this.channel.isActive()) {
-            ChannelFuture future = this.channel.writeAndFlush(message);
-            future.addListener((ChannelFutureListener) f -> {
-                if (!f.isSuccess()) {
-                    logger.error("Write failed. Total failures={}, consecutive failures={}. {}",
-                            writeFailureCount.incrementAndGet(),
-                            consecutiveWriteFailerCount.incrementAndGet(),
-                            f.cause());
-                } else {
-                    consecutiveWriteFailerCount.set(0);
-                }
-            });
-            return future;
-        }
-        logger.error("Cannot write and flush message. Channel is closed. Total failures={}, consecutive failures={}.",
-                writeFailureCount.incrementAndGet(),
-                consecutiveWriteFailerCount.incrementAndGet());
-        ReferenceCountUtil.release(message);
-      
-        return this.channel.newFailedFuture(new RuntimeException("Cannot write and flush message. Channel is closed."));
+        
+        ChannelFuture future = this.channel.writeAndFlush(message);
+        future.addListener((ChannelFutureListener) f -> {
+            if (!f.isSuccess()) {
+                logger.error("Write failed. Total failures={}, consecutive failures={}. {}",
+                        writeFailureCount.incrementAndGet(),
+                        consecutiveWriteFailerCount.incrementAndGet(),
+                        f.cause());
+            } else {
+                consecutiveWriteFailerCount.set(0);
+            }
+        });
+        
+        return future;
     }
 
     private int getNewMessageId() {
