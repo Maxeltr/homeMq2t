@@ -62,6 +62,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeoutException;
@@ -122,6 +123,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     @Value("${subscribe-timeout:1000}")
     private int subscribeTimeout;
 
+    private int publishQos1Timeout = 5;
+
     @Autowired
     private AppProperties appProperties;
 
@@ -164,6 +167,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     public static final AttributeKey<Promise<MqttConnAckMessage>> CONNACK_PROMISE = AttributeKey
             .valueOf(AppProperties.NAME_CONNACK_PROMISE);
+
+    public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttPubAckMessage>>> PENDING_PUBACK = AttributeKey
+            .valueOf(AppProperties.NAME_PENDING_PUBACK);
 
     @Override
     public void run(String... args) {
@@ -527,9 +533,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         byte[] bytes = new byte[payload.readableBytes()];
         payload.getBytes(payload.readerIndex(), bytes);
 
-        CompletableFuture.runAsync(() -> {
-            this.messageRepository.savePendingMessage(id, topic, bytes, retain);
-        }, this.workerGroup);
+        // CompletableFuture.runAsync(() -> {
+        //     this.messageRepository.savePendingMessage(id, topic, bytes, retain);
+        // }, this.workerGroup);
 
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, retain,
                 0);
@@ -542,7 +548,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         ConcurrentHashMap<Integer, Promise<MqttPubAckMessage>> pendingPubAck = pendingPubAckAttr.get();
         if (pendingPubAck == null) {
             pendingPubAck = new ConcurrentHashMap<>();
-            var oldMap = pendingPubAckAttr.setIfAbsent(pendingPubAck);
+            ConcurrentHashMap<Integer, Promise<MqttPubAckMessage>> oldMap = pendingPubAckAttr.setIfAbsent(pendingPubAck);
             if (oldMap != null) {
                 pendingPubAck = oldMap;
             }
@@ -567,10 +573,10 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
             }
             if (f.isSuccess()) {
                 var ack = f.getNow();
-                logger.info("Publish message id={} has been acknowledged", ack.variableHeader().packetId());
-                CompletableFuture.runAsync(() -> {
-                        this.messageRepository.deletePendingMessage(id);
-                    }, this.workerGroup);
+                logger.info("Publish message id={} has been acknowledged", ack.variableHeader().messageId());
+                // CompletableFuture.runAsync(() -> {
+                //         this.messageRepository.deletePendingMessage(id);
+                //     }, this.workerGroup);
                 //TODO handle medsage?
             } else {
                 logger.warn("Publish message with QoS=1 id={} failed: {}", id, f.cause().getMessage());
@@ -588,29 +594,29 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         return publishFuture;
     }
     
-    public void publishAtLeastOnce(String topic, ByteBuf payload, boolean retain) {
-        int id = this.getNewMessageId();
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, retain,
-                0);
-        MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
-        MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
+    // public void publishAtLeastOnce(String topic, ByteBuf payload, boolean retain) {
+    //     int id = this.getNewMessageId();
+    //     MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, retain,
+    //             0);
+    //     MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
+    //     MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
 
-        Promise<MqttPubAckMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
-        this.mqttAckMediator.add(id, publishFuture, message);
-        publishFuture.addListener((Promise<MqttPubAckMessage> f) -> {
-            HmMq2tImpl.this.handlePubAckMessage(f.get());
-        });
+    //     Promise<MqttPubAckMessage> publishFuture = new DefaultPromise<>(this.workerGroup.next());
+    //     this.mqttAckMediator.add(id, publishFuture, message);
+    //     publishFuture.addListener((Promise<MqttPubAckMessage> f) -> {
+    //         HmMq2tImpl.this.handlePubAckMessage(f.get());
+    //     });
 
-        ReferenceCountUtil.retain(message); // TODO is it nessesary?
+    //     ReferenceCountUtil.retain(message); // TODO is it nessesary?
 
-        this.writeAndFlush(message);
-        logger.info("Sent publish message id={}, t={}, d={}, q={}, r={}.",
-                message.variableHeader().packetId(),
-                message.variableHeader().topicName(),
-                message.fixedHeader().isDup(),
-                message.fixedHeader().qosLevel(),
-                message.fixedHeader().isRetain());
-    }
+    //     this.writeAndFlush(message);
+    //     logger.info("Sent publish message id={}, t={}, d={}, q={}, r={}.",
+    //             message.variableHeader().packetId(),
+    //             message.variableHeader().topicName(),
+    //             message.fixedHeader().isDup(),
+    //             message.fixedHeader().qosLevel(),
+    //             message.fixedHeader().isRetain());
+    // }
 
     private void handlePubAckMessage(MqttPubAckMessage pubAckMessage) {
         int id = pubAckMessage.variableHeader().messageId();

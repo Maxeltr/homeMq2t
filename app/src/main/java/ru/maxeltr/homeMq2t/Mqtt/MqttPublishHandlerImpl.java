@@ -38,6 +38,9 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.FutureListener;
 import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
+
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -107,7 +110,7 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                         pubAckMessage.fixedHeader().isRetain()
                 );
                 
-                var pendingPubAckAttr = ctx.channel().attr(PENDING_PUBACK);
+                var pendingPubAckAttr = ctx.channel().attr(HmMq2tImpl.PENDING_PUBACK);
                 ConcurrentHashMap<Integer, Promise<MqttPubAckMessage>> pendingPubAck = pendingPubAckAttr.get();
                 if (pendingPubAck == null) {
                     logger.warn("There is no pending pub ack map for this channel. Message id={} dropped.", id);

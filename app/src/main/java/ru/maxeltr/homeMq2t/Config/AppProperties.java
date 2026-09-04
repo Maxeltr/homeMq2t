@@ -64,6 +64,8 @@ public class AppProperties implements StartupTaskPropertiesProvider {
 
     public final static String NAME_CONNACK_PROMISE = "connack_promise";
 
+    public final static String NAME_PENDING_PUBACK = "pending_puback";
+
     @Autowired
     private Environment env;
 
