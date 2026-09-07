@@ -201,6 +201,34 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         future.setSuccess(message);
     }
 
+    private void handlePubRec(MqttMessage message) {
+        MqttMessage pubRecMessage = (MqttMessage) message;
+        int id = ((MqttMessageIdVariableHeader) pubRecMessage.variableHeader()).messageId();
+        logger.info("Received PUBREC. Message id: {}, d: {}, q: {}, r: {}.",
+            id,
+            pubRecMessage.fixedHeader().isDup(),
+            pubRecMessage.fixedHeader().qosLevel(),
+            pubRecMessage.fixedHeader().isRetain()
+        );
+
+        var pendingPubRecAttr = ctx.channel().attr(HmMq2tImpl.PENDING_PUBREC);
+        ConcurrentHashMap<Integer, Promise<MqttMessage>> pendingPubRec = pendingPubRecAttr.get();
+        if (pendingPubRec == null) {
+            logger.warn("There is no pending pub rec map for this channel. Message id={} dropped.", id);
+            return;
+        }
+
+        Promise<MqttMessage> future = pendingPubRec.remove(id);
+       if (future == null) {
+            logger.warn("There is no stored future for PUBREC id={}. Maybe it timed out and map was cleaned.", id);
+            return;
+        }
+
+        if (!future.trySuccess(pubRecMessage)) {
+            logger.warn("PUBREC for id={} arrived, but the promise was already completed (likely timeout).", id);
+        }
+    }
+    
     private void handlePubRel(Channel channel, MqttMessage pubRelMessage) {
         MqttMessageIdVariableHeader variableHeader = (MqttMessageIdVariableHeader) pubRelMessage.variableHeader();
         int id = variableHeader.messageId();
