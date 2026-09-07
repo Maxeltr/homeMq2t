@@ -658,6 +658,74 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 message.fixedHeader().isRetain());
     }
 
+    private Promise<MqttMessage> publishExactlyOnce(String topic, ByteBuf payload, boolean retain) {
+        int id = this.getNewMessageId();
+
+        byte[] bytes = new byte[payload.readableBytes()];
+        payload.getBytes(payload.readerIndex(), bytes);
+
+        // CompletableFuture.runAsync(() -> {
+        //     this.messageRepository.savePendingMessage(id, topic, bytes, retain);
+        // }, this.workerGroup);
+
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.EXACTLY_ONCE, retain,
+                0);
+        MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
+        MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
+
+        Promise<MqttMessage> publishFuture = this.channel.eventLoop().newPromise();
+
+        var pendingPubRecAttr = this.channel.attr(PENDING_PUBREC);
+        ConcurrentHashMap<Integer, Promise<MqttMessage>> pendingPubRec = pendingPubRecAttr.get();
+        if (pendingPubRec == null) {
+            pendingPubRec = new ConcurrentHashMap<>();
+            ConcurrentHashMap<Integer, Promise<MqttMessage>> oldMap = pendingPubRecAttr.setIfAbsent(pendingPubRec);
+            if (oldMap != null) {
+                pendingPubRec = oldMap;
+            }
+        }
+
+        pendingPubRec.put(id, publishFuture);
+        
+        final ConcurrentHashMap<Integer, Promise<MqttMessage>> finalPendingPubRec = pendingPubRec;
+
+        ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
+            if (publishFuture != null && !publishFuture.isDone()) {
+                logger.warn("Timeout PUBLISH with QoS=2 for id={} is over.", id);
+                publishFuture.tryFailure(
+                        new TimeoutWithMessage("Broker did not answer for publish message."));
+            }
+        }, this.publishQos2Timeout, TimeUnit.SECONDS);
+
+        publishFuture.addListener((Promise<MqttMessage> f) -> {
+            finalPendingPubRec.remove(id);
+            if (scheduledTask != null && !scheduledTask.isDone()) {
+                scheduledTask.cancel(false);
+            }
+            if (f.isSuccess()) {
+                var ack = f.getNow();
+                int packetId = ((MqttMessageIdVariableHeader) pubRec.variableHeader()).messageId();
+                logger.info("Publish message id={} has been acknowledged", packetId);
+                // CompletableFuture.runAsync(() -> {
+                //         this.messageRepository.deletePendingMessage(id);
+                //     }, this.workerGroup);
+                //TODO sendPubRel
+            } else {
+                logger.warn("Publish message with QoS=2 id={} failed: {}", id, f.cause().getMessage());
+            }
+        });
+
+        this.writeAndFlush(message);
+        logger.info("Sent publish message id={}, t={}, d={}, q={}, r={}.",
+                message.variableHeader().packetId(),
+                message.variableHeader().topicName(),
+                message.fixedHeader().isDup(),
+                message.fixedHeader().qosLevel(),
+                message.fixedHeader().isRetain());
+
+        return publishFuture;
+    }
+
     private void handlePubRecMessage(MqttMessage pubRecMessage) {
         int id = ((MqttMessageIdVariableHeader) pubRecMessage.variableHeader()).messageId();
         MqttPublishMessage publishMessage = this.mqttAckMediator.getMessage(id);
