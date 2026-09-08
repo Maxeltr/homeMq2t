@@ -66,6 +66,8 @@ public class AppProperties implements StartupTaskPropertiesProvider {
 
     public final static String NAME_PENDING_PUBACK = "pending_puback";
 
+    public final static String NAME_PENDING_PUBREC = "pending_pubrec";
+
     @Autowired
     private Environment env;
 
