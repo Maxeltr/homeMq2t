@@ -186,20 +186,20 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         future.setSuccess(message);
     }
 
-    private void handlePubRec(MqttMessage message) {
-        int id = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
-        MqttMessage storedMessage = this.mqttAckMediator.getMessage(id);
-        if (!(storedMessage instanceof MqttPublishMessage)) {
-            logger.warn("Error. There is no stored publish message for received PUBREC message id={}.", id);
-            return;
-        }
-        Promise<MqttMessage> future = this.mqttAckMediator.getFuture(id);
-        if (future == null) {
-            logger.warn("There is no stored future of PUBLISH message for PUBREC message id={}.May be it was acknowledged already.", id);
-            return;
-        }
-        future.setSuccess(message);
-    }
+    // private void handlePubRec(MqttMessage message) {
+    //     int id = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
+    //     MqttMessage storedMessage = this.mqttAckMediator.getMessage(id);
+    //     if (!(storedMessage instanceof MqttPublishMessage)) {
+    //         logger.warn("Error. There is no stored publish message for received PUBREC message id={}.", id);
+    //         return;
+    //     }
+    //     Promise<MqttMessage> future = this.mqttAckMediator.getFuture(id);
+    //     if (future == null) {
+    //         logger.warn("There is no stored future of PUBLISH message for PUBREC message id={}.May be it was acknowledged already.", id);
+    //         return;
+    //     }
+    //     future.setSuccess(message);
+    // }
 
     private void handlePubRec(MqttMessage message) {
         MqttMessage pubRecMessage = (MqttMessage) message;
