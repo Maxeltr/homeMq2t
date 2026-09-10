@@ -772,6 +772,67 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 pubrelMessage.fixedHeader().isRetain());
     }
 
+    private Promise<MqttMessage> sendPubRelMessage(int id) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(
+            MqttMessageType.PUBREL, 
+            false, 
+            MqttQoS.AT_LEAST_ONCE, 
+            false,
+            0
+        );
+        MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
+        MqttMessage pubrelMessage = new MqttMessage(fixedHeader, variableHeader);
+
+        Promise<MqttMessage> pubRelFuture = this.channel.eventLoop().newPromise();
+
+        var pendingPubCompAttr = this.channel.attr(PENDING_PUBCOMP);
+        ConcurrentHashMap<Integer, Promise<MqttMessage>> pendingPubComp = pendingPubCompAttr.get();
+        if (pendingPubComp == null) {
+            pendingPubComp = new ConcurrentHashMap<>();
+            ConcurrentHashMap<Integer, Promise<MqttMessage>> oldMap = pendingPubCompAttr.setIfAbsent(pendingPubComp);
+            if (oldMap != null) {
+                pendingPubComp = oldMap;
+            }
+        }
+
+        pendingPubComp.put(id, pubRelFuture);
+    
+        final ConcurrentHashMap<Integer, Promise<MqttMessage>> finalPendingPubComp = pendingPubComp;
+
+        ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
+            if (pubRelFuture != null && !pubRelFuture.isDone()) {
+                logger.warn("Timeout PUBREL with QoS=2 for id={} is over.", id);
+                pubRelFuture.tryFailure(
+                    new TimeoutWithMessage("Broker did not answer with PUBCOMP for message id=" + id));
+            }
+        }, this.pubrelQos2Timeout, TimeUnit.SECONDS); // Используйте ваш конфиг таймаута для PUBREL
+
+        pubRelFuture.addListener((Future<MqttMessage> f) -> {
+            finalPendingPubComp.remove(id);
+            if (scheduledTask != null && !scheduledTask.isDone()) {
+               bscheduledTask.cancel(false);
+            }
+            if (f.isSuccess()) {
+                var ack = f.getNow();
+                int packetId = ((MqttMessageIdVariableHeader) ack.variableHeader()).messageId();
+                logger.info("PUBREL message id={} has been acknowledged with PUBCOMP", packetId);
+                //this.handlePubCompMessage(ack);
+            } else {
+                logger.warn("PUBREL message with QoS=2 id={} failed or timed out: {}", id, f.cause().getMessage());
+            }
+        });
+
+        this.writeAndFlush(pubrelMessage);
+    
+        logger.info("Sent PUBREL message id={}, d={}, q={}, r={}.",
+            variableHeader.messageId(),
+            pubrelMessage.fixedHeader().isDup(),
+            pubrelMessage.fixedHeader().qosLevel(),
+            pubrelMessage.fixedHeader().isRetain());
+
+        return pubRelFuture;
+    }
+
     private void handlePubCompMessage(MqttMessage pubCompMessage) {
         int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();
         MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
