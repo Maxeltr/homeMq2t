@@ -855,6 +855,20 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     }
 
+    private void handlePubCompMessage(MqttMessage pubCompMessage) {
+        int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();
+    
+        logger.info("PubRelMessage id={} has been successfully acknowledged by broker.", id);
+    
+        CompletableFuture.runAsync(() -> {
+            //this.messageRepository.deletePendingMessage(id);
+        }, this.workerGroup).whenComplete((v, ex) -> {
+            if (ex != null) {
+                logger.error("Failed to delete acknowledged QoS 2 message id={} from DB", id, ex);
+            }
+        });
+    }
+
     private ChannelFuture writeAndFlush(Object message) {
         if (this.channel == null) {
             logger.error("Cannot write and flush message. Channel is null. Total failures={}, consecutive failures={}.",
