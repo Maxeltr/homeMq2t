@@ -127,6 +127,8 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     private int publishQos2Timeout = 5;
 
+    private int pubRelQos2Timeout = 5;
+
     @Autowired
     private AppProperties appProperties;
 
@@ -176,6 +178,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
     public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttMessage>>> PENDING_PUBREC = AttributeKey
             .valueOf(AppProperties.NAME_PENDING_PUBREC);
 
+    public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttMessage>>> PENDING_PUBCOMP = AttributeKey
+            .valueOf(AppProperties.NAME_PENDING_PUBCOMP);
+  
     @Override
     public void run(String... args) {
         logger.info("Start app with args={}.", Arrays.toString(args));
@@ -404,7 +409,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         ScheduledFuture<?> scheduledTask = this.channel.eventLoop().schedule(() -> {
             if (subscribeFuture != null && !subscribeFuture.isDone()) {
                 logger.warn("Timeout SUBACK for id={} is over.", id);
-                subscribeFuture.tryFailure(new TimeoutWithMessage("Broker did not answer for subscribe message."));
+                subscribeFuture.tryFailure(new TimeoutWithMessage("Broker did not answer for subscribe message id=" + id));
             }
         }, this.subscribeTimeout, TimeUnit.SECONDS);
 
@@ -474,7 +479,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
             if (unsubscribeFuture != null && !unsubscribeFuture.isDone()) {
                 logger.warn("Timeout UNSUBACK for id={} is over.", id);
                 unsubscribeFuture.tryFailure(
-                        new TimeoutWithMessage("Broker did not answer for unsubscribe message."));
+                        new TimeoutWithMessage("Broker did not answer for unsubscribe message id=" + id));
             }
         }, this.subscribeTimeout, TimeUnit.SECONDS);
 
@@ -698,7 +703,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
             if (publishFuture != null && !publishFuture.isDone()) {
                 logger.warn("Timeout PUBLISH with QoS=2 for id={} is over.", id);
                 publishFuture.tryFailure(
-                        new TimeoutWithMessage("Broker did not answer for publish message."));
+                        new TimeoutWithMessage("Broker did not answer for publish message id=" + id));
             }
         }, this.publishQos2Timeout, TimeUnit.SECONDS);
 
@@ -805,12 +810,12 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 pubRelFuture.tryFailure(
                     new TimeoutWithMessage("Broker did not answer with PUBCOMP for message id=" + id));
             }
-        }, this.pubrelQos2Timeout, TimeUnit.SECONDS); // Используйте ваш конфиг таймаута для PUBREL
+        }, this.pubRelQos2Timeout, TimeUnit.SECONDS);
 
         pubRelFuture.addListener((Future<MqttMessage> f) -> {
             finalPendingPubComp.remove(id);
             if (scheduledTask != null && !scheduledTask.isDone()) {
-               bscheduledTask.cancel(false);
+               scheduledTask.cancel(false);
             }
             if (f.isSuccess()) {
                 var ack = f.getNow();
