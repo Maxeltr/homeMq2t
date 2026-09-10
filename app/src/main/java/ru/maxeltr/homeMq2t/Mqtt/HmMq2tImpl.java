@@ -712,9 +712,11 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
                 int packetId = ((MqttMessageIdVariableHeader) ack.variableHeader()).messageId();
                 logger.info("Publish message id={} has been acknowledged", packetId);
                 // CompletableFuture.runAsync(() -> {
-                //         this.messageRepository.deletePendingMessage(id);
-                //     }, this.workerGroup);
-                //TODO sendPubRel
+                //         this.messageRepository.updateMessageStatus(packetId, "SEND_PUBREL");
+                //     }, this.workerGroup). thenRun(() -> {
+                        //TODO sendPubRel
+                //});
+                
             } else {
                 logger.warn("Publish message with QoS=2 id={} failed: {}", id, f.cause().getMessage());
             }
