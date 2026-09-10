@@ -185,7 +185,29 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         }
         future.setSuccess(message);
     }
+    
+    private void handlePubComp(MqttMessage message) {
+        int id = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
+    
+        var pendingPubCompAttr = ctx.channel().attr(HmMq2tImpl.PENDING_PUBCOMP);
+        ConcurrentHashMap<Integer, Promise<MqttMessage>> pendingPubComp = pendingPubCompAttr.get();
+    
+        if (pendingPubComp == null) {
+            logger.warn("There is no pending pub comp map for this channel. Message id={} dropped.", id);
+            return;
+        }
+    
+        Promise<MqttMessage> future = pendingPubComp.remove(id);
+        if (future == null) {
+            logger.warn("There is no stored future for PUBCOMP id={}. Maybe it timed out.", id);
+            return;
+        }
+        if (!future.trySuccess(message)) {
+            logger.warn("PUBCOMP for id={} arrived, but the promise was already completed (likely timeout).", id);
+        }
+    }
 
+    
     // private void handlePubRec(MqttMessage message) {
     //     int id = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
     //     MqttMessage storedMessage = this.mqttAckMediator.getMessage(id);
