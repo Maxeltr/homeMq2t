@@ -801,6 +801,7 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         ChannelFuture future = this.channel.writeAndFlush(message);
         future.addListener((ChannelFutureListener) f -> {
             if (!f.isSuccess()) {
+              ReferenceCountUtil.release(message);
                 logger.error("Write failed. Total failures={}, consecutive failures={}. {}",
                         writeFailureCount.incrementAndGet(),
                         consecutiveWriteFailerCount.incrementAndGet(),
