@@ -755,27 +755,27 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         this.sendPubRelMessage(id);
     }
 
-    private void sendPubRelMessage(int id) {
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBREL, false, MqttQoS.AT_LEAST_ONCE, false,
-                0);
-        MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
-        MqttMessage pubrelMessage = new MqttMessage(fixedHeader, variableHeader);
+    // private void sendPubRelMessage(int id) {
+    //     MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBREL, false, MqttQoS.AT_LEAST_ONCE, false,
+    //             0);
+    //     MqttMessageIdVariableHeader variableHeader = MqttMessageIdVariableHeader.from(id);
+    //     MqttMessage pubrelMessage = new MqttMessage(fixedHeader, variableHeader);
 
-        Promise<MqttMessage> pubRelFuture = new DefaultPromise<>(this.workerGroup.next());
-        this.mqttAckMediator.add(id, pubRelFuture, pubrelMessage);
-        pubRelFuture.addListener((Promise<MqttMessage> f) -> {
-            HmMq2tImpl.this.handlePubCompMessage(f.get());
-        });
+    //     Promise<MqttMessage> pubRelFuture = new DefaultPromise<>(this.workerGroup.next());
+    //     this.mqttAckMediator.add(id, pubRelFuture, pubrelMessage);
+    //     pubRelFuture.addListener((Promise<MqttMessage> f) -> {
+    //         HmMq2tImpl.this.handlePubCompMessage(f.get());
+    //     });
 
-        ReferenceCountUtil.retain(pubrelMessage); // TODO is it nessesary?
+    //     ReferenceCountUtil.retain(pubrelMessage); // TODO is it nessesary?
 
-        this.writeAndFlush(pubrelMessage);
-        logger.info("Sent PUBREL message id={}, d={}, q={}, r={}.",
-                variableHeader.messageId(),
-                pubrelMessage.fixedHeader().isDup(),
-                pubrelMessage.fixedHeader().qosLevel(),
-                pubrelMessage.fixedHeader().isRetain());
-    }
+    //     this.writeAndFlush(pubrelMessage);
+    //     logger.info("Sent PUBREL message id={}, d={}, q={}, r={}.",
+    //             variableHeader.messageId(),
+    //             pubrelMessage.fixedHeader().isDup(),
+    //             pubrelMessage.fixedHeader().qosLevel(),
+    //             pubrelMessage.fixedHeader().isRetain());
+    // }
 
     private Promise<MqttMessage> sendPubRelMessage(int id) {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(
@@ -838,22 +838,22 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         return pubRelFuture;
     }
 
-    private void handlePubCompMessage(MqttMessage pubCompMessage) {
-        int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();
-        MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
-        /*
-         * if (pubrelMessage == null ) {
-         * logger.
-         * warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already."
-         * );
-         * return;
-         * }
-         */
-        this.mqttAckMediator.remove(id);
-        logger.info("PubRelMessage id={} has been acknowledged.", id);
-        ReferenceCountUtil.release(pubrelMessage);
+    // private void handlePubCompMessage(MqttMessage pubCompMessage) {
+    //     int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();
+    //     MqttMessage pubrelMessage = this.mqttAckMediator.getMessage(id);
+    //     /*
+    //      * if (pubrelMessage == null ) {
+    //      * logger.
+    //      * warn("There is no stored PUBREL message for PUBCOMP message. May be it was acknowledged already."
+    //      * );
+    //      * return;
+    //      * }
+    //      */
+    //     this.mqttAckMediator.remove(id);
+    //     logger.info("PubRelMessage id={} has been acknowledged.", id);
+    //     ReferenceCountUtil.release(pubrelMessage);
 
-    }
+    // }
 
     private void handlePubCompMessage(MqttMessage pubCompMessage) {
         int id = ((MqttMessageIdVariableHeader) pubCompMessage.variableHeader()).messageId();

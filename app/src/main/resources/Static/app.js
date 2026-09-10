@@ -14,7 +14,7 @@ function setConnected(connected) {
     $("#connect").prop("disabled", connected);
     $("#disconnect").prop("disabled", !connected);
     $("#shutdown").prop("disabled", !connected);
-    $("#options").prop("disabled", !connected);
+    //$("#options").prop("disabled", !connected);
 }
 
 function connect() {

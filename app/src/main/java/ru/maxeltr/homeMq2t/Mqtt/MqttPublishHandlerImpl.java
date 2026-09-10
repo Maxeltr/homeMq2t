@@ -171,20 +171,20 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         }
     }
 
-    private void handlePubComp(MqttMessage message) {
-        int id = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
-        MqttMessage storedMessage = this.mqttAckMediator.getMessage(id);
-        if (storedMessage.fixedHeader().messageType() != MqttMessageType.PUBREL) {
-            logger.warn("Error. There is no stored PUBREL message for received PUBCOMP id={}.", id);
-            return;
-        }
-        Promise<MqttMessage> future = this.mqttAckMediator.getFuture(id);
-        if (future == null) {
-            logger.warn("There is no stored future of PUBREL message for PUBCOMP message id={}. May be it was acknowledged already.", id);
-            return;
-        }
-        future.setSuccess(message);
-    }
+    // private void handlePubComp(MqttMessage message) {
+    //     int id = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
+    //     MqttMessage storedMessage = this.mqttAckMediator.getMessage(id);
+    //     if (storedMessage.fixedHeader().messageType() != MqttMessageType.PUBREL) {
+    //         logger.warn("Error. There is no stored PUBREL message for received PUBCOMP id={}.", id);
+    //         return;
+    //     }
+    //     Promise<MqttMessage> future = this.mqttAckMediator.getFuture(id);
+    //     if (future == null) {
+    //         logger.warn("There is no stored future of PUBREL message for PUBCOMP message id={}. May be it was acknowledged already.", id);
+    //         return;
+    //     }
+    //     future.setSuccess(message);
+    // }
     
     private void handlePubComp(MqttMessage message) {
         int id = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
