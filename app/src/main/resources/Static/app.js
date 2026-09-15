@@ -10,49 +10,78 @@ let saveMqttSettingsTopic = "/app/saveMqttSettings";
 let deleteMqttSettingsTopic = "/app/deleteMqttSettings";
 let sendCommandTopic = "/app/publish";
 
-function setConnected(connected) {
-    $("#connect").prop("disabled", connected);
+let stompConnected = false;
+let mqttConnected = false;
+
+function setStompConnected(connected) {
+    stompConnected = connected;
+    $("#connect").prop("disabled", !connected || mqttConnected);
+    updateStompStatus();
+}
+
+function setMqttConnected(connected) {
+    mqttConnected = connected;
+    $("#connect").prop("disabled", !stompConnected || connected);
     $("#disconnect").prop("disabled", !connected);
-    $("#shutdown").prop("disabled", !connected);
     //$("#options").prop("disabled", !connected);
 }
 
-function connect() {
+function updateStompStatus() {
+    let el = document.getElementById('stompStatus');
+    if (!el) {
+        return;
+    }
+    el.textContent = stompConnected ? 'STOMP: connected' : 'STOMP: disconnected';
+    el.className = stompConnected ? 'badge bg-success' : 'badge bg-danger';
+}
+
+function connectStomp() {
     if (stompClient && stompClient.connected) {
-        console.warn('Already connected');
+        console.warn('STOMP already connected');
         return;
     }
     let socket = new SockJS('/mq2tClientDashboard');
     stompClient = Stomp.over(socket);
     stompClient.connect({}, function (frame) {
-        console.log('Connected: ' + frame);
-        setConnected(true);
+        console.log('STOMP Connected: ' + frame);
         dataSubscription = stompClient.subscribe(subDataTopic, function (message) {
             showData(JSON.parse(message.body), message.headers.card);
         });
-        stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
+        setStompConnected(true);
+        goToStartDashboard();               // автозагрузка карточек стартового дашборда
     }, error => {
         console.error('STOMP connection error', error);
-        setConnected(false);
+        setStompConnected(false);
     });
     stompClient.debug = function (msg) {
         console.log(msg);
     };
 }
 
+function connectMqtt() {
+    if (!stompClient || !stompClient.connected) {
+        console.warn('STOMP not connected yet, MQTT connect ignored');
+        return;
+    }
+    if (mqttConnected) {
+        console.warn('MQTT already connected');
+        return;
+    }
+    stompClient.send(connectTopic, {}, JSON.stringify({'id': "doConnect"}));
+    setMqttConnected(true);
+}
+
 function goToStartDashboard() {
     stompClient.send("/app/displayCardDashboard", {}, JSON.stringify({'id': ""}));
 }
 
-function disconnect() {
-    if (stompClient !== null) {
-        stompClient.send("/app/disconnect", {}, JSON.stringify({'id': "disconnect"}));
-        if (dataSubscription) {
-            stompClient.unsubscribe();
-        }
-        stompClient.disconnect();
+function disconnectMqtt() {
+    if (!stompClient || !stompClient.connected) {
+        console.warn('STOMP not connected, cannot disconnect MQTT');
+        return;
     }
-    setConnected(false);
+    stompClient.send("/app/disconnect", {}, JSON.stringify({'id': "disconnect"}));
+    setMqttConnected(false);
 }
 
 function shutdown() {
@@ -189,15 +218,19 @@ $(function () {
     $("form").on('submit', function (e) {
         e.preventDefault();
     });
-    
-    $("#connect").click(function () {
-        connect();
+
+    setStompConnected(false);
+    setMqttConnected(false);
+    connectStomp();                       // авто-STOMP
+
+    $("#connect").click(function () {     // MQTT только по кнопке
+        connectMqtt();
     });
-    
+
     $("#disconnect").click(function () {
-        disconnect();
+        disconnectMqtt();
     });
-    
+
     $("#shutdown").click(function () {
         shutdown();
     });
