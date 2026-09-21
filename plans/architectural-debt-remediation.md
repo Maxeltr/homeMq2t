@@ -6,7 +6,7 @@
 
 - [`plans/architecture.md`](architecture.md) — текущая архитектура (карта для ИИ и разработчиков)
 - [`plans/Roadmap.md`](Roadmap.md) — функциональные улучшения (MQTT, UI, планировщик)
-- [`plans/refactoring-remove-command-component.md`](refactoring-remove-command-component.md) — удаление Command/Component (частично выполнено или в процессе)
+- [`plans/done/refactoring-remove-command-component.md`](done/refactoring-remove-command-component.md) — удаление Command/Component (**выполнено**, архивировано)
 
 **Цель:** снизить связанность, повысить тестируемость и предсказуемость системы без «большого переписывания» за один раз.
 
@@ -594,7 +594,7 @@ gantt
 
 | План | Отношение |
 |------|-----------|
-| [`refactoring-remove-command-component.md`](refactoring-remove-command-component.md) | **Prerequisite** — завершить до Фазы 3 |
+| [`done/refactoring-remove-command-component.md`](done/refactoring-remove-command-component.md) | **Prerequisite** — ✅ выполнено (архив) |
 | [`msg-impl-record-refactor.md`](msg-impl-record-refactor.md) | Можно параллельно Фазе 8 |
 | [`subscribe-refactor.md`](subscribe-refactor.md) | Координировать с Фазой 2.3 |
 | [`Roadmap.md`](Roadmap.md) | Функциональность после стабилизации архитектуры |

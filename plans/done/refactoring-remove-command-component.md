@@ -1,5 +1,7 @@
 # Refactoring Plan: Remove Command/Component Entities and Dynamic .jar Loading
 
+> **Статус: ✅ Выполнено** — Command/Component удалены из кодовой базы, `ProcessExecutor` перенесён в `Service/`, `architecture.md` актуализирован. Документ архивирован как исторический.
+
 ## ADR Context
 
 **Decision:** Completely remove dynamic .jar loading (custom ClassLoaders, ServiceLoader), remove Command entity and all related services, remove Component entity and all related services.
@@ -380,7 +382,7 @@ flowchart TD
 
 ## Phase 10: Update Architecture Documentation
 
-### 10.1 [`plans/architecture.md`](plans/architecture.md)
+### 10.1 [`plans/architecture.md`](../architecture.md)
 
 **Changes:**
 - Remove CommandService and ComponentService from the high-level architecture diagram

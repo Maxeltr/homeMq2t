@@ -1,11 +1,13 @@
 # План рефакторинга: автоподключение STOMP + MQTT по кнопке
 
+> **Статус: ✅ Выполнено** — реализовано в `app.js`: `connectStomp()`, `connectMqtt()`, `disconnectMqtt()`, авто-STOMP при старте. Документ архивирован как исторический.
+
 ## Контекст
 
-Сейчас функция `connect()` в `app/src/main/resources/Static/app.js:20` делает две вещи сразу:
+Сейчас функция `connect()` в `../app/src/main/resources/Static/app.js:20` делает две вещи сразу:
 
 1. Поднимает **STOMP-соединение** (SockJS + Stomp, подписка на `/topic/data`)
-2. Отправляет `/app/connect` с `doConnect`, что через `ConnectManagerImpl.connect()` (`app/src/main/java/ru/maxeltr/homeMq2t/Service/UI/ConnectManagerImpl.java:69`) подключается к **MQTT-брокеру**
+2. Отправляет `/app/connect` с `doConnect`, что через `ConnectManagerImpl.connect()` (`../app/src/main/java/ru/maxeltr/homeMq2t/Service/UI/ConnectManagerImpl.java:69`) подключается к **MQTT-брокеру**
 
 Нужно развязать эти два независимых соединения:
 - STOMP-соединение устанавливается автоматически при старте приложения.
