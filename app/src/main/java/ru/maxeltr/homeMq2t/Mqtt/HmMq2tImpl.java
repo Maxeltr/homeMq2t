@@ -891,18 +891,27 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     private int getNewMessageId() {
         int i = 0;
-        this.nextMessageId.compareAndSet(0xffff, 1);
-        int id = this.nextMessageId.getAndIncrement();
 
+        // Атомарно увеличиваем. Если вышли за 0xffff или ушли в минус/ноль — сбрасываем в 1
+        int id = this.nextMessageId.updateAndGet(current ->
+                (current >= 0xffff || current <= 0) ? 1 : current + 1
+        );
+
+        // Цикл проверки коллизий в медиаторе
         while (this.mqttAckMediator.isContainId(id)) {
-            if (this.nextMessageId.compareAndSet(0xffff, 1)) {
-                ++i;
+            if (id == 0xffff) {
+                i++;
                 if (i >= 2) {
-                    this.mqttAckMediator.clear();
+                    this.mqttAckMediator.clear(); // вызываем void метод
                     this.disconnect((byte) 1);
+                    break; // выходим из цикла, так как соединение разорвано
                 }
             }
-            id = this.nextMessageId.getAndIncrement();
+
+            // Снова атомарно берем следующий ID для проверки
+            id = this.nextMessageId.updateAndGet(current ->
+                    (current >= 0xffff || current <= 0) ? 1 : current + 1
+            );
         }
 
         return id;
