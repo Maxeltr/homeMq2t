@@ -175,6 +175,9 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
 
     public static final AttributeKey<ConcurrentHashMap<Integer, Promise<MqttMessage>>> PENDING_PUBCOMP = AttributeKey
             .valueOf(AppProperties.NAME_PENDING_PUBCOMP);
+
+    public static final AttributeKey<ConcurrentHashMap<Integer, MqttPublishMessage>> PENDING_PUBREL = AttributeKey
+            .valueOf(AppProperties.NAME_PENDING_PUBREL);
   
     @Override
     public void run(String... args) {

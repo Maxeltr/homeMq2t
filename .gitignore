@@ -15,3 +15,5 @@ application-dev.properties
 
 # Ignore other files
 *.vsdx
+.continue
+.vscode

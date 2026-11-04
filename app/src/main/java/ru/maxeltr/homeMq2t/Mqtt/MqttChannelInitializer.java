@@ -131,7 +131,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
     }
 
     private MqttPublishHandlerImpl createMqttPublishHandler() {
-        MqttPublishHandlerImpl mqttPublishHandler = new MqttPublishHandlerImpl(this.mqttAckMediator, this.serviceMediator);
+        MqttPublishHandlerImpl mqttPublishHandler = new MqttPublishHandlerImpl(this.serviceMediator);
 
         AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
         autowireCapableBeanFactory.autowireBean(mqttPublishHandler);
