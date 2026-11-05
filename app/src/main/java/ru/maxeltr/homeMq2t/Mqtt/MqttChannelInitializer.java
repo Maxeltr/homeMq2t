@@ -51,9 +51,6 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
 
     private ApplicationContext appContext;
 
-    @Autowired
-    private MqttAckMediator mqttAckMediator;
-
     private ServiceMediator serviceMediator;
 
     @Value("${max-bytes-in-message:8092000}")
@@ -107,7 +104,7 @@ public class MqttChannelInitializer extends ChannelInitializer<SocketChannel> im
     }
 
     private MqttConnectHandler createMqttConnectHandler() {
-        var mqttConnectHandler = new MqttConnectHandler(this.mqttAckMediator);
+        var mqttConnectHandler = new MqttConnectHandler();
 
         AutowireCapableBeanFactory autowireCapableBeanFactory = this.appContext.getAutowireCapableBeanFactory();
         autowireCapableBeanFactory.autowireBean(mqttConnectHandler);

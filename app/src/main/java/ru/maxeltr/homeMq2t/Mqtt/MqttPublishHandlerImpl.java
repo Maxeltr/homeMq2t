@@ -36,10 +36,16 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.Promise;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.task.TaskExecutor;
+import ru.maxeltr.homeMq2t.Entity.MqttMessageEntity;
+import ru.maxeltr.homeMq2t.Repository.MqttMessageRepository;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
 
 /**
@@ -53,6 +59,13 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
     private ChannelHandlerContext ctx;
 
     private final ServiceMediator serviceMediator;
+
+    @Autowired
+    @Qualifier("processExecutor")
+    private TaskExecutor processExecutor;
+
+    @Autowired
+    private MqttMessageRepository messageRepository;
 
     public MqttPublishHandlerImpl(ServiceMediator serviceMediator) {
         this.serviceMediator = serviceMediator;
@@ -140,7 +153,15 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
 
     private void handlePubComp(MqttMessage message) {
         int id = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
-    
+
+        CompletableFuture.runAsync(() -> {
+            this.messageRepository.deleteByPacketId(id);
+        }, this.processExecutor).whenComplete((v, ex) -> {
+            if (ex != null) {
+                logger.error("Failed to delete acknowledged QoS2 message id={} from DB.", id, ex);
+            }
+        });
+
         var pendingPubCompAttr = ctx.channel().attr(HmMq2tImpl.PENDING_PUBCOMP);
         ConcurrentHashMap<Integer, Promise<MqttMessage>> pendingPubComp = pendingPubCompAttr.get();
     
@@ -243,6 +264,11 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
                 );
 
                 break;
+            case FAILURE:
+                logger.warn("Received PUBLISH message with invalid QoS ({}). Message is skipped.",
+                        message.fixedHeader().qosLevel());
+
+                return;
             case EXACTLY_ONCE:
                 var pendingPubRelAttr = ctx.channel().attr(HmMq2tImpl.PENDING_PUBREL);
                 ConcurrentHashMap<Integer, MqttPublishMessage> pendingPubRel = pendingPubRelAttr.get();

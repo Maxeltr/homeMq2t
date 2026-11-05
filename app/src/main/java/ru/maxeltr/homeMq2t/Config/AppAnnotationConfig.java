@@ -47,8 +47,6 @@ import org.springframework.scheduling.support.PeriodicTrigger;
 import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
-import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediator;
-import ru.maxeltr.homeMq2t.Mqtt.MqttAckMediatorImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
 import ru.maxeltr.homeMq2t.Service.ProcessExecutor;
 import ru.maxeltr.homeMq2t.Service.ProcessExecutorImpl;
@@ -149,11 +147,6 @@ public class AppAnnotationConfig {
     }
 
     @Bean
-    public MqttAckMediator getMqttAckMediator() {
-        return new MqttAckMediatorImpl();
-    }
-
-    @Bean
     public ServiceMediator getServiceMediator() {
         return new ServiceMediatorImpl();
     }
@@ -184,14 +177,6 @@ public class AppAnnotationConfig {
     @Bean(name = "pingPeriodicTrigger")
     public PeriodicTrigger pingPeriodicTrigger() {
         Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("keep-alive-timer", "20000")));
-        PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
-        periodicTrigger.setInitialDelay(duration);
-        return periodicTrigger;
-    }
-
-    @Bean(name = "retransmitPeriodicTrigger")
-    public PeriodicTrigger retransmitPeriodicTrigger() {
-        Duration duration = Duration.ofMillis(Integer.parseInt(this.env.getProperty("retransmit-delay", "60000")));
         PeriodicTrigger periodicTrigger = new PeriodicTrigger(duration);
         periodicTrigger.setInitialDelay(duration);
         return periodicTrigger;

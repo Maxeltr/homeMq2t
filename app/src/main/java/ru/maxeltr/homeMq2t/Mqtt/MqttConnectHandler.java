@@ -54,9 +54,6 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
 
     private static final Logger logger = LoggerFactory.getLogger(MqttConnectHandler.class);
 
-//    @Autowired
-    private final MqttAckMediator mqttAckMediator;
-
     private final String protocolName = "MQTT";
 
     @Value("${protocol-version:4}")
@@ -68,13 +65,9 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
     @Autowired
     private AppProperties appProperties;
 
-    MqttConnectHandler(MqttAckMediator mqttAckMediator) {
-        this.mqttAckMediator = mqttAckMediator;
+    MqttConnectHandler() {
         logger.debug("Create {}.", this.getClass());
     }
-//    public void setMediator(MqttAckMediator mqttAckMediator) {
-//        this.mqttAckMediator = mqttAckMediator;
-//    }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {

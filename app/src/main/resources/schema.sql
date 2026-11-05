@@ -32,14 +32,14 @@ CREATE TABLE IF NOT EXISTS card_settings (
     FOREIGN KEY (dashboard_id) REFERENCES dashboard_settings(id) ON DELETE CASCADE
 );
 
-CREATE SEQUENCE IF NOT EXISTS startup_task_number_seq START WITH 1 INCREMENT BY 1;	
+CREATE SEQUENCE IF NOT EXISTS startup_task_number_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS startup_task_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     path VARCHAR(255),
     arguments VARCHAR(255),
-    number BIGINT DEFAULT NEXT VALUE FOR startup_task_number_seq NOT NULL	
+    number BIGINT DEFAULT NEXT VALUE FOR startup_task_number_seq NOT NULL
 );
 
 CREATE SEQUENCE IF NOT EXISTS mqtt_settings_number_seq
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS mqtt_settings (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255),
     host VARCHAR(255),
-    port VARCHAR(50),
+    port VARCHAR(50), -- VARCHAR(50): сущность MqttSettingsEntity.port имеет тип String; INT ломает существующие БД и маппинг Hibernate
     mq2t_password VARCHAR(255),
     mq2t_username VARCHAR(255),
     client_id VARCHAR(255),
@@ -67,54 +67,34 @@ CREATE TABLE IF NOT EXISTS mqtt_settings (
     number BIGINT DEFAULT NEXT VALUE FOR mqtt_settings_number_seq NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS pending_mqtt_messages (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    packet_id INT NOT NULL DEFAULT 0, -- Синхронизировано с дефолтом миграции
+    topic VARCHAR(255) NOT NULL,
+    payload BLOB NOT NULL,
+    qos INT NOT NULL,
+    retain BOOLEAN,
+    status VARCHAR(20) DEFAULT NULL, -- Синхронизировано с дефолтом миграции
+    created_at TIMESTAMP
+);
+
+-- Миграция для старых баз данных (безопасно отработает благодаря IF NOT EXISTS)
+ALTER TABLE IF EXISTS pending_mqtt_messages ADD COLUMN IF NOT EXISTS packet_id INT NOT NULL DEFAULT 0;
+ALTER TABLE IF EXISTS pending_mqtt_messages ADD COLUMN IF NOT EXISTS status VARCHAR(20);
+
+CREATE INDEX IF NOT EXISTS idx_pending_packet_id ON pending_mqtt_messages (packet_id);
+CREATE INDEX IF NOT EXISTS idx_pending_status ON pending_mqtt_messages (status);
+
+-- Безопасная инициализация начального дашборда
 INSERT INTO dashboard_settings (name, type)
 SELECT 'Start dashboard', 'CARD'
 WHERE NOT EXISTS (
   SELECT 1 FROM dashboard_settings WHERE name = 'Start dashboard'
 );
 
+-- ИСПРАВЛЕНО: удален сломанный блок VALUES, синтаксис теперь валиден для H2
 INSERT INTO mqtt_settings (name)
 SELECT 'Mqtt Settings'
-WHERE NOT EXISTS (SELECT 1 FROM mqtt_settings WHERE name = 'Mqtt Settings');
-VALUES
-  ('Mqtt Settings');
-
--- INSERT INTO card_settings (
---     name,
---     subscription_topic,
---     subscription_qos,
---     subscription_data_name,
---     subscription_data_type,
---     display_data_jsonpath,
---     publication_topic,
---     publication_qos,
---     publication_retain,
---     publication_data,
---     publication_data_type,
---     local_task_path,
---     local_task_arguments,
---     local_task_data_type,
---     dashboard_id  
--- ) VALUES (
---     'Тестовая карточка',  --card name
---     'sensors/temperature',  --subscription_topic
---     'AT_MOST_ONCE',
---     'Current temperature',  -- subscription_data_name (пустое значение)
---     'application/json',
---     '$.temperature',  -- display_data_jsonpath (пустое значение)
---     'sensors/temperature',  -- publication_topic
---     'AT_MOST_ONCE',
---     FALSE,  -- publication_retain
---     '{
---        "deviceId":"device-001",
---        "timestamp":"2025-07-26T12:00:00Z",
---        "temperature":23.5,
---        "humidity":45.2,
---        "status":"OK"
---     }',  -- publication_data
---     'application/json',
---     NULL,  -- local_task_path (пустое значение)
---     NULL,  -- local_task_arguments (пустое значение)
---     NULL,  -- local_task_data_type (пустое значение)
---     1   -- dashboard_id 
--- );
+WHERE NOT EXISTS (
+  SELECT 1 FROM mqtt_settings WHERE name = 'Mqtt Settings'
+);
