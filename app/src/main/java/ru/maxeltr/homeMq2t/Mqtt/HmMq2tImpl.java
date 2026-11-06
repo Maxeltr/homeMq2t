@@ -25,6 +25,7 @@ package ru.maxeltr.homeMq2t.Mqtt;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -547,15 +548,29 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         payload.getBytes(payload.readerIndex(), bytes);
 
         CompletableFuture.runAsync(() -> {
+            logger.debug("Saving pending PUBLISH message (QoS=1) to DB: id={}, topic={}, qos={}, retain={}, status={}, payloadSize={}.",
+                    id, topic, MqttQoS.AT_LEAST_ONCE.value(), retain, MqttMessageEntity.STATUS_SEND_PUBLISH, bytes.length);
             this.messageRepository.save(new MqttMessageEntity(id, topic, bytes,
                     MqttQoS.AT_LEAST_ONCE.value(), retain, MqttMessageEntity.STATUS_SEND_PUBLISH));
+            logger.debug("Pending PUBLISH message (QoS=1) id={} has been saved to DB.", id);
         }, this.processExecutor).whenComplete((v, ex) -> {
             if (ex != null) {
                 logger.error("Failed to save pending PUBLISH message id={} to DB.", id, ex);
             }
         });
 
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.AT_LEAST_ONCE, retain,
+        return this.doPublishAtLeastOnce(id, topic, Unpooled.wrappedBuffer(bytes), retain, false);
+    }
+
+    /**
+     * Отправляет PUBLISH с QoS=1 и ожидает PUBACK. Используется как при обычной
+     * отправке (dup=false, id сгенерирован заново), так и при ретрансляции
+     * pending-сообщения из БД (dup=true, сохранённый packetId). Подтверждение
+     * обрабатывается одинаково: при получении PUBACK строка удаляется из БД.
+     */
+    private Promise<MqttPubAckMessage> doPublishAtLeastOnce(int id, String topic, ByteBuf payload, boolean retain,
+            boolean dup) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, dup, MqttQoS.AT_LEAST_ONCE, retain,
                 0);
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
@@ -622,15 +637,30 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         payload.getBytes(payload.readerIndex(), bytes);
 
         CompletableFuture.runAsync(() -> {
+            logger.debug("Saving pending PUBLISH message (QoS=2) to DB: id={}, topic={}, qos={}, retain={}, status={}, payloadSize={}.",
+                    id, topic, MqttQoS.EXACTLY_ONCE.value(), retain, MqttMessageEntity.STATUS_SEND_PUBLISH, bytes.length);
             this.messageRepository.save(new MqttMessageEntity(id, topic, bytes,
                     MqttQoS.EXACTLY_ONCE.value(), retain, MqttMessageEntity.STATUS_SEND_PUBLISH));
+            logger.debug("Pending PUBLISH message (QoS=2) id={} has been saved to DB.", id);
         }, this.processExecutor).whenComplete((v, ex) -> {
             if (ex != null) {
                 logger.error("Failed to save pending PUBLISH message id={} to DB.", id, ex);
             }
         });
 
-        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, false, MqttQoS.EXACTLY_ONCE, retain,
+        return this.doPublishExactlyOnce(id, topic, Unpooled.wrappedBuffer(bytes), retain, false);
+    }
+
+    /**
+     * Отправляет PUBLISH с QoS=2 и ожидает PUBREC. Используется как при обычной
+     * отправке (dup=false, id сгенерирован заново), так и при ретрансляции
+     * pending-сообщения из БД (dup=true, сохранённый packetId). Подтверждение
+     * обрабатывается одинаково: при получении PUBREC строка переводится в статус
+     * SEND_PUBREL и отправляется PUBREL.
+     */
+    private Promise<MqttMessage> doPublishExactlyOnce(int id, String topic, ByteBuf payload, boolean retain,
+            boolean dup) {
+        MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBLISH, dup, MqttQoS.EXACTLY_ONCE, retain,
                 0);
         MqttPublishVariableHeader variableHeader = new MqttPublishVariableHeader(topic, id);
         MqttPublishMessage message = new MqttPublishMessage(fixedHeader, variableHeader, payload);
@@ -693,12 +723,39 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         return publishFuture;
     }
 
+    @Override
+    public void retransmitPublish(String topic, byte[] payload, MqttQoS qos, boolean retain, int packetId) {
+        if (this.channel == null) {
+            logger.error("Cannot retransmit PUBLISH message id={}: channel is null.", packetId);
+            return;
+        }
+
+        switch (qos) {
+            case MqttQoS.AT_LEAST_ONCE ->
+                this.doPublishAtLeastOnce(packetId, topic, Unpooled.wrappedBuffer(payload), retain, true);
+            case MqttQoS.EXACTLY_ONCE ->
+                this.doPublishExactlyOnce(packetId, topic, Unpooled.wrappedBuffer(payload), retain, true);
+            default ->
+                logger.warn("Invalid retransmit QoS={} for message id={}. Message is skipped.", qos, packetId);
+        }
+    }
+
+    @Override
+    public void retransmitPubRel(int packetId) {
+        if (this.channel == null) {
+            logger.error("Cannot retransmit PUBREL message id={}: channel is null.", packetId);
+            return;
+        }
+        this.sendPubRelMessage(packetId);
+    }
+
     /**
      * Отправляет PUBREL для сообщения с QoS=2 после получения PUBREC
      * и ожидает PUBCOMP. Удаление pending-сообщения из БД выполняется
      * в {@link MqttPublishHandlerImpl#handlePubComp} при получении PUBCOMP.
      * Для ретрансляции PUBREL достаточно строки со статусом SEND_PUBREL:
-     * PUBREL восстанавливается из packet_id.
+     * PUBREL восстанавливается из packet_id. Метод также используется
+     * {@link MqttRetransmitServiceImpl} при переподключении.
      */
     private Promise<MqttMessage> sendPubRelMessage(int id) {
         MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.PUBREL, false, MqttQoS.AT_LEAST_ONCE, false,
@@ -779,12 +836,63 @@ public class HmMq2tImpl implements HmMq2t, CommandLineRunner { // TODO separate 
         return future;
     }
 
-    private int getNewMessageId() {
-        // Атомарно увеличиваем. Если вышли за 0xffff или ушли в минус/ноль — сбрасываем в 1
-        int id = this.nextMessageId.updateAndGet(current ->
-                (current >= 0xffff || current <= 0) ? 1 : current + 1
-        );
+    /**
+     * Максимальное число попыток найти свободный packetId. Ограничивает цикл,
+     * чтобы не зациклиться, если в БД скопилось много необработанных сообщений.
+     */
+    private static final int MAX_ID_ALLOCATION_ATTEMPTS = 100;
 
+    /**
+     * Генерирует новый уникальный packetId для MQTT-пакета.
+     *
+     * Многопоточность:
+     * 1. Метод может одновременно вызываться из нескольких потоков Netty
+     *    (event loop) и из потоков processExecutor. Значение nextMessageId
+     *    изменяется только через AtomicInteger.updateAndGet, который атомарен,
+     *    поэтому параллельные потоки НИКОГДА не получат один и тот же id —
+     *    каждый вызывающий поток гарантированно получает уникальный кандидат.
+     * 2. Занятость кандидата проверяется по БД (pending-сообщения, ожидающие
+     *    подтверждения брокера). Если id занят — берём следующий. Так как
+     *    каждый поток получает свой уникальный кандидат от AtomicInteger,
+     *    конкуренция за один и тот же id между потоками исключена.
+     * 3. Метод синхронный (возвращает int), поэтому проверка БД выполняется
+     *    блокирующе. Вызовы идут через быстрый EXISTS-запрос
+     *    {@link MqttMessageRepository#existsByPacketId(int)} и число попыток
+     *    ограничено {@link #MAX_ID_ALLOCATION_ATTEMPTS}, чтобы не блокировать
+     *    event loop надолго.
+     *
+     * @return свободный (не занятый в БД) packetId в диапазоне 1..0xffff
+     */
+    private int getNewMessageId() {
+        int id = 1;
+
+        for (int attempt = 0; attempt < MAX_ID_ALLOCATION_ATTEMPTS; attempt++) {
+            // Атомарно увеличиваем. Если вышли за 0xffff или ушли в минус/ноль — сбрасываем в 1
+            id = this.nextMessageId.updateAndGet(current ->
+                    (current >= 0xffff || current <= 0) ? 1 : current + 1
+            );
+
+            try {
+                // Проверяем, не занят ли id в БД необработанным (pending) сообщением
+                if (!this.messageRepository.existsByPacketId(id)) {
+                    return id;
+                }
+                logger.warn("Packet id={} is already occupied in DB (pending message). Trying next id, attempt={}/{}.",
+                        id, attempt + 1, MAX_ID_ALLOCATION_ATTEMPTS);
+            } catch (Exception ex) {
+                // БД недоступна — не блокируем отправку сообщения, считаем id свободным.
+                // Ошибка при сохранении pending-сообщения в БД будет залогирована отдельно.
+                logger.error("Failed to check packet id={} occupancy in DB. Returning it as free.", id, ex);
+                return id;
+            }
+        }
+
+        // Все попытки исчерпаны — возвращаем последний сгенерированный id,
+        // чтобы не блокировать отправку. Дубликат возможен только в том
+        // случае, если предыдущее сообщение с таким же id всё ещё ожидает
+        // подтверждения в БД.
+        logger.error("Could not find a free packet id after {} attempts. Returning id={} anyway.",
+                MAX_ID_ALLOCATION_ATTEMPTS, id);
         return id;
     }
 

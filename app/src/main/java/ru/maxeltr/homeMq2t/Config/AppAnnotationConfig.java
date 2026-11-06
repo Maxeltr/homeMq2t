@@ -48,6 +48,8 @@ import ru.maxeltr.homeMq2t.AppShutdownManager;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2t;
 import ru.maxeltr.homeMq2t.Mqtt.HmMq2tImpl;
 import ru.maxeltr.homeMq2t.Mqtt.MqttChannelInitializer;
+import ru.maxeltr.homeMq2t.Mqtt.MqttRetransmitService;
+import ru.maxeltr.homeMq2t.Mqtt.MqttRetransmitServiceImpl;
 import ru.maxeltr.homeMq2t.Service.ProcessExecutor;
 import ru.maxeltr.homeMq2t.Service.ProcessExecutorImpl;
 import ru.maxeltr.homeMq2t.Service.ServiceMediator;
@@ -139,6 +141,11 @@ public class AppAnnotationConfig {
     @Bean
     public HmMq2t getHmMq2t() {
         return new HmMq2tImpl();
+    }
+
+    @Bean
+    public MqttRetransmitService getMqttRetransmitService() {
+        return new MqttRetransmitServiceImpl();
     }
 
     @Bean

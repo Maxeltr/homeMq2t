@@ -65,6 +65,9 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
     @Autowired
     private AppProperties appProperties;
 
+    @Autowired
+    private MqttRetransmitService retransmitService;
+
     MqttConnectHandler() {
         logger.debug("Create {}.", this.getClass());
     }
@@ -136,6 +139,11 @@ public class MqttConnectHandler extends ChannelInboundHandlerAdapter {
                 logger.info("Received CONNACK message. Connection accepted.");
 
                 channel.flush();
+
+                // После успешного CONNACK ретранслируем pending-сообщения из БД
+                // (PUBLISH со статусом SEND_PUBLISH и PUBREL со статусом SEND_PUBREL).
+                // Выполняется асинхронно в processExecutor.
+                this.retransmitService.retransmitPendingMessages();
             }
 
             case CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD,

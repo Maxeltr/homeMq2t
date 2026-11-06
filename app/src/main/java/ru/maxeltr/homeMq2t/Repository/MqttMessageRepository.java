@@ -15,6 +15,19 @@ public interface MqttMessageRepository extends JpaRepository<MqttMessageEntity, 
 
     Optional<MqttMessageEntity> findByPacketId(int packetId);
 
+    /**
+     * Проверяет, занят ли packetId в базе данных (т.е. существует ли
+     * сообщение с таким packetId, ожидающее подтверждения от брокера).
+     *
+     * Spring Data генерирует для этого метода эффективный запрос
+     * "SELECT 1 ... LIMIT 1" (EXISTS) вместо COUNT, поэтому метод
+     * выполняется быстро даже на больших таблицах.
+     *
+     * @param packetId идентификатор MQTT-пакета
+     * @return true, если packetId уже занят в БД, иначе false
+     */
+    boolean existsByPacketId(int packetId);
+
     List<MqttMessageEntity> findByStatus(String status);
 
     @Transactional

@@ -28,6 +28,27 @@ public interface HmMq2t {
 
     void publish(String topic, ByteBuf payload, MqttQoS qos, boolean retain);
 
+    /**
+     * Ретранслирует сохранённое pending-сообщение PUBLISH с уже выделенным
+     * packetId (после восстановления соединения). Отправляется с dup=true,
+     * БД не изменяется — подтверждения обрабатываются как при обычной отправке.
+     *
+     * @param topic тема сообщения
+     * @param payload полезная нагрузка сообщения
+     * @param qos уровень QoS (AT_LEAST_ONCE или EXACTLY_ONCE)
+     * @param retain retain-флаг сообщения
+     * @param packetId сохранённый идентификатор пакета
+     */
+    void retransmitPublish(String topic, byte[] payload, MqttQoS qos, boolean retain, int packetId);
+
+    /**
+     * Ретранслирует PUBREL для сообщения с QoS=2, находящегося в статусе
+     * SEND_PUBREL (после восстановления соединения), с сохранённым packetId.
+     *
+     * @param packetId сохранённый идентификатор пакета
+     */
+    void retransmitPubRel(int packetId);
+
     void setMediator(ServiceMediator serviceMediator);
 
     boolean isConnected();
