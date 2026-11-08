@@ -46,7 +46,7 @@
 Внутри scheduledTask таймаута (в publishExactlyOnce и sendPubRelMessage) нужно не просто переводить промис в tryFailure, но и явно удалять его из мапы
 
 ## Bugs
-- **При дисконнекте не очищается toSubscribe в SubscriptionService** —  при повторном коннекте из за этого не происходит повторной подписки.
+- ~~**При дисконнекте не очищается toSubscribe в SubscriptionService**~~ — исправлено. На пути реконнекта записи в `ConcurrentMap<String, Subscription> subscriptions` в `SubscriptionServiceImpl` не очищались: `subscribeFromConfig()` находил существующую `Subscription` с теми же подписчиками и тем же QoS, поэтому `toSubscribe` оставался пустым и `SUBSCRIBE` брокеру повторно не отправлялся (в логе: `Subscribers for topic=test are present` → `List to subscribe is empty`). Добавлен метод `SubscriptionService.reset()`, который очищает локальное состояние подписок без отправки `UNSUBSCRIBE`; вызывается перед реконнектом в `MqttPingScheduleHandler.disconnectOrReconnect()` и перед `subscribeFromConfig()` в `ConnectManagerImpl.connect()`.
 не приходят сообщения от топиков test.mosquitto.org елси подписаться с qos 1 или 2
 
 - Проверить на утечки. Уровень детекции Dio.netty.leakDetection.level 

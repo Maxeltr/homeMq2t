@@ -166,6 +166,9 @@ public class MqttPingScheduleHandler extends ChannelInboundHandlerAdapter {
         private void disconnectOrReconnect() {
             if (reconnect) {
                 logger.info("Start the reconnection attempt.");
+                //Clear local subscription state, otherwise subscribeFromConfig() will find
+                //existing subscriptions and will not re-send SUBSCRIBE to the broker.
+                subscriptionService.reset();
                 serviceMediator.reconnect();
                 subscriptionService.subscribeFromConfig();
             } else {

@@ -39,4 +39,11 @@ public interface SubscriptionService {
 
     public void unsubscribeAll();
 
+    /**
+     * Clears all local subscription state without sending UNSUBSCRIBE to the broker.
+     * Must be called when the connection is lost or before re-subscription,
+     * so that subscriptions are rebuilt and re-sent to the broker on reconnect.
+     */
+    public void reset();
+
 }

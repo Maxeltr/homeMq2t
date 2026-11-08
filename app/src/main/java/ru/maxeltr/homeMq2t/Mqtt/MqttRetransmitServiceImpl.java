@@ -115,8 +115,13 @@ public class MqttRetransmitServiceImpl implements MqttRetransmitService {
             // поэтому ретранслировать нечего. Зависшие строки должны быть удалены
             // при disconnect(); на случай гонки (быстрый реконнект до завершения
             // асинхронного удаления) очищаем их здесь повторно.
-            logger.info("CleanSession=true. Deleting stale pending messages instead of retransmission.");
-            this.messageRepository.deleteAll();
+            long pending = this.messageRepository.count();
+            if (pending > 0) {
+                this.messageRepository.deleteAll();
+                logger.info("CleanSession=true. Deleted {} stale pending messages instead of retransmission.", pending);
+            } else {
+                logger.debug("CleanSession=true. No stale pending messages to delete. Retransmission skipped.");
+            }
             return;
         }
 

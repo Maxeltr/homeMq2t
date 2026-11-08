@@ -89,6 +89,9 @@ public class ConnectManagerImpl implements ConnectManager {
         } else {
             logger.info("Connection established successfully.");
             msg.data(this.jsonFormatter.createAndEncodeHtml(dashboardHtml, Status.OK));
+            //Clear local subscription state left from a previous connection,
+            //otherwise subscribeFromConfig() will not re-send SUBSCRIBE to the broker.
+            this.subscriptionService.reset();
             this.subscriptionService.subscribeFromConfig();
         }
 

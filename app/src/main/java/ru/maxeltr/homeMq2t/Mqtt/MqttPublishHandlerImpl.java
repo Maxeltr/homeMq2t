@@ -151,14 +151,26 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
         }
     }
 
+    /**
+     * Handles the final stage of the outbound QoS2 publish handshake (PUBLISH -> PUBREC -> PUBREL -> PUBCOMP).
+     * This is the point where the message is finally removed from the DB:
+     * it is NOT deleted on PUBREC and NOT deleted on PUBREL — only here, on PUBCOMP,
+     * which means the broker has confirmed full delivery (analogous to PUBACK for QoS1, see HmMq2tImpl).
+     */
     private void handlePubComp(MqttMessage message) {
         int id = ((MqttMessageIdVariableHeader) message.variableHeader()).messageId();
 
+        // At this moment the message in the DB still has status STATUS_SEND_PUBREL
+        // (set in HmMq2tImpl after PUBREC was received and PUBREL was sent).
+        // PUBCOMP completes the QoS2 handshake, so the message is fully acknowledged
+        // and can be safely removed from the DB; no retransmission will be needed anymore.
         CompletableFuture.runAsync(() -> {
             this.messageRepository.deleteByPacketId(id);
         }, this.processExecutor).whenComplete((v, ex) -> {
             if (ex != null) {
                 logger.error("Failed to delete acknowledged QoS2 message id={} from DB.", id, ex);
+            } else {
+                logger.debug("Acknowledged QoS2 message id={} (status=STATUS_SEND_PUBREL) has been deleted from DB.", id);
             }
         });
 
@@ -182,14 +194,10 @@ public class MqttPublishHandlerImpl extends SimpleChannelInboundHandler<MqttMess
 
     
     private void handlePubRec(MqttMessage message) {
+        // Note: this message has already been logged in channelRead0() (case PUBREC).
+        // Only the QoS2 handshake logic is handled here to avoid duplicated log entries.
         MqttMessage pubRecMessage = (MqttMessage) message;
         int id = ((MqttMessageIdVariableHeader) pubRecMessage.variableHeader()).messageId();
-        logger.info("Received PUBREC. Message id: {}, d: {}, q: {}, r: {}.",
-            id,
-            pubRecMessage.fixedHeader().isDup(),
-            pubRecMessage.fixedHeader().qosLevel(),
-            pubRecMessage.fixedHeader().isRetain()
-        );
 
         var pendingPubRecAttr = ctx.channel().attr(HmMq2tImpl.PENDING_PUBREC);
         ConcurrentHashMap<Integer, Promise<MqttMessage>> pendingPubRec = pendingPubRecAttr.get();

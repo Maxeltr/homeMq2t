@@ -235,6 +235,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         unsubscribe(all);
     }
 
+    @Override
+    public void reset() {
+        logger.info("Reset subscription state. Clearing {} subscriptions.", subscriptions.size());
+        subscriptions.clear();
+    }
+
     private void unsubscribeAndRemoveSubscriptions(List<String> prepared) {
         logger.debug("Prepared list of unsubscriptions {}", prepared);
         prepared.stream().forEach(t -> {
